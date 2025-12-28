@@ -978,16 +978,18 @@ class GCPPEASS(CloudPEASS):
 				user_info["scopes"] = self.credentials.scopes
 
 		if token:
-			resp = requests.post(
-				"https://www.googleapis.com/oauth2/v3/tokeninfo",
-				headers={"Content-Type": "application/x-www-form-urlencoded"},
-				data={"access_token": token}  # Assuming you have a valid access token
-			)
-			if resp.status_code != 200:
-				print(f"{Fore.RED}Error fetching user info. Token or credentials are invalid.")
-				exit(1)
-			
-			user_info = resp.json()
+			try:
+				resp = requests.get(
+					"https://www.googleapis.com/oauth2/v3/tokeninfo",
+					params={"access_token": token},
+					timeout=15,
+				)
+				if resp.status_code == 200:
+					user_info = resp.json()
+				else:
+					print(f"{Fore.YELLOW}Warning: Unable to fetch user info from token (status={resp.status_code}). Continuing without whoami context.")
+			except Exception as e:
+				print(f"{Fore.YELLOW}Warning: Unable to fetch user info from token ({type(e).__name__}). Continuing without whoami context.")
 		if "email" in user_info and user_info["email"]:
 			self.email = user_info["email"]
 			self.is_sa = user_info["email"].endswith("iam.gserviceaccount.com")
