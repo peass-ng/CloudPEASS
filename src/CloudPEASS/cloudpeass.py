@@ -578,6 +578,14 @@ class CloudPEASS:
         perms_catalog["high"] -= perms_catalog["critical"]
         perms_catalog["medium"] -= (perms_catalog["critical"] | perms_catalog["high"])
         perms_catalog["low"] -= (perms_catalog["critical"] | perms_catalog["high"] | perms_catalog["medium"])
+        # Some providers/tools can return permissions not present in the built-in catalog.
+        # Treat uncategorized permissions as low-risk so UIs can still show accurate counts.
+        categorized = set()
+        for v in perms_catalog.values():
+            categorized |= set(v)
+        uncategorized = set(perms_set) - categorized
+        if uncategorized:
+            perms_catalog["low"].update(uncategorized)
 
         # Convert CloudResource objects to dicts for resource IDs
         resource_ids = []
