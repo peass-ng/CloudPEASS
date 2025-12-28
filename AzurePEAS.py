@@ -344,8 +344,6 @@ class AzurePEASS(CloudPEASS):
             else:
                 print(f"{Fore.RED}No FOCI app with OneNote scopes found. Skipping OneNote enumeration.{Fore.WHITE}")
 
-        return whoami
-
             # CONTACTS
             print(f"{Fore.YELLOW}\nEnumerating Contacts:")
             contacts_token = self.get_tokens_from_foci_with_scope(CONTACTS_FOCI_APPS)
@@ -363,6 +361,8 @@ class AzurePEASS(CloudPEASS):
                 self.enumerate_tasks(tasks_token)
             else:
                 print(f"{Fore.RED}No FOCI app with Tasks scopes found. Skipping Tasks enumeration.{Fore.WHITE}")
+
+        return whoami
 
 
     def enumerate_conditional_access_policies(self, graph_token):
