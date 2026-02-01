@@ -780,11 +780,26 @@ class AzurePEASS(CloudPEASS):
             # The following checks are for user principals (they use the /me endpoint)
             memberships = self.EntraIDPEASS.get_entraid_memberships()
             if memberships is not None:
+                # User principal - use existing /me endpoint methods
                 resources_data += memberships
                 resources_data += self.EntraIDPEASS.get_assigned_permissions()
                 resources_data += self.EntraIDPEASS.get_my_app_role_assignments()
                 resources_data += self.EntraIDPEASS.get_eligible_roles()
                 resources_data += self.EntraIDPEASS.get_entraid_owns()
+            else:
+                # Service Principal or Managed Identity - use SP-specific methods
+                sp_id = self.EntraIDPEASS.get_sp_principal_id()
+                if sp_id:
+                    # Cursory check to see if SP has any EntraID roles/permissions
+                    if self.EntraIDPEASS.check_sp_has_entraid_permissions(sp_id):
+                        print(f"{Fore.CYAN}Service Principal/Managed Identity has EntraID role assignments. Enumerating...{Style.RESET_ALL}")
+                        resources_data += self.EntraIDPEASS.get_sp_directory_role_assignments(sp_id)
+                        resources_data += self.EntraIDPEASS.get_sp_group_memberships(sp_id)
+                        resources_data += self.EntraIDPEASS.get_sp_app_role_assignments(sp_id)
+                        resources_data += self.EntraIDPEASS.get_sp_eligible_roles(sp_id)
+                        resources_data += self.EntraIDPEASS.get_sp_owned_objects(sp_id)
+                    else:
+                        print(f"{Fore.YELLOW}Service Principal/Managed Identity has no EntraID directory role assignments or insufficient permissions to check.{Style.RESET_ALL}")
 
         return resources_data
     
