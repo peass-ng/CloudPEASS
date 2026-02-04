@@ -56,7 +56,6 @@ class EntraIDPEASS():
             resp = requests.get(url, headers=self.headers)
             if resp.status_code != 200:
                 if "/me request is only valid with delegated authentication" in resp.text:
-                    print(f"{Fore.RED}This is a token from a MI or a SP, it cannot access it's permissions in Entra ID. Skipping.{Style.RESET_ALL}")
                     return None
                 else:
                     print(f"{Fore.RED}Graph API call failed: {url} -> {resp.status_code} {resp.text}.{Style.RESET_ALL}")
@@ -340,7 +339,7 @@ class EntraIDPEASS():
 
     def get_entraid_owns(self):
         sub_resources = []
-        # Retrieve the current principal’s owned objects (service principals, apps, groups that the principal owns)
+        # Retrieve the current principal's owned objects (service principals, apps, groups that the principal owns)
         owned_objects_url = "https://graph.microsoft.com/v1.0/me/ownedObjects?$select=id,displayName,appDisplayName"
         owned_objects = self.get_all_pages(owned_objects_url)
 
@@ -350,6 +349,304 @@ class EntraIDPEASS():
             obj_id = obj.get("id")
             name = obj.get("displayName") or obj.get("appDisplayName") or obj_id
 
+            sub_resources.append(CloudResource(
+                resource_id=obj_id,
+                name=name,
+                resource_type=odata_type,
+                permissions=[f"Owner of {obj_id} ({odata_type})"],
+                deny_perms=[]
+            ))
+        
+        return sub_resources
+
+    def get_sp_principal_id(self):
+        """
+        Extract the principal ID (oid) from the decoded token if it's a SP/MI token.
+        Returns the principal ID if token is from SP/MI, None otherwise.
+        """
+        if not self.decoded_token:
+            return None
+        
+        # SP/MI tokens have appid but typically no upn
+        if 'appid' in self.decoded_token and 'upn' not in self.decoded_token:
+            return self.decoded_token.get('oid')
+        
+        return None
+
+    def check_sp_has_entraid_permissions(self, sp_id):
+        """
+        Cursory check to determine if SP/MI has any EntraID roles or permissions.
+        Returns True if any assignments found, False otherwise.
+        """
+        # Check 1: Any directory role assignments?
+        url = f"https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignments?$filter=principalId eq '{sp_id}'&$top=1"
+        resp = requests.get(url, headers=self.headers)
+        if resp.status_code == 200 and len(resp.json().get('value', [])) > 0:
+            return True
+        elif resp.status_code == 403:
+            print(f"{Fore.YELLOW}Insufficient permissions to check SP directory role assignments.{Style.RESET_ALL}")
+            return False
+        
+        # Check 2: Any group memberships?
+        url = f"https://graph.microsoft.com/v1.0/servicePrincipals/{sp_id}/transitiveMemberOf?$top=1"
+        resp = requests.get(url, headers=self.headers)
+        if resp.status_code == 200 and len(resp.json().get('value', [])) > 0:
+            return True
+        elif resp.status_code == 403:
+            print(f"{Fore.YELLOW}Insufficient permissions to check SP group memberships.{Style.RESET_ALL}")
+        
+        # Check 3: Any app role assignments?
+        url = f"https://graph.microsoft.com/v1.0/servicePrincipals/{sp_id}/appRoleAssignments?$top=1"
+        resp = requests.get(url, headers=self.headers)
+        if resp.status_code == 200 and len(resp.json().get('value', [])) > 0:
+            return True
+        elif resp.status_code == 403:
+            print(f"{Fore.YELLOW}Insufficient permissions to check SP app role assignments.{Style.RESET_ALL}")
+        
+        return False
+
+    def get_sp_directory_role_assignments(self, sp_id):
+        """
+        Fetch all directory role assignments for a Service Principal or Managed Identity.
+        Includes active, scheduled (PIM), and transitive role assignments.
+        """
+        sub_resources = []
+        
+        # Get active role assignments
+        url = f"https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignments?$filter=principalId eq '{sp_id}'"
+        try:
+            active_roles = self.get_all_pages(url)
+            if active_roles is None:
+                active_roles = []
+        except Exception as e:
+            print(f"{Fore.YELLOW}Failed to retrieve active role assignments for SP: {e}{Style.RESET_ALL}")
+            active_roles = []
+        
+        for role in active_roles:
+            role_definition_id = role.get("roleDefinitionId")
+            directory_scope_id = role.get("directoryScopeId", "/")
+            
+            try:
+                granular_permissions = self.get_granular_permissions(role_definition_id)
+                role_name = self.get_role_name(role_definition_id)
+                
+                sub_resources.append(CloudResource(
+                    resource_id="roleDefinitionId:" + role_definition_id,
+                    name=role_name,
+                    resource_type=directory_scope_id,
+                    permissions=granular_permissions,
+                    deny_perms=[],
+                    assignmentType="Assigned"
+                ))
+            except Exception as e:
+                print(f"{Fore.YELLOW}Failed to get permissions for role {role_definition_id}: {e}{Style.RESET_ALL}")
+        
+        # Get scheduled role assignments (PIM)
+        url = f"https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignmentScheduleInstances?$filter=principalId eq '{sp_id}'&$expand=roleDefinition"
+        try:
+            scheduled_roles = self.get_all_pages(url)
+            if scheduled_roles is None:
+                scheduled_roles = []
+        except Exception as e:
+            print(f"{Fore.YELLOW}Failed to retrieve scheduled role assignments for SP: {e}{Style.RESET_ALL}")
+            scheduled_roles = []
+        
+        existing_role_ids = {(entry.id if hasattr(entry, 'id') else entry["id"]) for entry in sub_resources}
+        
+        for role in scheduled_roles:
+            role_definition_id = role.get("roleDefinitionId")
+            directory_scope_id = role.get("directoryScopeId", "/")
+            
+            if "roleDefinitionId:" + role_definition_id in existing_role_ids:
+                continue
+            
+            try:
+                granular_permissions = self.get_granular_permissions(role_definition_id)
+                role_name = self.get_role_name(role_definition_id)
+                
+                sub_resources.append(CloudResource(
+                    resource_id="roleDefinitionId:" + role_definition_id,
+                    name=role_name,
+                    resource_type=directory_scope_id,
+                    permissions=granular_permissions,
+                    deny_perms=[],
+                    assignmentType="Assigned"
+                ))
+            except Exception as e:
+                print(f"{Fore.YELLOW}Failed to get permissions for scheduled role {role_definition_id}: {e}{Style.RESET_ALL}")
+        
+        # Get transitive role assignments (inherited through groups)
+        url = f"https://graph.microsoft.com/beta/roleManagement/directory/transitiveRoleAssignments?$count=true&$filter=principalId eq '{sp_id}'"
+        try:
+            transitive_roles = self.get_all_pages(url)
+            if transitive_roles is None:
+                transitive_roles = []
+        except Exception as e:
+            print(f"{Fore.YELLOW}Failed to retrieve transitive role assignments for SP: {e}{Style.RESET_ALL}")
+            transitive_roles = []
+        
+        for role in transitive_roles:
+            role_definition_id = role.get("roleDefinitionId")
+            directory_scope_id = role.get("directoryScopeId", "/")
+            
+            if "roleDefinitionId:" + role_definition_id in existing_role_ids:
+                continue
+            
+            try:
+                granular_permissions = self.get_granular_permissions(role_definition_id)
+                role_name = self.get_role_name(role_definition_id)
+                
+                sub_resources.append(CloudResource(
+                    resource_id="roleDefinitionId:" + role_definition_id,
+                    name=role_name,
+                    resource_type=directory_scope_id,
+                    permissions=granular_permissions,
+                    deny_perms=[],
+                    assignmentType="Transitive"
+                ))
+            except Exception as e:
+                print(f"{Fore.YELLOW}Failed to get permissions for transitive role {role_definition_id}: {e}{Style.RESET_ALL}")
+        
+        return sub_resources
+
+    def get_sp_group_memberships(self, sp_id):
+        """
+        Fetch all group memberships for a Service Principal or Managed Identity.
+        Groups that are directory roles will have their permissions enumerated.
+        """
+        sub_resources = []
+        
+        url = f"https://graph.microsoft.com/v1.0/servicePrincipals/{sp_id}/transitiveMemberOf"
+        try:
+            member_objects = self.get_all_pages(url)
+            if member_objects is None:
+                return []
+        except Exception as e:
+            print(f"{Fore.YELLOW}Failed to retrieve group memberships for SP: {e}{Style.RESET_ALL}")
+            return []
+        
+        def process_member_object(obj):
+            odata_type = obj.get("@odata.type", "")
+            obj_id = obj.get("roleTemplateId") or obj.get("id")
+            name = obj.get("displayName") or obj_id
+            
+            if odata_type.endswith("directoryRole"):
+                try:
+                    permissions = self.get_granular_permissions(obj_id)
+                    
+                    return CloudResource(
+                        resource_id=obj_id,
+                        name=name,
+                        resource_type=odata_type,
+                        permissions=permissions,
+                        deny_perms=[],
+                        assignmentType="Assigned"
+                    )
+                except Exception as e:
+                    print(f"{Fore.YELLOW}Failed to get permissions for directory role {obj_id}: {e}{Style.RESET_ALL}")
+            
+            return {}
+        
+        with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
+            results = executor.map(process_member_object, member_objects)
+        
+        # Filter out empty results
+        sub_resources = [x for x in results if x]
+        
+        return sub_resources
+
+    def get_sp_app_role_assignments(self, sp_id):
+        """
+        Fetch all app role assignments for a Service Principal or Managed Identity.
+        These are application permissions granted to the SP on other service principals.
+        """
+        url = f"https://graph.microsoft.com/v1.0/servicePrincipals/{sp_id}/appRoleAssignments"
+        
+        try:
+            assignments = self.get_all_pages(url)
+            if assignments is None:
+                return []
+        except Exception as e:
+            print(f"{Fore.YELLOW}Failed to retrieve app role assignments for SP: {e}{Style.RESET_ALL}")
+            return []
+        
+        result = []
+        for a in assignments:
+            try:
+                perm_name = self._get_app_role_value(a["resourceId"], a["appRoleId"])
+                
+                if perm_name:
+                    result.append(CloudResource(
+                        resource_id="#microsoft.graph:" + a.get("resourceId") + "-" + a.get("resourceDisplayName") + "-" + a.get("principalType"),
+                        name=a.get("appRoleId"),
+                        resource_type="appRoleAssignment",
+                        permissions=[perm_name],
+                        deny_perms=[],
+                        assignmentType="Assigned"
+                    ))
+            except Exception as e:
+                print(f"{Fore.YELLOW}Failed to resolve app role {a.get('appRoleId')}: {e}{Style.RESET_ALL}")
+        
+        return result
+
+    def get_sp_eligible_roles(self, sp_id):
+        """
+        Fetch all eligible (PIM) roles for a Service Principal or Managed Identity.
+        """
+        url = f"https://graph.microsoft.com/v1.0/roleManagement/directory/roleEligibilityScheduleInstances?$filter=principalId eq '{sp_id}'&$expand=roleDefinition"
+        
+        try:
+            eligible_roles = self.get_all_pages(url)
+            if eligible_roles is None:
+                return []
+        except Exception as e:
+            print(f"{Fore.YELLOW}Failed to retrieve eligible roles for SP: {e}{Style.RESET_ALL}")
+            return []
+        
+        eligible_resources = []
+        
+        for role in eligible_roles:
+            role_definition_id = role.get("roleDefinitionId")
+            role_name = role.get("roleDefinition", {}).get("displayName", role_definition_id)
+            assignment_type = role.get("assignmentType", "Eligible")
+            directory_scope = role.get("directoryScopeId", "/")
+            
+            try:
+                granular_permissions = self.get_granular_permissions(role_definition_id)
+                
+                eligible_resources.append(CloudResource(
+                    resource_id=role_definition_id,
+                    name=role_name,
+                    resource_type=directory_scope,
+                    permissions=granular_permissions,
+                    deny_perms=[],
+                    assignmentType=assignment_type
+                ))
+            except Exception as e:
+                print(f"{Fore.YELLOW}Failed to get permissions for eligible role {role_definition_id}: {e}{Style.RESET_ALL}")
+        
+        return eligible_resources
+
+    def get_sp_owned_objects(self, sp_id):
+        """
+        Fetch all objects owned by a Service Principal or Managed Identity.
+        """
+        sub_resources = []
+        url = f"https://graph.microsoft.com/v1.0/servicePrincipals/{sp_id}/ownedObjects?$select=id,displayName,appDisplayName"
+        
+        try:
+            owned_objects = self.get_all_pages(url)
+            if owned_objects is None:
+                return []
+        except Exception as e:
+            print(f"{Fore.YELLOW}Failed to retrieve owned objects for SP: {e}{Style.RESET_ALL}")
+            return []
+        
+        for obj in owned_objects:
+            odata_type = obj.get("@odata.type", "")
+            obj_id = obj.get("id")
+            name = obj.get("displayName") or obj.get("appDisplayName") or obj_id
+            
             sub_resources.append(CloudResource(
                 resource_id=obj_id,
                 name=name,
