@@ -810,10 +810,16 @@ class AzurePEASS(CloudPEASS):
         """
         perms_str = [str(p).lower() for p in permissions]
         
-        # Check for wildcard permissions that indicate full access
-        admin_perms = ["*" ,"*/*", "*/action", "*/write", "*/create", "*/update"]
-        if any(admin in p for admin in admin_perms for p in perms_str):
+        # Exact wildcards = full admin (Owner, Contributor roles)
+        if any(p == "*" or p == "*/*" for p in perms_str):
             return True
+        
+        # Wildcard action patterns = admin (must start with */ to be a wildcard)
+        # These indicate broad administrative access across ALL resources
+        admin_suffixes = ["/action", "/write", "/create", "/update"]
+        for perm in perms_str:
+            if perm.startswith("*/") and any(perm.endswith(suffix) for suffix in admin_suffixes):
+                return True
         
         return False
     
