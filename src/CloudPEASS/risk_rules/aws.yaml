@@ -294,6 +294,15 @@ high_exact:
   - ivs:UpdateChannel
   - lakeformation:PutDataLakeSettings
   - m2:GetSignedBluinsightsUrl
+  - mediaconnect:AddFlowOutputs
+  - mediaconnect:DescribeFlowSourceThumbnail
+  - mediaconnect:UpdateFlowOutput
+  - medialive:DescribeThumbnails
+  - medialive:UpdateChannel
+  - mediapackagev2:PutChannelPolicy
+  - mediapackagev2:PutOriginEndpointPolicy
+  - notifications:GetManagedNotificationEvent
+  - notifications:ListManagedNotificationEvents
   - memorydb:UpdateUser
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
@@ -470,6 +479,15 @@ high_override_exact:
   - ivs:UpdateChannel
   - lakeformation:PutDataLakeSettings
   - m2:GetSignedBluinsightsUrl
+  - mediaconnect:AddFlowOutputs
+  - mediaconnect:DescribeFlowSourceThumbnail
+  - mediaconnect:UpdateFlowOutput
+  - medialive:DescribeThumbnails
+  - medialive:UpdateChannel
+  - mediapackagev2:PutChannelPolicy
+  - mediapackagev2:PutOriginEndpointPolicy
+  - notifications:GetManagedNotificationEvent
+  - notifications:ListManagedNotificationEvents
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue

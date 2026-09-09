@@ -2331,6 +2331,177 @@ ID. Query APIs operate on public addresses, contracts, balances, transactions, a
 remain Medium billable intelligence. Public explorers/RPC nodes, self-hosted nodes, offline chain
 indexes, IaC, application configs, process environments, and logs are fallbacks.
 
+### MAP Credits, Mechanical Turk, and AmazonMediaImport — 2026-09-09
+
+MAP Credits exposes three permission-only list actions for agreements, quarterly credits, and
+eligible spend, but no public API/CLI/SDK operation. This remains Medium financial enumeration.
+Mechanical Turk's balance and HIT calls both rejected this account because it is not linked to a
+Requester account. Although the API documentation says assignment reads contain worker IDs and
+answers, no such read is promoted without a completed live fixture. `mediaimport` similarly exposes
+only the permission-only `CreateDatabaseBinarySnapshot` action and no callable client. Billing
+exports, payer reports, contracts, requester databases/exports, public HIT pages, local CSV/JSON,
+database-native snapshots, migration logs, S3 artifacts, source/IaC, browser history, application
+logs, and CloudTrail/SIEM copies are fallbacks. No resource or account link was created.
+
+### MediaConnect (`mediaconnect`) — 2026-09-09
+
+Three single-action roles were independently validated against one disposable flow carrying a
+synthetic RTP test pattern. `DescribeFlowSourceThumbnail` returned a non-empty base64 frame and
+timecode. `AddFlowOutputs` added an RTP destination at a disposable EC2 receiver, which observed a
+packet from the flow's AWS egress IP. `UpdateFlowOutput` changed that output to a second UDP port,
+where an independent listener again observed a packet. An empty role was denied each operation.
+All three permissions are High because they directly reveal a private frame or duplicate/redirect
+the continuing live feed.
+
+`AddFlowOutputs` required authorization on both the flow and the deterministically named new output;
+`UpdateFlowOutput` required the flow and existing output. Listing is optional if the ARNs are found
+in source/IaC, encoder profiles, process environments, shell history, monitoring exports, DNS,
+application logs, or CloudTrail/SIEM copies. The flow/output and the EC2 receiver, security group,
+instance profile, roles, and policies were deleted. The flow and matching role inventories are
+zero and the instance is terminated.
+
+### MediaLive (`medialive`) — 2026-09-09
+
+A single-pipeline channel ingested a synthetic RTP test pattern and emitted UDP to a disposable
+receiver. A role holding only `DescribeThumbnails` on its exact channel ARN returned a current JPEG;
+an empty role was denied. A different role holding only `UpdateChannel` changed the destination
+while the channel was idle. After restart, the new UDP port received packets from the same channel
+egress IP. Both are High private-live-content paths: one reads a frame and the other redirects the
+continuing feed. Channel IDs, input addresses, and destinations can be recovered without list
+permissions from encoder profiles, source/IaC, environments, shell history, DNS, monitoring, logs,
+and CloudTrail/SIEM copies.
+
+`CreateNodeRegistrationScript` was also tested but is not promoted. The MediaLive action plus the
+documented SSM activation/tag actions still failed until `iam:PassRole` on the cluster instance role
+was granted. At that point the principal can already use `ssm:CreateActivation` directly, so the
+MediaLive operation adds no privilege-escalation primitive. Two unused activations and the test node,
+cluster, network, channel, input, input security group, EC2 receiver, instance profile, roles, and
+policies were deleted; all exact inventories are zero and the instance is terminated.
+
+### MediaPackage VOD (`mediapackage-vod`) — 2026-09-09
+
+A disposable HLS source in S3, source role, packaging group/configuration, and asset tested the
+hypothesis that `DescribeAsset` alone reveals a usable opaque playback URL. The operation did
+return an egress URL, but packaging reached `FAILED` and the URL never served content. No
+capability-URL access was reproduced, so the read remains Medium enumeration rather than a new
+High. Source manifests, application/CDN configuration, browser history, player telemetry,
+source/IaC, deployment output, logs, and CloudTrail/SIEM copies are fallbacks. The failed asset,
+packaging configuration/group, source role/policy, every S3 object, bucket, and local media file
+were deleted; exact inventories are zero.
+
+### MediaPackage v2 (`mediapackagev2`) — 2026-09-09
+
+Two resource-policy mutations were independently validated on one disposable channel and origin
+endpoint. A role holding only `PutOriginEndpointPolicy` on the exact endpoint attached a wildcard
+read policy; the same unsigned egress request changed from forbidden (`403`) to authorized but
+empty (`404`). This is High when an endpoint contains private media because the action alone can
+publish it. A role holding only `PutChannelPolicy` on the exact channel attached a wildcard ingest
+policy constrained to the tester's source IP. Unsigned `PUT` requests from that host to valid HLS
+object paths then returned `200`, proving a High content-injection primitive. The empty role was
+denied both operations.
+
+AWS rejected a globally wildcard ingest policy without an `aws:SourceIp` condition, so this result
+does not imply worldwide anonymous ingest. The synthetic objects also did not produce playable
+output, so only accepted attacker-host ingestion—not end-to-end playback—is claimed. Channel and
+endpoint names are often recoverable without list permissions from player/encoder URLs, DNS,
+source/IaC, environments, deployment output, browser history, monitoring, logs, and CloudTrail/SIEM
+copies. Both policies, the endpoint, channel, group, exact/empty roles, and local media were deleted;
+exact inventories are zero.
+
+### Migration Hub (`mgh`) — 2026-09-09
+
+Botocore calls in `us-east-1` and `us-west-2` returned empty progress-update-stream,
+migration-task, and application-state inventories. The installed AWS CLI no longer exposes the
+legacy `migrationhub` command, so the SDK provides the resilient fallback. API-model review found
+metadata association and state-update operations, but no returned credential, role-passing
+execution, resource-policy, or independent sensitive-content path. Migration task, source, and
+artifact data remain Medium infrastructure enumeration. ADS exports, inventory databases,
+source/IaC, migration-agent logs, local SDK scripts, application catalogs, and CloudTrail/SIEM
+copies are fallbacks. No resource or setting was created or changed.
+
+### Migration Hub Orchestrator (`migrationhub-orchestrator`) — 2026-09-09
+
+`ListWorkflows` and `ListTemplates` both returned an explicit denial because Migration Hub has not
+accepted new customers since 2025-11-07. Workflow/template reads can expose commands, S3 script and
+output locations, and workflow inputs; `StartWorkflow` may execute an existing workflow. This
+account cannot create the disposable workflow needed to isolate those effects, so no execution
+permission is promoted without evidence. Workflow exports, template YAML, S3 scripts/output,
+migration runbooks, ADS inventory, source/IaC, logs, and CloudTrail/SIEM copies are fallbacks. No
+workflow, template, step, role, bucket, or setting was created or changed.
+
+### Migration Hub Strategy Recommendations (`migrationhub-strategy`) — 2026-09-09
+
+Server and application-component inventories were empty in both tested Regions, and there was no
+latest assessment. Assessment, import, report, and configuration shapes were reviewed, including
+source-code locations and Secrets Manager key identifiers, but no credential-return or execution
+primitive exists without an onboarded collector and assessment. These reports remain Medium
+environment metadata. Collector exports, ADS inventory, source/IaC, imported CSV, report S3
+buckets, local reports, agent logs, and CloudTrail/SIEM copies are fallbacks. No resource or
+setting was created or changed.
+
+### Amazon Pinpoint (`mobiletargeting`) — 2026-09-09
+
+`GetApps` was empty. A tagged disposable app could be created, but `UpdateEndpoint` returned the
+new-customer sunset denial, so endpoint PII reads could not be isolated. A synthetic Baidu channel
+was accepted, but `GetBaiduChannel` returned only `HasCredential=true` and no credential value;
+GCM validated and rejected a fake credential as unregistered. Existing-customer endpoint reads may
+still be sensitive, but no untested PII path is promoted. Segment exports, Connect Customer
+Profiles, campaign exports, source/IaC, browser/app caches, logs, and CloudTrail/SIEM copies are
+fallbacks. Every disposable app was deleted and the inventory is zero.
+
+### Amazon Monitron (`monitron`) — 2026-09-09
+
+Current AWS CLI and Botocore expose no Monitron client, and AWS has not accepted new customers
+since 2024-10-31. This account cannot create the project/sensor fixture required to isolate
+industrial telemetry reads or project mutations. Existing-customer fallbacks include mobile-app
+exports, local sensor/gateway caches, equipment maintenance systems, IoT/industrial historians,
+browser history, application logs, and CloudTrail/SIEM copies. No resource or setting was created.
+
+### Multi-party approval (`mpa`) — 2026-09-09
+
+Approval-team inventory was empty. Complete API-model review covered teams, identity sources,
+policies, sessions, deletion windows, updates, and cancellation. The API has no direct
+approve/respond operation; team updates themselves create a pending approval workflow instead of
+silently bypassing the quorum. Session and team reads remain Medium because they can reveal
+requester, approver, protected-resource, action, comment, and policy metadata. Identity Center
+exports, protected-service logs, tickets, source/IaC, notifications, browser history, and
+CloudTrail/SIEM copies are fallbacks. No resource or setting was created or changed.
+
+### AWS User Notifications (`notifications`) — 2026-09-09
+
+Two reads were independently isolated against existing AWS-managed Health events. A role holding
+only `ListManagedNotificationEvents` on `Resource: "*"` returned account-specific event ARNs,
+related account IDs, sources, and headlines. A different role holding only
+`GetManagedNotificationEvent` on one exact event ARN returned structured full content containing
+message components, text parts, and a source-event detail URL. An empty role was denied both.
+
+These are High account-operational-data disclosures: observed categories included billing/account
+state, certificate and domain state, resource lifecycle notices, and experiment events. Exact text
+was deliberately excluded from stored evidence. `Get` is resource-scoped; identifiers may come
+from `List` or permissionless browser history, notification email/chat/tickets, local application
+logs, and exported SIEM records. The events pre-existed and were not modified. All one-action and
+empty roles/policies were deleted; their inventory is zero.
+
+### AWS User Notifications Contacts (`notifications-contacts`) — 2026-09-09
+
+Email-contact inventory was empty. Read operations return the address, status, and tags but not the
+activation code; creation sends that code out of band and activation requires it. Creating a
+contact also does not associate it with a notification configuration. Routing events to an
+attacker therefore additionally requires mailbox control and `notifications:AssociateChannel` on
+a target configuration, a chain not claimed without a controlled mailbox fixture. Notification
+email, mail-server logs, ticket/chat exports, browser history, source/IaC, and CloudTrail/SIEM
+copies are fallbacks. No contact, activation, association, role, or policy was created or changed.
+
+### Amazon Nova Act (`nova-act`) — 2026-09-09
+
+A disposable workflow definition and two runs exercised the current preview model alias.
+`CreateAct` reached `PENDING_CLIENT_ACTION`: the service proposes tool interactions, while the
+client must execute tools and submit results to `InvokeActStep`. It did not run the declared local
+echo tool and exposes no service role, AWS credential, or autonomous AWS action path. Prompt/task,
+tool schema, run metadata, and optional S3 export/log locations remain Medium workflow data. Local
+SDK state, browser traces, CloudWatch logs, S3 exports, source/IaC, application logs, and
+CloudTrail/SIEM copies are fallbacks. Both runs and definitions were deleted; inventory is zero.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

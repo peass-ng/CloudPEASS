@@ -107,6 +107,15 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "ivs:UpdateChannel",
     "lakeformation:PutDataLakeSettings",
     "m2:GetSignedBluinsightsUrl",
+    "mediaconnect:AddFlowOutputs",
+    "mediaconnect:DescribeFlowSourceThumbnail",
+    "mediaconnect:UpdateFlowOutput",
+    "medialive:DescribeThumbnails",
+    "medialive:UpdateChannel",
+    "mediapackagev2:PutChannelPolicy",
+    "mediapackagev2:PutOriginEndpointPolicy",
+    "notifications:GetManagedNotificationEvent",
+    "notifications:ListManagedNotificationEvents",
     "iotwireless:GetWirelessDevice",
     "iotsitewise:BatchGetAssetPropertyAggregates",
     "iotsitewise:BatchGetAssetPropertyValue",
@@ -1521,3 +1530,72 @@ def test_live_validated_managed_blockchain_reads_stay_medium():
     ):
         assert (action,) not in high
         assert classify_permission("aws", action, unknown_default="medium") == "medium"
+
+
+def test_live_validated_mediaconnect_content_access():
+    actions = (
+        "mediaconnect:AddFlowOutputs",
+        "mediaconnect:DescribeFlowSourceThumbnail",
+        "mediaconnect:UpdateFlowOutput",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert tested_risk_documentation[action] == (
+            "aws-services/aws-mediaconnect-enum.md"
+        )
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-mediaconnect-enum.md"
+        )
+
+
+def test_live_validated_medialive_content_access():
+    actions = (
+        "medialive:DescribeThumbnails",
+        "medialive:UpdateChannel",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert tested_risk_documentation[action] == (
+            "aws-services/aws-medialive-enum.md"
+        )
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-medialive-enum.md"
+        )
+
+
+def test_live_validated_mediapackage_v2_policy_attacks():
+    actions = (
+        "mediapackagev2:PutChannelPolicy",
+        "mediapackagev2:PutOriginEndpointPolicy",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert tested_risk_documentation[action] == (
+            "aws-services/aws-mediapackage-v2-enum.md"
+        )
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-mediapackage-v2-enum.md"
+        )
+
+
+def test_live_validated_user_notifications_health_event_disclosure():
+    actions = (
+        "notifications:GetManagedNotificationEvent",
+        "notifications:ListManagedNotificationEvents",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert tested_risk_documentation[action] == (
+            "aws-services/aws-user-notifications-enum.md"
+        )
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-user-notifications-enum.md"
+        )
