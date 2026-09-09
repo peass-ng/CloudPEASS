@@ -141,6 +141,12 @@ medium_override_exact:
   # existing canary execution role.
   - synthetics:StartCanaryDryRun
   - synthetics:UpdateCanary
+  # UpdateExperimentTemplate retained the existing experiment role without a
+  # caller iam:PassRole check, but the tested escalation also required
+  # StartExperiment and a pre-authorized FIS-to-SSM role chain. Start alone
+  # can only execute the template already stored. The pair is Critical.
+  - fis:UpdateExperimentTemplate
+  - fis:StartExperiment
 
 ## =====================
 ## HIGH RULES

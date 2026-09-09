@@ -1319,3 +1319,20 @@ def test_live_validated_s3_vectors_plaintext_disclosure_paths():
         assert live_validated_disclosure_documentation[action] == (
             "aws-services/aws-bedrock-enum.md"
         )
+
+
+def test_live_validated_fis_template_role_reuse_requires_update_and_start():
+    combination = (
+        "fis:UpdateExperimentTemplate",
+        "fis:StartExperiment",
+    )
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    assert combination in critical
+    for action in combination:
+        assert (action,) not in critical
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "medium"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-privilege-escalation/aws-fis-privesc/README.md"
+        )

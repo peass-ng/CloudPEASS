@@ -1831,6 +1831,60 @@ network reachability to the endpoint, and useful permissions on the user's confi
 server/user, SSH-key records, bucket/object, three roles and inline policies, local keys, harness,
 lock, and bytecode were deleted. Exact post-cleanup checks returned zero for every fixture resource.
 
+### Billing, retired, and externally provisioned service batch — 2026-09-09
+
+The re:Invent billing prefix exposes only permission-only `info` and `approve` operations. There is
+no public CLI/SDK client and the account has no pass-purchase request; manufacturing one or calling
+`approve` would alter a real commercial billing decision. FinOps Agent likewise has no public
+client or enumerable tenant. One-time-login, approval, document/artifact, connection, integration,
+and automation operations remain concrete candidates, but need a real enabled agent space and
+protected content. Both rows are blocked and no commercial or external workflow was touched.
+
+CloudWatch Evidently's endpoints no longer resolve after the service retirement, including in four
+formerly supported Regions. Its historic feature/launch mutation APIs only affected applications
+that separately trusted Evidently decisions; they did not return an AWS identity. The row is
+`no_new_positive` and no retained project was created.
+
+Elastic VMware Service has no environment in the lab. A valid fixture requires exactly four
+supported bare-metal hosts, ten non-overlapping VLANs and real single-use Broadcom VCF/vSAN
+licenses covering at least 256 cores and 110 TiB. Existing-environment reads may expose license
+keys, topology, hostnames, managed-secret ARNs, or depot URLs, while connector/entitlement changes
+could affect access, but none can be promoted without that costly licensed target.
+
+FinSpace legacy and kdb inventories are empty in all five account-accessible Regions. The sole
+`finspace-api` action is particularly interesting: `GetProgrammaticAccessCredentials` models an
+access-key ID, secret key, and session token. Its actual identity and data scope cannot be inferred
+without a legacy environment. Creating the prerequisite provisions persistent paid users or kdb
+infrastructure shortly before the announced 2026-10-07 service retirement, so both FinSpace rows
+remain blocked and no credential claim is added.
+
+### AWS Fault Injection Service (`fis`) — 2026-09-09
+
+Live validation confirmed a template-role reuse escalation. A benign FIS template initially held
+only `aws:fis:wait`. A restricted role with exactly `fis:UpdateExperimentTemplate` and
+`fis:StartExperiment` replaced that action with `aws:ssm:start-automation-execution`, supplied
+parameters for an existing Automation document, and deliberately omitted `roleArn`. FIS retained
+the template's existing role without checking caller `iam:PassRole`.
+
+The stored FIS role was preauthorized to start that exact document and pass its Automation role.
+The document attached one exact proof policy to the restricted caller. Before the experiment, the
+same STS session was denied `organizations:DescribeOrganization`; after it ran, the call returned
+the protected organization ID and management account. The caller was still denied direct
+`iam:AttachRolePolicy`. Empty-role, start-only, and update-only controls independently failed.
+
+The tested combination is conditional Critical. It requires a known template, a useful action or
+document reachable by the stored FIS role, and `StartExperiment`; neither FIS permission is an
+unconditional escalation alone. Live IAM evaluation also exposed two important scope details:
+updating required authorization on both the template and referenced FIS action ARN, while starting
+required the template plus the prospective `experiment/*` ARN. First use additionally needs the
+account's FIS service-linked role, but the restricted actor did not need permission to create it
+once the controller provisioned it.
+
+The experiment was stopped and the template, Automation document, attached proof policy, managed
+policy, six IAM roles and inline policies, and first-use FIS service-linked role were deleted.
+Exact active-resource inventories are empty. FIS exposes no `DeleteExperiment` API, so the terminal
+experiment record remains as immutable service audit history rather than active infrastructure.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

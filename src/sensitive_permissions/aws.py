@@ -77,6 +77,8 @@ very_sensitive_combinations = [
 
     ["events:PutTargets", "events:PutEvents"],
 
+    ["fis:UpdateExperimentTemplate", "fis:StartExperiment"],
+
     ["elasticfilesystem:DeleteFileSystemPolicy"],
     ["elasticfilesystem:PutFileSystemPolicy"],
 
@@ -667,6 +669,8 @@ live_validated_disclosure_documentation = {
     "ecs:DescribeTasks": "aws-services/aws-ecs-enum.md",
     "events:PutEvents": "aws-privilege-escalation/aws-eventbridge-privesc/README.md",
     "events:PutTargets": "aws-privilege-escalation/aws-eventbridge-privesc/README.md",
+    "fis:UpdateExperimentTemplate": "aws-privilege-escalation/aws-fis-privesc/README.md",
+    "fis:StartExperiment": "aws-privilege-escalation/aws-fis-privesc/README.md",
     "firehose:UpdateDestination": "aws-services/aws-kinesis-data-firehose-enum.md",
     "emr-serverless:GetApplication": "aws-services/aws-emr-enum.md",
     "emr-serverless:GetJobRun": "aws-services/aws-emr-enum.md",
