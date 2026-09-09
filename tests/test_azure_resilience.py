@@ -384,6 +384,25 @@ def test_search_skillset_write_is_a_validated_high_singleton():
     assert not categories["critical"]
 
 
+def test_synapse_admin_writes_are_validated_critical_singletons():
+    permissions = {
+        "Microsoft.Synapse/workspaces/administrators/write",
+        "Microsoft.Synapse/workspaces/sqlAdministrators/write",
+    }
+    for permission in permissions:
+        assert [permission] in very_sensitive_combinations
+
+        peas = CloudPEASS(
+            very_sensitive_combinations,
+            sensitive_combinations,
+            "Azure",
+            1,
+        )
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert categories["critical"] == [permission]
+        assert not categories["high"]
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",

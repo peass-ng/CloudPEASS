@@ -52,6 +52,12 @@ very_sensitive_combinations = [
     # send its managed-identity bearer token to an attacker-controlled WebActivity.
     ["Microsoft.DataFactory/factories/pipelines/write", "Microsoft.DataFactory/factories/pipelines/createRun/action"],
 
+    # Either exact singleton can replace the Synapse workspace Entra admin.
+    # Live validation then authenticated to the dedicated SQL endpoint as
+    # sysadmin and created a persistent SQL login that survived admin removal.
+    ["Microsoft.Synapse/workspaces/administrators/write"],
+    ["Microsoft.Synapse/workspaces/sqlAdministrators/write"],
+
     ["Microsoft.ContainerRegistry/registries/listCredentials/action"],
     ["Microsoft.ContainerRegistry/registries/regenerateCredential/action"],
     ["Microsoft.ContainerRegistry/registries/generateCredentials/action"],

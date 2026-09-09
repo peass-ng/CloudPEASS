@@ -246,6 +246,14 @@ _AZURE_CRITICAL_EXACT = frozenset(
         "microsoft.authorization/roleassignmentschedules/write",
         "microsoft.authorization/roleassignmentschedulerequests/write",
         "microsoft.authorization/roleeligibilityschedulerequests/write",
+        # Live exact-role validation showed that either Synapse administrator
+        # alias can replace the workspace Entra administrator. The selected
+        # principal authenticated to the dedicated SQL control endpoint as
+        # sysadmin and created a SQL login that survived removal of the Entra
+        # administrator. Neither alias granted Synapse RBAC administration or
+        # serverless SQL access in the tested zero-pool workspace.
+        "microsoft.synapse/workspaces/administrators/write",
+        "microsoft.synapse/workspaces/sqladministrators/write",
         "microsoft.keyvault/vaults/accesspolicies/write",
         "microsoft.keyvault/vaults/secrets/getsecret/action",
         "microsoft.keyvault/vaults/keys/decrypt/action",
