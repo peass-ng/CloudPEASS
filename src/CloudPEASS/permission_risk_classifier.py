@@ -450,6 +450,11 @@ _AZURE_HIGH_EXACT = frozenset(
         # Admin service-account token.  The token retained workspace-admin
         # access after the issuer's Azure role assignment was removed.
         "microsoft.dashboard/grafana/actasgrafanaadmin/action",
+        # Exact-role live validation minted account-scoped Video Indexer
+        # tokens. The ordinary token listed/downloaded/deleted private media;
+        # the restricted-viewer token listed it and returned its insights.
+        "microsoft.videoindexer/accounts/generateaccesstoken/action",
+        "microsoft.videoindexer/accounts/generaterestrictedvieweraccesstoken/action",
         # Exact-role cross-principal tests recovered stored OpenAI/Foundry
         # response bodies. The Foundry route is currently authorized by
         # agents/read rather than its advertised responses/read action.
@@ -686,6 +691,12 @@ _AZURE_MEDIUM_EXACT = frozenset(
         # returned AccessTokenBasedAuthNotSupported, and the minted token did
         # not establish standalone test-result access or privilege escalation.
         "microsoft.loadtestservice/playwrightworkspaces/accesstokens/write",
+        # Both exact extension-token actions passed ARM RBAC but returned a
+        # service-level 400 for nonexistent and disconnected Arc extension
+        # resources. A working approved GPU-backed extension is required, so
+        # keep them visible without inferring the cloud-account token impact.
+        "microsoft.videoindexer/accounts/generateextensionaccesstoken/action",
+        "microsoft.videoindexer/accounts/generateextensionrestrictedvieweraccesstoken/action",
     }
 )
 

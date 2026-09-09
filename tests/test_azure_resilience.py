@@ -437,6 +437,25 @@ def test_live_validated_grafana_admin_token_minting_is_high():
     assert permission not in categories["critical"]
 
 
+def test_live_validated_video_indexer_tokens_are_high_not_critical():
+    permissions = (
+        "Microsoft.VideoIndexer/accounts/generateAccessToken/action",
+        "Microsoft.VideoIndexer/accounts/generateRestrictedViewerAccessToken/action",
+    )
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+
+    for permission in permissions:
+        assert [permission] in sensitive_combinations
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert permission in categories["high"]
+        assert permission not in categories["critical"]
+
+
 def test_speech_job_read_only_becomes_high_with_file_read():
     job_read = (
         "Microsoft.CognitiveServices/accounts/SpeechServices/"

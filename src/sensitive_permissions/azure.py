@@ -226,6 +226,12 @@ sensitive_combinations = [
     # caller minted a Grafana Admin token.  The token remained usable after
     # the issuer's Azure role assignment and application were removed.
     ["Microsoft.Dashboard/grafana/ActAsGrafanaAdmin/action"],
+    # Live validated with separate exact roles. The ordinary action minted an
+    # account Contributor token that listed, downloaded, and deleted private
+    # media. The restricted-viewer action exposed the private media list and
+    # processed insights while correctly denying the original source file.
+    ["Microsoft.VideoIndexer/accounts/generateAccessToken/action"],
+    ["Microsoft.VideoIndexer/accounts/generateRestrictedViewerAccessToken/action"],
     # Live validated on a compute instance explicitly assigned to the caller:
     # workspace read plus application access opened a Jupyter terminal and
     # executed a canary while computes/read remained denied. The action alone

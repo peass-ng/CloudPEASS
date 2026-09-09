@@ -221,6 +221,8 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.MachineLearningServices/workspaces/serverlessEndpoints/listKeys/action": "high",
             "Microsoft.InferenceService/inferenceAccounts/listKeys/action": "high",
             "Microsoft.Dashboard/grafana/ActAsGrafanaAdmin/action": "high",
+            "Microsoft.VideoIndexer/accounts/generateAccessToken/action": "high",
+            "Microsoft.VideoIndexer/accounts/generateRestrictedViewerAccessToken/action": "high",
             "Microsoft.CognitiveServices/accounts/OpenAI/responses/read": "high",
             "Microsoft.CognitiveServices/accounts/AIServices/agents/read": "high",
             "Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/files/read": "high",
@@ -552,6 +554,16 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             ),
             "medium",
         )
+
+    def test_video_indexer_extension_tokens_stay_medium_without_a_working_extension(
+        self,
+    ) -> None:
+        for permission in (
+            "Microsoft.VideoIndexer/accounts/generateExtensionAccessToken/action",
+            "Microsoft.VideoIndexer/accounts/generateExtensionRestrictedViewerAccessToken/action",
+        ):
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), "medium")
 
     def test_unusable_azure_ml_notebook_credentials_stay_medium(self) -> None:
         for permission in (
