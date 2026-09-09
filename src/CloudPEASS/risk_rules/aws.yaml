@@ -38,6 +38,7 @@ critical_exact:
   - eks-auth:AssumeRoleForPodIdentity
   - es:UpdateDomainConfig
   - events:RetrieveConnectionCredentials
+  - gamelift:GetComputeAccess
   - grafana:CreateWorkspaceApiKey
   - grafana:CreateWorkspaceServiceAccountToken
   - iam:CreateAccessKey
@@ -147,6 +148,10 @@ medium_override_exact:
   # can only execute the template already stored. The pair is Critical.
   - fis:UpdateExperimentTemplate
   - fis:StartExperiment
+  # Upload credentials are issued only while a known build is INITIALIZED.
+  # A live READY-build request was rejected, so this cannot replace an
+  # immutable build or execute code without a later fleet/deployment action.
+  - gamelift:RequestUploadCredentials
 
 ## =====================
 ## HIGH RULES

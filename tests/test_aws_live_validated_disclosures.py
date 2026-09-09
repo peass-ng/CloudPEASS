@@ -1349,3 +1349,21 @@ def test_live_validated_fraud_detector_event_disclosure():
     assert live_validated_disclosure_documentation[action] == (
         "aws-services/aws-fraud-detector-enum.md"
     )
+
+
+def test_live_validated_gamelift_compute_host_access_and_upload_boundary():
+    action = "gamelift:GetComputeAccess"
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    assert (action,) in critical
+    assert classify_permission(
+        "aws", action, unknown_default="medium"
+    ) == "critical"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-gamelift-enum.md"
+    )
+
+    upload_action = "gamelift:RequestUploadCredentials"
+    assert (upload_action,) not in critical
+    assert classify_permission(
+        "aws", upload_action, unknown_default="medium"
+    ) == "medium"

@@ -1921,6 +1921,30 @@ The event was deleted with its audit history, followed by the event type, variab
 two IAM roles/policies, and local test harness. A final `GetEvent` returned `Event not found` and
 exact prefixed inventories were empty.
 
+### Amazon GameLift Servers (`gamelift`) — 2026-09-09
+
+A disposable Amazon Linux 2023 managed EC2 fleet installed a private file on one c5.large compute.
+A role with only `gamelift:GetComputeAccess` on `Resource: *` received temporary credentials issued
+from a GameLift service account plus the exact SSM target. Those credentials opened the default
+encrypted Session Manager shell and read `BENIGN-GAMELIFT-CANARY-20260909` from the host. The role
+was denied `DescribeInstances`, and an empty role was denied the known-ID getter.
+
+The returned session policy correctly rejected a broader `AWS-StartNonInteractiveCommand`
+document. The finding is therefore constrained host access, not unrestricted credentials in the
+customer account. It is still Critical: a shell can reach deployed build/configuration, live game
+data, application secrets, and any configured fleet-instance-role credentials.
+
+The same build tested `gamelift:RequestUploadCredentials`. A request against the controller's build
+after it reached `READY` returned `InvalidRequestException`, matching the immutability guarantee.
+The action can take over a known `INITIALIZED` upload, but needs a later fleet/deployment action
+before code executes. Its former standalone Critical entry was removed and it is explicitly Medium.
+
+`GetInstanceAccess` rejected this Server SDK 5 fleet and directed the caller to
+`GetComputeAccess`; no SSH-key claim is added without a separate SDK 4 fixture. The desired fleet
+capacity was set to zero, and the managed fleet/build, service-owned upload, four roles/policies,
+and local credential material were removed. No new service role remained, and exact active
+inventories were empty after GameLift's activation/deletion state machine completed.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

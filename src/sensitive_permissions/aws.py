@@ -82,7 +82,7 @@ very_sensitive_combinations = [
     ["elasticfilesystem:DeleteFileSystemPolicy"],
     ["elasticfilesystem:PutFileSystemPolicy"],
 
-    ["gamelift:RequestUploadCredentials"],
+    ["gamelift:GetComputeAccess"],
 
     ["grafana:CreateWorkspaceApiKey"],
     ["grafana:CreateWorkspaceServiceAccountToken"],
@@ -674,6 +674,7 @@ live_validated_disclosure_documentation = {
     "fis:StartExperiment": "aws-privilege-escalation/aws-fis-privesc/README.md",
     "firehose:UpdateDestination": "aws-services/aws-kinesis-data-firehose-enum.md",
     "frauddetector:GetEvent": "aws-services/aws-fraud-detector-enum.md",
+    "gamelift:GetComputeAccess": "aws-services/aws-gamelift-enum.md",
     "emr-serverless:GetApplication": "aws-services/aws-emr-enum.md",
     "emr-serverless:GetJobRun": "aws-services/aws-emr-enum.md",
     "events:ListTargetsByRule": "aws-services/eventbridgescheduler-enum.md",
