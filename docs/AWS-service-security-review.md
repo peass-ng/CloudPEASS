@@ -2051,6 +2051,59 @@ The accelerator, listener, endpoint group, two Elastic IPs, security group, both
 backends, two roles/policies, and local harness were removed. Exact accelerator/EIP/security-group
 and role inventories are empty; both test instances are in `terminated` state.
 
+### Ground Station and console-only GroundTruth (`groundstation`, `groundtruthlabeling`) — 2026-09-09
+
+Ground Station config, dataflow-endpoint-group, mission-profile, satellite, and ground-station
+inventories were empty in all ten enabled service Regions. Changing a victim mission profile or
+dataflow route could redirect satellite data, and reserving or cancelling a contact could affect
+operations, but those hypotheses require a satellite already onboarded by AWS and working contact
+infrastructure. None can be created as an isolated disposable fixture, so no severity is inferred
+from action names and no Ground Station resource was changed.
+
+AWS's current authorization reference describes all 16 `groundtruthlabeling` actions as
+permission-only and explicitly lists no callable API operation. Current CLI and Botocore releases
+also expose no client. Console-mediated batch/dataset reads and manifest processing therefore need
+an authorized GT+ tenant and captured console request/response before their content and downstream
+S3 checks can be tested. No GroundTruth project, batch, dataset, job, bucket, or role was created.
+
+Permissionless fallback discovery for both surfaces includes CloudTrail/SIEM copies, IaC and
+deployment state, application configuration, S3 manifests/output, logs, support/onboarding records,
+and locally cached exports. These may reveal resource IDs or data without either service's list
+permissions, but do not bypass the service authorization boundary.
+
+### Amazon Connect Health (`health-agent`) — 2026-09-09
+
+The newly published Amazon Connect Health client was absent from the installed CLI, so inventory
+used disposable Botocore 1.43.90. `ListDomains` returned no domains in either supported Region,
+`us-east-1` or `us-west-2`. The authorization surface contains unusually sensitive candidates:
+patient-insights and medical-scribe getters, permission-only patient/session/EHR getters, password
+reset, and agent/integration mutation. A meaningful test needs an existing configured domain,
+subscription, EHR integration, and protected patient/session/job. Creating the domain also creates
+application/Identity Center setup state and would merely manufacture synthetic health data, so it
+was not used to overstate any permission as High or Critical. No domain, subscription, integration,
+job, session, identity assignment, role, or account setting was changed.
+
+When Connect Health enumeration is denied, useful non-IAM sources are Connect flows and instance
+configuration, IAM Identity Center application assignments, CloudTrail/SIEM copies, application
+URLs, EHR integration configuration, S3 input/output references, client telemetry, and IaC. These
+are discovery fallbacks, not authorization bypasses.
+
+### Retired and unreachable data-transfer surfaces (`honeycode`, `importexport`) — 2026-09-09
+
+AWS CLI 2.32.21 and Botocore 1.43.90 no longer expose Honeycode, and current AWS documentation
+records removal of Honeycode integration material following service discontinuation. Historical
+row/screen reads and automation invocation require known workbook resources in an existing retired
+tenant; there is no current workbook-discovery API or authorized target. No Honeycode state was
+created or changed.
+
+The legacy AWS Import/Export Disk SDK model remains, but its sole global endpoint timed out with
+explicit short connection/read timeouts. Historical status/shipping-label reads and manifest
+updates require a physical-disk job, and ordering a physical shipment is not a disposable security
+test. Snowball uses a separate active API and IAM prefix. No job, manifest, address, label, bucket,
+role, or device order was created. For both legacy surfaces, permissionless fallbacks are old local
+exports, source-control/IaC, CloudTrail/SIEM history, emails and shipping records, S3 source/output
+objects already accessible to the caller, and application caches.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The
