@@ -83,6 +83,7 @@ very_sensitive_combinations = [
     ["elasticfilesystem:PutFileSystemPolicy"],
 
     ["gamelift:GetComputeAccess"],
+    ["gameliftstreams:CreateStreamSessionAdminShell"],
 
     ["grafana:CreateWorkspaceApiKey"],
     ["grafana:CreateWorkspaceServiceAccountToken"],
@@ -284,6 +285,9 @@ sensitive_combinations = [
     ["execute-api:Invoke"],
     ["firehose:UpdateDestination"],
     ["frauddetector:GetEvent"],
+    ["gameliftstreams:GetStreamSession"],
+    ["gameliftstreams:GetStreamUrl"],
+    ["gameliftstreams:ListStreamUrls"],
     ["glue:GetConnection"],
     ["glue:GetJob"],
     ["glue:GetWorkflowRunProperties"],
@@ -675,6 +679,10 @@ live_validated_disclosure_documentation = {
     "firehose:UpdateDestination": "aws-services/aws-kinesis-data-firehose-enum.md",
     "frauddetector:GetEvent": "aws-services/aws-fraud-detector-enum.md",
     "gamelift:GetComputeAccess": "aws-services/aws-gamelift-enum.md",
+    "gameliftstreams:CreateStreamSessionAdminShell": "aws-services/aws-gamelift-streams-enum.md",
+    "gameliftstreams:GetStreamSession": "aws-services/aws-gamelift-streams-enum.md",
+    "gameliftstreams:GetStreamUrl": "aws-services/aws-gamelift-streams-enum.md",
+    "gameliftstreams:ListStreamUrls": "aws-services/aws-gamelift-streams-enum.md",
     "emr-serverless:GetApplication": "aws-services/aws-emr-enum.md",
     "emr-serverless:GetJobRun": "aws-services/aws-emr-enum.md",
     "events:ListTargetsByRule": "aws-services/eventbridgescheduler-enum.md",

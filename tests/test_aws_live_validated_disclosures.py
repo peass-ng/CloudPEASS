@@ -1367,3 +1367,38 @@ def test_live_validated_gamelift_compute_host_access_and_upload_boundary():
     assert classify_permission(
         "aws", upload_action, unknown_default="medium"
     ) == "medium"
+
+
+def test_live_validated_gamelift_streams_shell_and_secret_disclosures():
+    critical_action = "gameliftstreams:CreateStreamSessionAdminShell"
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    assert (critical_action,) in critical
+    assert classify_permission(
+        "aws", critical_action, unknown_default="medium"
+    ) == "critical"
+
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in (
+        "gameliftstreams:GetStreamSession",
+        "gameliftstreams:GetStreamUrl",
+        "gameliftstreams:ListStreamUrls",
+    ):
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-gamelift-streams-enum.md"
+        )
+
+    assert live_validated_disclosure_documentation[critical_action] == (
+        "aws-services/aws-gamelift-streams-enum.md"
+    )
+
+    # The role-bearing entry points correctly enforce iam:PassRole, while the
+    # file export also needs its documented downstream S3 permission.
+    for action in (
+        "gameliftstreams:CreateStreamUrl",
+        "gameliftstreams:StartStreamSession",
+        "gameliftstreams:ExportStreamSessionFiles",
+        "gameliftstreams:UpdateApplication",
+    ):
+        assert classify_permission("aws", action, unknown_default="medium") == "medium"

@@ -39,6 +39,7 @@ critical_exact:
   - es:UpdateDomainConfig
   - events:RetrieveConnectionCredentials
   - gamelift:GetComputeAccess
+  - gameliftstreams:CreateStreamSessionAdminShell
   - grafana:CreateWorkspaceApiKey
   - grafana:CreateWorkspaceServiceAccountToken
   - iam:CreateAccessKey
@@ -251,6 +252,9 @@ high_exact:
   - events:ListTargetsByRule
   - firehose:UpdateDestination
   - frauddetector:GetEvent
+  - gameliftstreams:GetStreamSession
+  - gameliftstreams:GetStreamUrl
+  - gameliftstreams:ListStreamUrls
   - execute-api:Invoke
   - glue:GetConnection
   - glue:GetJob

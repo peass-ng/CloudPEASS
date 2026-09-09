@@ -1945,6 +1945,45 @@ capacity was set to zero, and the managed fleet/build, service-owned upload, fou
 and local credential material were removed. No new service role remained, and exact active
 inventories were empty after GameLift's activation/deletion state machine completed.
 
+### Amazon GameLift Streams (`gameliftstreams`) — 2026-09-09
+
+A disposable Ubuntu application wrote a private canary under its user profile, and a zero-idle
+`gen6n_small` stream group ran one short on-demand session. A role with only
+`gameliftstreams:CreateStreamSessionAdminShell` received the service's SSM connection material and
+opened a real terminal. The terminal read the profile canary and successfully exercised the IAM
+role passed to that stream session. An empty role was denied the same known-ID request. This action
+is Critical because it grants application-equivalent access to the live runtime, including data,
+user/session state, and any IAM role made available to the application.
+
+Three newly published read operations also produced independently tested sensitive disclosures:
+
+- `gameliftstreams:GetStreamSession` alone returned a private environment value, user ID, and the
+  passed role ARN; its empty-role control was denied.
+- `gameliftstreams:GetStreamUrl` alone returned an existing full accountless stream URL, its passed
+  role ARN, and its private environment value; its empty-role control was denied.
+- `gameliftstreams:ListStreamUrls` alone required no prior URL identifier and returned that full
+  bearer-style URL. Both URL reads are High because AWS explicitly treats the URL as a secret and
+  anyone holding it can start the private application until its expiry/use limit.
+
+The role-bearing entry points were tested as boundaries rather than assumed escalation paths.
+`StartStreamSession` without `iam:PassRole` was denied, while the exact service action plus a scoped
+pass-role grant started the session and exposed the role to the application. `CreateStreamUrl`
+likewise enforced `iam:PassRole`, and also enforced the newly observed dependent
+`gameliftstreams:StartStreamSession` permission on the application.
+
+`ExportStreamSessionFiles` alone was denied specifically on missing `s3:PutObject`; after adding
+only that documented dependency, it exported an archive containing the private profile canary.
+Separately, `UpdateApplication` alone changed the supported log path to the private profile file and
+the log destination to a same-account service-write bucket; the next controller-started session
+exported that canary automatically. Both actions remain Medium in isolation because retrieving the
+result needs suitable bucket access, and the update path additionally relies on a subsequent
+session.
+
+The test session was terminated, capacity was returned to zero, every stream URL was revoked, and
+the stream group, application, S3 bucket/objects/policy, twelve IAM roles/policies, temporary SDK,
+and local harness were removed. Exact prefixed inventories were empty after the asynchronous
+GameLift Streams deletion completed.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The
