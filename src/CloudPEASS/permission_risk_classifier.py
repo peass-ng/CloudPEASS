@@ -543,6 +543,11 @@ _AZURE_HIGH_EXACT = frozenset(
         # secrets. A JWT signed with the recovered API secret authenticated to
         # the target bot's scenario-management endpoint.
         "microsoft.healthbot/healthbots/listsecrets/action",
+        # Exact-role live validation with no ARM read regenerated the bot's
+        # 64-character API_JWT_SECRET. The returned value exactly matched the
+        # active ARM secret and signed a management JWT that changed the
+        # scenarios request from 401 (wrong key) to 200.
+        "microsoft.healthbot/healthbots/admin/secrets/generateapikey/action",
         "microsoft.notificationhubs/namespaces/notificationhubs/pnscredentials/action",
         "microsoft.apimanagement/service/policies/read",
         "microsoft.apimanagement/service/apis/policies/read",

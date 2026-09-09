@@ -223,6 +223,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Dashboard/grafana/ActAsGrafanaAdmin/action": "high",
             "Microsoft.VideoIndexer/accounts/generateAccessToken/action": "high",
             "Microsoft.VideoIndexer/accounts/generateRestrictedViewerAccessToken/action": "high",
+            "Microsoft.HealthBot/healthBots/Admin/Secrets/GenerateApiKey/Action": "high",
             "Microsoft.CognitiveServices/accounts/OpenAI/responses/read": "high",
             "Microsoft.CognitiveServices/accounts/AIServices/agents/read": "high",
             "Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/files/read": "high",
@@ -564,6 +565,16 @@ class AzureWildcardClassificationTest(unittest.TestCase):
         ):
             with self.subTest(permission=permission):
                 self.assertEqual(self.classify(permission), "medium")
+
+    def test_healthbot_pes_key_generation_stays_medium_without_a_pes_fixture(
+        self,
+    ) -> None:
+        self.assertEqual(
+            self.classify(
+                "Microsoft.HealthBot/healthBots/Admin/Secrets/GeneratePESApiKey/Action"
+            ),
+            "medium",
+        )
 
     def test_unusable_azure_ml_notebook_credentials_stay_medium(self) -> None:
         for permission in (

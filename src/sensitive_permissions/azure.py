@@ -232,6 +232,10 @@ sensitive_combinations = [
     # processed insights while correctly denying the original source file.
     ["Microsoft.VideoIndexer/accounts/generateAccessToken/action"],
     ["Microsoft.VideoIndexer/accounts/generateRestrictedViewerAccessToken/action"],
+    # Live validated with the exact singleton DataAction and no ARM read. The
+    # response was the newly active API_JWT_SECRET, and an HS256 JWT signed
+    # with it authenticated to the bot's management-scenarios endpoint.
+    ["Microsoft.HealthBot/healthBots/Admin/Secrets/GenerateApiKey/Action"],
     # Live validated on a compute instance explicitly assigned to the caller:
     # workspace read plus application access opened a Jupyter terminal and
     # executed a canary while computes/read remained denied. The action alone
