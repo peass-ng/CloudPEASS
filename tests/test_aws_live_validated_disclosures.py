@@ -83,6 +83,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "emr-serverless:GetJobRun",
     "events:ListTargetsByRule",
     "firehose:UpdateDestination",
+    "frauddetector:GetEvent",
     "execute-api:Invoke",
     "glue:GetConnection",
     "glue:GetJob",
@@ -1336,3 +1337,15 @@ def test_live_validated_fis_template_role_reuse_requires_update_and_start():
         assert live_validated_disclosure_documentation[action] == (
             "aws-privilege-escalation/aws-fis-privesc/README.md"
         )
+
+
+def test_live_validated_fraud_detector_event_disclosure():
+    action = "frauddetector:GetEvent"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (action,) in high
+    assert classify_permission(
+        "aws", action, unknown_default="medium"
+    ) == "high"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-fraud-detector-enum.md"
+    )

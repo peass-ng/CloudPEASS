@@ -245,6 +245,7 @@ high_exact:
   - emr-serverless:GetJobRun
   - events:ListTargetsByRule
   - firehose:UpdateDestination
+  - frauddetector:GetEvent
   - execute-api:Invoke
   - glue:GetConnection
   - glue:GetJob

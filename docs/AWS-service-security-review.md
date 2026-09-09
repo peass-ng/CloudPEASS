@@ -1885,6 +1885,42 @@ policy, six IAM roles and inline policies, and first-use FIS service-linked role
 Exact active-resource inventories are empty. FIS exposes no `DeleteExperiment` API, so the terminal
 experiment record remains as immutable service audit history rather than active infrastructure.
 
+### Firewall, forecasting, embedded-software, and free-tier batch — 2026-09-09
+
+Firewall Manager has no default or delegated administrator in the organization. `PutPolicy`,
+administrator, resource-set, and third-party-firewall operations can have organization-wide impact,
+but only after FMS governance and service integrations are configured. Creating that prerequisite
+would change real organization security management, so the row is blocked and nothing was
+associated.
+
+Amazon Forecast has zero datasets, groups, predictors, or forecasts in all ten SDK-supported
+Regions. `QueryForecast` remains a direct business-data candidate and export APIs can expose model
+output through S3, but both require an existing trained forecast with protected values. Running a
+new billable training job would manufacture only synthetic output, not the missing victim boundary,
+so the row is blocked without a data-access claim.
+
+Amazon FreeRTOS has no public SDK client. General software/configuration downloads are not workload
+credentials; EMP patch URLs need a paid Extended Maintenance entitlement that is absent. AWS Free
+Tier reads were reachable, but a role with only `freetier:GetFreeTierUsage` was denied specifically
+on the separate `aws-portal:ViewBilling` check. That billing permission is already independently
+classified and documented as High, so the Free Tier action adds no standalone sensitive-data path.
+No account plan or commercial operation was changed.
+
+### Amazon Fraud Detector (`frauddetector`) — 2026-09-09
+
+A disposable event type stored a private email-like variable and customer entity ID. A role with
+only `frauddetector:GetEvent` on `Resource: *` retrieved both values for the known event type and
+event ID while `GetEventTypes` was denied. An empty role was denied the same known-ID call.
+
+The action is High because production events commonly hold email, IP, phone, billing/shipping,
+payment, fingerprint, order, and authentication fields. Enumeration is not required: identifiers
+can instead come from application code/configuration, logs, traces, tickets, exports, shell history,
+IaC, or CloudTrail already available to the compromised workload.
+
+The event was deleted with its audit history, followed by the event type, variable, entity type,
+two IAM roles/policies, and local test harness. A final `GetEvent` returned `Event not found` and
+exact prefixed inventories were empty.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The
