@@ -51,6 +51,8 @@ very_sensitive_combinations = [
 
     ["docdb-elastic:UpdateCluster"],
 
+    ["dsql:PutClusterPolicy"],
+
     ["dynamodb:PutResourcePolicy"],
 
     ["ec2:ModifyInstanceAttribute"],
@@ -200,6 +202,8 @@ sensitive_combinations = [
     ["dax:Scan"],
     ["devicefarm:GetRemoteAccessSession"],
     ["devicefarm:ListArtifacts"],
+    ["dsql:DbConnect"],
+    ["dsql:DbConnectAdmin"],
     ["athena:GetQueryExecution"],
     ["autoscaling:DescribeLaunchConfigurations"],
     ["backup:DeleteRecoveryPoint"],
@@ -620,6 +624,9 @@ live_validated_disclosure_documentation = {
     "dax:UpdateItem": "aws-services/aws-dynamodb-enum.md",
     "devicefarm:GetRemoteAccessSession": "aws-services/aws-device-farm-enum.md",
     "devicefarm:ListArtifacts": "aws-services/aws-device-farm-enum.md",
+    "dsql:DbConnect": "aws-services/aws-aurora-dsql-enum.md",
+    "dsql:DbConnectAdmin": "aws-services/aws-aurora-dsql-enum.md",
+    "dsql:PutClusterPolicy": "aws-services/aws-aurora-dsql-enum.md",
     "dynamodb:PutResourcePolicy": "aws-privilege-escalation/aws-dynamodb-privesc/README.md",
     "dynamodb:BatchGetItem": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
     "dynamodb:GetItem": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",

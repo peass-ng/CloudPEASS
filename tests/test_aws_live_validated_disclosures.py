@@ -1073,6 +1073,28 @@ def test_live_validated_device_farm_session_and_artifact_disclosures():
         )
 
 
+def test_live_validated_aurora_dsql_database_access_and_policy_escalation():
+    database_actions = ("dsql:DbConnect", "dsql:DbConnectAdmin")
+    policy_action = "dsql:PutClusterPolicy"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+
+    for action in database_actions:
+        assert (action,) in high
+        assert (action,) not in critical
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+    assert (policy_action,) in critical
+    assert classify_permission(
+        "aws", policy_action, unknown_default="medium"
+    ) == "critical"
+    for action in database_actions + (policy_action,):
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-aurora-dsql-enum.md"
+        )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (

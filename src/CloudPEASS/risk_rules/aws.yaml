@@ -21,6 +21,7 @@ critical_exact:
   - codeartifact:GetAuthorizationToken
   - cognito-identity:UpdateIdentityPool
   - docdb-elastic:UpdateCluster
+  - dsql:PutClusterPolicy
   - dynamodb:PutResourcePolicy
   - ec2:AssociateIamInstanceProfile
   - ec2:GetPasswordData
@@ -194,6 +195,8 @@ high_exact:
   - datazone:GetEnvironmentCredentials
   - datasync:StartTaskExecution
   - dms:ModifyEndpoint
+  - dsql:DbConnect
+  - dsql:DbConnectAdmin
   - ec2:DescribeLaunchTemplateVersions
   - ec2:DescribeInstanceAttribute
   - elasticache:ModifyUser
