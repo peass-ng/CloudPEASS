@@ -242,6 +242,22 @@ sensitive_combinations = [
         "Microsoft.CognitiveServices/accounts/AIServices/connections/read",
         "Microsoft.CognitiveServices/accounts/AIServices/connections/listSecrets/action",
     ],
+    # Live validated across separate principals. OpenAI responses/read returned
+    # a stored response created with the account key. On a Foundry project the
+    # advertised AIServices/responses/read action stayed denied, while the
+    # exact agents/read action listed and returned the response, including the
+    # victim prompt metadata and output.
+    ["Microsoft.CognitiveServices/accounts/OpenAI/responses/read"],
+    ["Microsoft.CognitiveServices/accounts/AIServices/agents/read"],
+    # Live validated against a completed Speech batch transcription. files/read
+    # alone returned signed download URLs when the job UUID was known. Pairing
+    # it with transcriptions/read also disclosed the UUID through the job list,
+    # enabling end-to-end transcript discovery and recovery.
+    ["Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/files/read"],
+    [
+        "Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/read",
+        "Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/files/read",
+    ],
     ["Microsoft.ContainerRegistry/registries/tasks/write"],
     ["Microsoft.ContainerRegistry/registries/taskruns/write"],
     ["Microsoft.ContainerRegistry/registries/scheduleRun/action"],

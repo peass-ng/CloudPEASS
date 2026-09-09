@@ -442,6 +442,14 @@ _AZURE_HIGH_EXACT = frozenset(
         # one key authenticated a protected chat-completion request. The
         # endpoint's model and exposed data determine the final impact.
         "microsoft.machinelearningservices/workspaces/serverlessendpoints/listkeys/action",
+        # Exact-role cross-principal tests recovered stored OpenAI/Foundry
+        # response bodies. The Foundry route is currently authorized by
+        # agents/read rather than its advertised responses/read action.
+        "microsoft.cognitiveservices/accounts/openai/responses/read",
+        "microsoft.cognitiveservices/accounts/aiservices/agents/read",
+        # With a known batch-transcription UUID, this exact Speech DataAction
+        # returned a signed URL that downloaded the private transcript.
+        "microsoft.cognitiveservices/accounts/speechservices/speechrest/transcriptions/files/read",
         # These live-tested credentials or signed callbacks reached only the
         # configured API, bot, map service, artifact, or workflow. Their exact
         # downstream impact is configuration-dependent, so keep them High.
@@ -647,6 +655,13 @@ _AZURE_MEDIUM_EXACT = frozenset(
         # This writes a metadata secret object but does not read an existing
         # value or make any workload consume the supplied value by itself.
         "microsoft.machinelearningservices/workspaces/metadata/secrets/write",
+        # These provider operations advertise response/completion access, but
+        # clean exact-role tests did not authorize the current project route or
+        # expose a stored completion on either AIServices- or OpenAI-kind
+        # accounts. Keep them visible without claiming a proven disclosure.
+        "microsoft.cognitiveservices/accounts/aiservices/responses/read",
+        "microsoft.cognitiveservices/accounts/openai/stored-completions/read",
+        "microsoft.cognitiveservices/accounts/openai/stored-completions/action",
     }
 )
 

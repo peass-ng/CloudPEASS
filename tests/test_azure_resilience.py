@@ -387,6 +387,52 @@ def test_foundry_connection_secret_requires_read_and_list_secrets():
     assert set(combination).issubset(complete["high"])
 
 
+def test_live_validated_ai_response_reads_are_high():
+    permissions = (
+        "Microsoft.CognitiveServices/accounts/OpenAI/responses/read",
+        "Microsoft.CognitiveServices/accounts/AIServices/agents/read",
+        "Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/files/read",
+    )
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+
+    for permission in permissions:
+        assert [permission] in sensitive_combinations
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert permission in categories["high"]
+        assert permission not in categories["critical"]
+
+
+def test_speech_job_read_only_becomes_high_with_file_read():
+    job_read = (
+        "Microsoft.CognitiveServices/accounts/SpeechServices/"
+        "speechrest/transcriptions/read"
+    )
+    file_read = (
+        "Microsoft.CognitiveServices/accounts/SpeechServices/"
+        "speechrest/transcriptions/files/read"
+    )
+    combination = [job_read, file_read]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    job_only = peas.analyze_group({job_read}, [])["permissions_cat"]
+    assert job_read not in job_only["high"]
+    assert job_read not in job_only["critical"]
+
+    complete = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(combination).issubset(complete["high"])
+
+
 def test_azure_multi_permission_attacks_are_not_critical_when_incomplete():
     peas = CloudPEASS(
         very_sensitive_combinations,
