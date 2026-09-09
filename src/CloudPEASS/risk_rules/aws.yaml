@@ -255,6 +255,7 @@ high_exact:
   - gameliftstreams:GetStreamSession
   - gameliftstreams:GetStreamUrl
   - gameliftstreams:ListStreamUrls
+  - globalaccelerator:UpdateEndpointGroup
   - execute-api:Invoke
   - glue:GetConnection
   - glue:GetJob

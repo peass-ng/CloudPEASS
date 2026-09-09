@@ -1402,3 +1402,13 @@ def test_live_validated_gamelift_streams_shell_and_secret_disclosures():
         "gameliftstreams:UpdateApplication",
     ):
         assert classify_permission("aws", action, unknown_default="medium") == "medium"
+
+
+def test_live_validated_global_accelerator_endpoint_hijack():
+    action = "globalaccelerator:UpdateEndpointGroup"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (action,) in high
+    assert classify_permission("aws", action, unknown_default="medium") == "high"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-global-accelerator-enum.md"
+    )

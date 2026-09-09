@@ -2008,6 +2008,49 @@ legitimate client is a non-IAM bearer fallback but remains constrained by the ke
 actions, resources, expiry, and referrer rules. All four temporary roles/policies and the local
 harness were removed; the tests created no persistent Location infrastructure.
 
+### Amazon S3 Glacier direct vaults (`glacier`) — 2026-09-09
+
+Every one of the 17 Glacier regions enabled for the account returned an empty direct-vault
+inventory. A controller `CreateVault` request in `us-west-2` was rejected with
+`NoLongerSupportedException`: the legacy direct-vault API is not available to this account, and
+AWS directs new customers to S3 Glacier storage classes.
+
+`SetVaultAccessPolicy` could theoretically overwrite a vault resource policy to grant archive
+retrieval, and `GetJobOutput` returns a completed inventory/archive retrieval. Neither is marked
+as a tested High/Critical technique here because there is no authorized vault/archive/job on which
+to prove the effective access. No resource, role, job, or billing state was created. Fallback
+discovery when direct-vault permissions or eligibility are absent includes already accessible S3
+Glacier-object metadata/content, backup catalogs, application references, CloudTrail/SIEM copies,
+local restore caches, and offline backups.
+
+### AWS Global Accelerator (`globalaccelerator`) — 2026-09-09
+
+An isolated standard TCP accelerator initially routed its unchanged public DNS name and addresses
+to a legitimate caged HTTP canary. A role with only
+`globalaccelerator:UpdateEndpointGroup` on `Resource: *` replaced that endpoint with a second
+attacker-controlled Elastic IP. The same public accelerator endpoint then returned the attacker
+canary after deployment. The role was denied `DescribeEndpointGroup`, had no EC2 permission,
+and received the endpoint-group ARN and attacker allocation ID out of band; an empty role was
+denied the update.
+
+This is High traffic hijack. It can redirect production ingress to an attacker service, expose
+plaintext requests/session material, serve malicious content, or blackhole traffic. The impact is
+conditional enough not to claim unconditional Critical: the replacement must be a valid active
+endpoint in the group's Region (or be authorized through a cross-account attachment), and TLS
+clients still validate the certificate presented by the new backend. The same IAM permission also
+authorizes the newer add/remove-endpoint operations, so defenders must monitor all three API paths.
+
+For enumeration without Global Accelerator list/describe permission, search DNS/CNAME records,
+IaC state, application configuration, CloudTrail/SIEM copies, deployment pipelines, runbooks, and
+monitoring exports for accelerator/listener/endpoint-group ARNs. DNS resolution itself reveals the
+accelerator anycast addresses without AWS permission. If the mutation is denied, an already
+compromised current endpoint, load balancer target, DNS layer, or application deployment path is a
+permissionless alternative traffic position rather than a Global Accelerator policy bypass.
+
+The accelerator, listener, endpoint group, two Elastic IPs, security group, both disposable
+backends, two roles/policies, and local harness were removed. Exact accelerator/EIP/security-group
+and role inventories are empty; both test instances are in `terminated` state.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The
