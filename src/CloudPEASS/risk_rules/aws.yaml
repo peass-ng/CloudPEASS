@@ -212,6 +212,9 @@ high_exact:
   - memorydb:UpdateUser
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
+  - neptune-db:GetStreamRecords
+  - neptune-db:ReadDataViaQuery
+  - neptune-graph:ReadDataViaQuery
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue
@@ -384,6 +387,9 @@ high_override_exact:
   - medical-imaging:GetImageSetMetadata
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
+  - neptune-db:GetStreamRecords
+  - neptune-db:ReadDataViaQuery
+  - neptune-graph:ReadDataViaQuery
   - omics:GetReadSet
   - invoicing:BatchGetInvoiceProfile
   - invoicing:GetInvoicePDF

@@ -9,7 +9,10 @@ from botocore.exceptions import ClientError
 from AWSPEAS import AWSPEASS, UNKNOWN_RESOURCE_SCOPE, build_parser
 from src.CloudPEASS.cloudpeass import CloudPEASS, CloudResource
 from src.aws.awsbruteforce import AWSBruteForce
-from src.aws.awsmanagedpoliciesguesser import AWSManagedPoliciesGuesser
+from src.aws.awsmanagedpoliciesguesser import (
+    AWSManagedPoliciesGuesser,
+    aws_bf_permissions_detectable,
+)
 
 
 def bare_awspeass():
@@ -23,6 +26,17 @@ def bare_awspeass():
     instance.policy_notes = []
     instance.permissions_boundary_arns = set()
     return instance
+
+
+def test_neptune_discovery_probes_are_in_offline_baseline():
+    expected = {
+        # Neptune's management client uses the RDS IAM namespace by design.
+        "rds:DescribeDBClusters",
+        "rds:DescribeDBInstances",
+        "neptune-graph:ListGraphs",
+        "neptune-graph:ListGraphSnapshots",
+    }
+    assert expected <= set(aws_bf_permissions_detectable)
 
 
 def test_parse_principal_variants_and_paths():

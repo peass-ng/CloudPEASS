@@ -987,6 +987,24 @@ def test_live_validated_mediapackage_ingest_credential_takeovers():
         )
 
 
+def test_live_validated_neptune_data_disclosures():
+    actions = (
+        "neptune-db:GetStreamRecords",
+        "neptune-db:ReadDataViaQuery",
+        "neptune-graph:ReadDataViaQuery",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-neptune-enum.md"
+        )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (
