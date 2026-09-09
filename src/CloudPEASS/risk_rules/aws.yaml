@@ -178,6 +178,10 @@ high_exact:
   - cognito-idp:DescribeIdentityProvider
   - cognito-idp:ListUsers
   - cognito-idp:ListUsersInGroup
+  - dax:BatchGetItem
+  - dax:GetItem
+  - dax:Query
+  - dax:Scan
   - dynamodb:BatchGetItem
   - dynamodb:GetItem
   - dynamodb:Query
@@ -340,6 +344,10 @@ high_override_exact:
   - cognito-idp:DescribeIdentityProvider
   - cognito-idp:ListUsers
   - cognito-idp:ListUsersInGroup
+  - dax:BatchGetItem
+  - dax:GetItem
+  - dax:Query
+  - dax:Scan
   - dynamodb:BatchGetItem
   - dynamodb:GetItem
   - dynamodb:Query

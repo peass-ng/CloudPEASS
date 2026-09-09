@@ -1024,6 +1024,38 @@ def test_live_validated_keyspaces_read_and_write_paths():
         )
 
 
+def test_live_validated_dax_inherited_table_access():
+    read_actions = (
+        "dax:BatchGetItem",
+        "dax:GetItem",
+        "dax:Query",
+        "dax:Scan",
+    )
+    write_and_oracle_actions = (
+        "dax:BatchWriteItem",
+        "dax:ConditionCheckItem",
+        "dax:DeleteItem",
+        "dax:PutItem",
+        "dax:UpdateItem",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    for action in read_actions:
+        assert (action,) in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+    for action in write_and_oracle_actions:
+        assert (action,) not in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "medium"
+    for action in read_actions + write_and_oracle_actions:
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-dynamodb-enum.md"
+        )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (
