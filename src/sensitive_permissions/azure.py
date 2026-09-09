@@ -225,6 +225,14 @@ sensitive_combinations = [
         "Microsoft.MachineLearningServices/workspaces/read",
         "Microsoft.MachineLearningServices/workspaces/computes/applicationaccess/action",
     ],
+    # Live validated against an immutable V1 environment definition. All
+    # three permissions were required to expand an AzureMlSecret reference;
+    # the recovered ACR admin password authenticated to the registry.
+    [
+        "Microsoft.MachineLearningServices/workspaces/environments/read",
+        "Microsoft.MachineLearningServices/workspaces/metadata/secrets/read",
+        "Microsoft.MachineLearningServices/workspaces/environments/readSecrets/action",
+    ],
     ["Microsoft.ContainerRegistry/registries/tasks/write"],
     ["Microsoft.ContainerRegistry/registries/taskruns/write"],
     ["Microsoft.ContainerRegistry/registries/scheduleRun/action"],

@@ -342,6 +342,29 @@ def test_compute_application_access_requires_workspace_read_combination():
     assert set(combination).issubset(complete["high"])
 
 
+def test_environment_secret_expansion_requires_all_three_permissions():
+    combination = [
+        "Microsoft.MachineLearningServices/workspaces/environments/read",
+        "Microsoft.MachineLearningServices/workspaces/metadata/secrets/read",
+        "Microsoft.MachineLearningServices/workspaces/environments/readSecrets/action",
+    ]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    for omitted in combination:
+        incomplete = set(combination) - {omitted}
+        categories = peas.analyze_group(incomplete, [])["permissions_cat"]
+        assert not (incomplete & set(categories["high"]))
+
+    complete = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(combination).issubset(complete["high"])
+
+
 def test_azure_multi_permission_attacks_are_not_critical_when_incomplete():
     peas = CloudPEASS(
         very_sensitive_combinations,
