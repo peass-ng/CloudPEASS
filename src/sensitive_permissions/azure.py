@@ -335,6 +335,14 @@ sensitive_combinations = [
     ["Microsoft.Compute/restorePointCollections/restorePoints/diskRestorePoints/beginGetAccess/action"],
     ["Microsoft.DocumentDB/databaseAccounts/readonlykeys/action"],
     ["Microsoft.DocumentDB/databaseAccounts/readonlykeys/read"],
+    # Live validated against an ACL-enabled Azure AI Search index. Ordinary
+    # documents/read returned only the caller-authorized document, while the
+    # exact pair plus x-ms-enable-elevated-read returned a document protected
+    # for an unrelated user. The elevated operation alone could not query.
+    [
+        "Microsoft.Search/searchServices/indexes/documents/read",
+        "Microsoft.Search/searchServices/indexes/contentSecurity/elevatedOperations/read",
+    ],
     ["Microsoft.Search/searchServices/createQueryKey/action"],
     ["Microsoft.Search/searchServices/listQueryKeys/action"],
     ["Microsoft.EventGrid/topics/listKeys/action"],

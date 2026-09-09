@@ -702,6 +702,11 @@ _AZURE_MEDIUM_EXACT = frozenset(
         # keep them visible without inferring the cloud-account token impact.
         "microsoft.videoindexer/accounts/generateextensionaccesstoken/action",
         "microsoft.videoindexer/accounts/generateextensionrestrictedvieweraccesstoken/action",
+        # Live validation proved that this operation bypasses Azure AI Search
+        # document ACLs only when the caller also has documents/read. Keep the
+        # singleton visible as Medium; the exact pair is High in
+        # sensitive_permissions.azure.
+        "microsoft.search/searchservices/indexes/contentsecurity/elevatedoperations/read",
     }
 )
 

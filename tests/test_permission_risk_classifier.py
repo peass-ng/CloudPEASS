@@ -576,6 +576,14 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "medium",
         )
 
+    def test_search_elevated_read_stays_medium_without_document_read(self) -> None:
+        self.assertEqual(
+            self.classify(
+                "Microsoft.Search/searchServices/indexes/contentSecurity/elevatedOperations/read"
+            ),
+            "medium",
+        )
+
     def test_unusable_azure_ml_notebook_credentials_stay_medium(self) -> None:
         for permission in (
             "Microsoft.MachineLearningServices/workspaces/listNotebookAccessToken/read",

@@ -342,6 +342,33 @@ def test_compute_application_access_requires_workspace_read_combination():
     assert set(combination).issubset(complete["high"])
 
 
+def test_search_elevated_read_requires_document_read_combination():
+    elevated = (
+        "Microsoft.Search/searchServices/indexes/contentSecurity/"
+        "elevatedOperations/read"
+    )
+    documents = "Microsoft.Search/searchServices/indexes/documents/read"
+    combination = [documents, elevated]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    elevated_only = peas.analyze_group({elevated}, [])["permissions_cat"]
+    assert elevated in elevated_only["medium"]
+    assert elevated not in elevated_only["high"]
+
+    documents_only = peas.analyze_group({documents}, [])["permissions_cat"]
+    assert documents in documents_only["low"]
+    assert documents not in documents_only["high"]
+
+    pair = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(pair["high"]) == set(combination)
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",
