@@ -347,6 +347,9 @@ sensitive_combinations = [
     ["Microsoft.Logic/workflows/triggers/run/action"],
     ["Microsoft.Logic/workflows/triggers/histories/resubmit/action"],
     ["Microsoft.Logic/workflows/runs/actions/read"],
+    # Live exact-role Webhook test disclosed custom request/response headers
+    # and a signed callback URI that was independently replayable.
+    ["Microsoft.Logic/workflows/runs/actions/requestHistories/read"],
     ["Microsoft.DataFactory/factories/pipelines/createRun/action"],
     ["Microsoft.EventGrid/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/topics/eventSubscriptions/getFullUrl/action"],

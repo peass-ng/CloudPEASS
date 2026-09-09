@@ -529,6 +529,11 @@ _AZURE_HIGH_EXACT = frozenset(
         # unauthenticated output-link request disclosed the seeded run value;
         # a no-role principal was denied the ARM action request.
         "microsoft.logic/workflows/runs/actions/read",
+        # Exact Webhook-action history read exposed custom request/response
+        # header canaries and a signed callback URI that replayed without the
+        # reader's Entra token. Ordinary Http actions reject this route, and
+        # the exact principal remained denied on the action GET endpoint.
+        "microsoft.logic/workflows/runs/actions/requesthistories/read",
         "microsoft.datafactory/factories/pipelines/createrun/action",
         # getFullUrl returned signed Logic App callback URLs that were usable
         # without the caller's Entra token. ACR run-log SAS URLs similarly
