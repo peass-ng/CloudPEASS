@@ -159,6 +159,14 @@ medium_override_exact:
   # Returns stream-key identifiers but never the secret value. It is useful
   # reconnaissance for the separately High Get/BatchGet actions.
   - ivs:ListStreamKeys
+  # Returns the complete AMB billing token used instead of SigV4 for public
+  # blockchain-node API requests. Live validation showed credential exposure,
+  # but the token provides billable public-chain access rather than private
+  # tenant data or AWS privilege escalation.
+  - managedblockchain:GetAccessor
+  # Returns public on-chain transaction data supplied by hash/ID. It is a
+  # billable authenticated query, not account-owned sensitive data.
+  - managedblockchain-query:GetTransaction
 
 ## =====================
 ## HIGH RULES
@@ -285,6 +293,7 @@ high_exact:
   - ivs:GetStreamKey
   - ivs:UpdateChannel
   - lakeformation:PutDataLakeSettings
+  - m2:GetSignedBluinsightsUrl
   - memorydb:UpdateUser
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
@@ -460,6 +469,7 @@ high_override_exact:
   - ivs:GetStreamKey
   - ivs:UpdateChannel
   - lakeformation:PutDataLakeSettings
+  - m2:GetSignedBluinsightsUrl
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue

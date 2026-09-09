@@ -2266,6 +2266,71 @@ disposable ARN is absent. Without IAM enumeration, useful fallbacks are Glue/Ath
 Terraform/CloudFormation, application query code, local credential/config caches, S3 path names,
 CloudTrail/SIEM exports, and analytics-engine logs.
 
+### Kendra Intelligent Ranking (`kendra-ranking`) — 2026-09-09
+
+A role with only `kendra-ranking:Rescore` on one disposable plan successfully reranked two
+caller-provided documents. The API stores neither a searchable tenant corpus nor result history;
+it returned IDs/scores for the submitted text. This remains a billable Medium computation. Local
+embedding/reranking models and public search tools are permissionless substitutes. The plan reached
+deletion, all roles/policies were removed, and plan/role inventories are empty.
+
+### Launch Wizard (`launchwizard`) — 2026-09-09
+
+There are no deployments. Seven public workload families and their templates are visible, but the
+current CLI has no update operation and there is no retained victim provisioning context to test.
+Manufacturing a large CloudFormation-backed application solely to infer behavior is not justified.
+Public solution templates, source/IaC, CloudFormation history, deployment logs, SSM/EC2 inventory,
+and CloudTrail/SIEM copies are fallbacks. No stack, deployment, instance, role, or network changed.
+
+### License Manager family — 2026-09-09
+
+Core License Manager has no active configuration, license, grant, or token. A token-to-web-identity
+hypothesis was tested carefully: reserved `aws:` token properties were rejected; an administrator
+could create a token, but both an IAM role and IAM user holding `CreateToken` plus `GetLicense` were
+denied by License Manager's internal license authorization. The empty role was separately denied by
+IAM. Thus no permission-only role assumption is promoted. Synthetic license/token records are
+`DELETED`; users, access keys, roles, and policies are absent.
+
+Linux subscription discovery and organization integration are disabled with no source Regions.
+User Subscriptions has no service-linked role, identity provider, endpoint, instance, product, or
+association, so its mutating workflow cannot be tested without onboarding managed infrastructure.
+Local license files, package-manager/SSM inventory, directory configuration, contracts, billing
+exports, application logs, and CloudTrail/SIEM copies are fallbacks. No setting or SLR changed.
+
+### Lookout services — 2026-09-09
+
+Lookout for Metrics and Lookout for Vision reached full shutdown in October 2025 and current clients
+no longer expose their APIs. Lookout for Equipment is in sunset through October 7, 2026, but all
+three supported Regions have zero datasets. Historical industrial telemetry/model/scheduler paths
+remain plausible only for an existing customer fixture. Source S3/CSV/images, sensor historians,
+IoT SiteWise, exported models/anomalies, replacement anomaly services, edge caches, logs, and SIEM
+archives are fallbacks. No dataset, detector, project, model, scheduler, role, or setting changed.
+
+### Mainframe Modernization (`m2`) — 2026-09-09
+
+A role holding only `m2:GetSignedBluinsightsUrl` on `Resource: *` obtained a short-lived SSO URL for
+`bluinsights.aws`. The embedded signed claims identified the exact assumed-role session, while an
+empty role was denied. Consuming the link followed the BluInsights authentication flow to HTTP 200.
+This is High sensitive-workspace access because it requires no application/list permission and the
+portal can hold migration assessments and source-analysis projects. The link had 30 seconds left
+and was consumed; both roles/policies were deleted. M2 application/environment inventories are
+empty. Source repositories, exported assessments, browser history, CI artifacts, local exports,
+and CloudTrail/SIEM copies are fallbacks.
+
+### Managed Blockchain (`managedblockchain`, `managedblockchain-query`) — 2026-09-09
+
+`managedblockchain:GetAccessor` alone on one exact accessor ARN returned the complete 42-character
+billing token; an empty role was denied and `ListAccessors` omitted it. AWS warns that this token
+replaces SigV4 for Ethereum-node calls. It remains Medium under the review rubric: the token enables
+account-billed public-chain RPC, not private tenant data or AWS privilege escalation. The roles are
+gone; AWS retains the accessor in asynchronous `PENDING_DELETION`, and the token was never printed
+or stored.
+
+`managedblockchain-query:GetTransaction` returned the Bitcoin genesis transaction from its public
+ID. Query APIs operate on public addresses, contracts, balances, transactions, and events, so they
+remain Medium billable intelligence. Public explorers/RPC nodes, self-hosted nodes, offline chain
+indexes, IaC, application configs, process environments, and logs are fallbacks.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

@@ -106,6 +106,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "ivs:GetStreamKey",
     "ivs:UpdateChannel",
     "lakeformation:PutDataLakeSettings",
+    "m2:GetSignedBluinsightsUrl",
     "iotwireless:GetWirelessDevice",
     "iotsitewise:BatchGetAssetPropertyAggregates",
     "iotsitewise:BatchGetAssetPropertyValue",
@@ -1497,3 +1498,26 @@ def test_live_validated_lake_formation_self_admin_assignment():
     assert live_validated_disclosure_documentation[action] == (
         "aws-services/aws-lake-formation-enum.md"
     )
+
+
+def test_live_validated_mainframe_modernization_sso_url():
+    action = "m2:GetSignedBluinsightsUrl"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (action,) in high
+    assert classify_permission("aws", action, unknown_default="medium") == "high"
+    assert tested_risk_documentation[action] == (
+        "aws-services/aws-mainframe-modernization-enum.md"
+    )
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-mainframe-modernization-enum.md"
+    )
+
+
+def test_live_validated_managed_blockchain_reads_stay_medium():
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in (
+        "managedblockchain:GetAccessor",
+        "managedblockchain-query:GetTransaction",
+    ):
+        assert (action,) not in high
+        assert classify_permission("aws", action, unknown_default="medium") == "medium"
