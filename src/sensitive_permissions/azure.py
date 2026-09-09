@@ -233,6 +233,15 @@ sensitive_combinations = [
         "Microsoft.MachineLearningServices/workspaces/metadata/secrets/read",
         "Microsoft.MachineLearningServices/workspaces/environments/readSecrets/action",
     ],
+    # Live validated against an account-level connection inherited by a
+    # Foundry project. listSecrets alone stayed denied, but adding the narrow
+    # connection read DataAction returned a Storage account key that downloaded
+    # a private blob. Knowing the account, project, and connection names avoids
+    # any ARM resource-read requirement.
+    [
+        "Microsoft.CognitiveServices/accounts/AIServices/connections/read",
+        "Microsoft.CognitiveServices/accounts/AIServices/connections/listSecrets/action",
+    ],
     ["Microsoft.ContainerRegistry/registries/tasks/write"],
     ["Microsoft.ContainerRegistry/registries/taskruns/write"],
     ["Microsoft.ContainerRegistry/registries/scheduleRun/action"],

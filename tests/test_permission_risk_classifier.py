@@ -535,6 +535,15 @@ class AzureWildcardClassificationTest(unittest.TestCase):
                 self.assertEqual(self.classify(permission), "medium")
 
     def test_unvalidated_credential_like_action_is_not_automatically_critical(self) -> None:
+        # The AIServices data-plane route is live validated only as a two-
+        # permission combination with connections/read. The action alone was
+        # denied throughout a clean-identity propagation test.
+        self.assertEqual(
+            self.classify(
+                "Microsoft.CognitiveServices/accounts/AIServices/connections/listSecrets/action"
+            ),
+            "medium",
+        )
         self.assertEqual(
             self.classify("Microsoft.Example/widgets/listSecrets/action"),
             "medium",

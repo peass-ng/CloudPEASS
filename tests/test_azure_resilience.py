@@ -365,6 +365,28 @@ def test_environment_secret_expansion_requires_all_three_permissions():
     assert set(combination).issubset(complete["high"])
 
 
+def test_foundry_connection_secret_requires_read_and_list_secrets():
+    combination = [
+        "Microsoft.CognitiveServices/accounts/AIServices/connections/read",
+        "Microsoft.CognitiveServices/accounts/AIServices/connections/listSecrets/action",
+    ]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    for permission in combination:
+        incomplete = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert permission not in incomplete["high"]
+        assert permission not in incomplete["critical"]
+
+    complete = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(combination).issubset(complete["high"])
+
+
 def test_azure_multi_permission_attacks_are_not_critical_when_incomplete():
     peas = CloudPEASS(
         very_sensitive_combinations,
