@@ -27,6 +27,7 @@ critical_exact:
   - ec2:GetPasswordData
   - ec2:ModifyInstanceAttribute
   - ec2:ReplaceIamInstanceProfileAssociation
+  - ec2-instance-connect:SendSSHPublicKey
   - ecr-public:GetAuthorizationToken
   - ecr-public:SetRepositoryPolicy
   - ecr:GetAuthorizationToken
@@ -197,6 +198,8 @@ high_exact:
   - dms:ModifyEndpoint
   - dsql:DbConnect
   - dsql:DbConnectAdmin
+  - ec2-instance-connect:OpenTunnel
+  - ec2-instance-connect:SendSerialConsoleSSHPublicKey
   - ec2:DescribeLaunchTemplateVersions
   - ec2:DescribeInstanceAttribute
   - elasticache:ModifyUser

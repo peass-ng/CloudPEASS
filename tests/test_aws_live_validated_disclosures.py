@@ -1095,6 +1095,37 @@ def test_live_validated_aurora_dsql_database_access_and_policy_escalation():
         )
 
 
+def test_live_validated_ec2_instance_connect_access_paths():
+    critical_action = "ec2-instance-connect:SendSSHPublicKey"
+    high_actions = (
+        "ec2-instance-connect:OpenTunnel",
+        "ec2-instance-connect:SendSerialConsoleSSHPublicKey",
+    )
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    assert (critical_action,) in critical
+    assert (critical_action,) not in high
+    assert classify_permission(
+        "aws", critical_action, unknown_default="medium"
+    ) == "critical"
+    for action in high_actions:
+        assert (action,) in high
+        assert (action,) not in critical
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+    assert live_validated_disclosure_documentation[critical_action] == (
+        "aws-privilege-escalation/aws-ec2-privesc/README.md"
+    )
+    assert live_validated_disclosure_documentation[high_actions[0]].endswith(
+        "aws-ec2-instance-connect-endpoint-backdoor.md"
+    )
+    assert live_validated_disclosure_documentation[high_actions[1]] == (
+        "aws-privilege-escalation/aws-ec2-privesc/README.md"
+    )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (

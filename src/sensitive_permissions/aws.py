@@ -61,7 +61,6 @@ very_sensitive_combinations = [
     ["es:UpdateDomainConfig"],
     ["ec2:CreateLaunchTemplateVersion", "ec2:CreateLaunchTemplate", "ec2:ModifyLaunchTemplate"],
     ["ec2-instance-connect:SendSSHPublicKey"],
-    ["ec2-instance-connect:SendSerialConsoleSSHPublicKey"],
 
     ["ebs:ListSnapshotBlocks", "ebs:GetSnapshotBlock"],
 
@@ -204,6 +203,8 @@ sensitive_combinations = [
     ["devicefarm:ListArtifacts"],
     ["dsql:DbConnect"],
     ["dsql:DbConnectAdmin"],
+    ["ec2-instance-connect:OpenTunnel"],
+    ["ec2-instance-connect:SendSerialConsoleSSHPublicKey"],
     ["athena:GetQueryExecution"],
     ["autoscaling:DescribeLaunchConfigurations"],
     ["backup:DeleteRecoveryPoint"],
@@ -627,6 +628,9 @@ live_validated_disclosure_documentation = {
     "dsql:DbConnect": "aws-services/aws-aurora-dsql-enum.md",
     "dsql:DbConnectAdmin": "aws-services/aws-aurora-dsql-enum.md",
     "dsql:PutClusterPolicy": "aws-services/aws-aurora-dsql-enum.md",
+    "ec2-instance-connect:OpenTunnel": "aws-post-exploitation/aws-ec2-ebs-ssm-and-vpc-post-exploitation/aws-ec2-instance-connect-endpoint-backdoor.md",
+    "ec2-instance-connect:SendSSHPublicKey": "aws-privilege-escalation/aws-ec2-privesc/README.md",
+    "ec2-instance-connect:SendSerialConsoleSSHPublicKey": "aws-privilege-escalation/aws-ec2-privesc/README.md",
     "dynamodb:PutResourcePolicy": "aws-privilege-escalation/aws-dynamodb-privesc/README.md",
     "dynamodb:BatchGetItem": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
     "dynamodb:GetItem": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
