@@ -422,6 +422,21 @@ def test_live_validated_inference_account_keys_are_high():
     assert permission not in categories["critical"]
 
 
+def test_live_validated_grafana_admin_token_minting_is_high():
+    permission = "Microsoft.Dashboard/grafana/ActAsGrafanaAdmin/action"
+    assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert permission in categories["high"]
+    assert permission not in categories["critical"]
+
+
 def test_speech_job_read_only_becomes_high_with_file_read():
     job_read = (
         "Microsoft.CognitiveServices/accounts/SpeechServices/"

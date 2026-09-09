@@ -221,6 +221,11 @@ sensitive_combinations = [
     # both account keys were returned without resource read, and one key
     # authenticated a protected Semantic Reranker request.
     ["Microsoft.InferenceService/inferenceAccounts/listKeys/action"],
+    # Live validated with the exact singleton DataAction and no ARM read:
+    # after service accounts were enabled on the selected workspace, the
+    # caller minted a Grafana Admin token.  The token remained usable after
+    # the issuer's Azure role assignment and application were removed.
+    ["Microsoft.Dashboard/grafana/ActAsGrafanaAdmin/action"],
     # Live validated on a compute instance explicitly assigned to the caller:
     # workspace read plus application access opened a Jupyter terminal and
     # executed a canary while computes/read remained denied. The action alone

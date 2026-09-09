@@ -446,6 +446,10 @@ _AZURE_HIGH_EXACT = frozenset(
         # account keys without resource read. A recovered key authenticated a
         # Semantic Reranker request while no key and a wrong key returned 401.
         "microsoft.inferenceservice/inferenceaccounts/listkeys/action",
+        # Exact-role live validation minted an independently usable Grafana
+        # Admin service-account token.  The token retained workspace-admin
+        # access after the issuer's Azure role assignment was removed.
+        "microsoft.dashboard/grafana/actasgrafanaadmin/action",
         # Exact-role cross-principal tests recovered stored OpenAI/Foundry
         # response bodies. The Foundry route is currently authorized by
         # agents/read rather than its advertised responses/read action.
@@ -676,6 +680,12 @@ _AZURE_MEDIUM_EXACT = frozenset(
         "microsoft.inferenceservice/inferenceaccounts/invoke/embedding/action",
         "microsoft.inferenceservice/inferenceaccounts/write",
         "microsoft.inferenceservice/inferenceaccounts/delete",
+        # Live exact-role testing proved that this user-only operation can mint
+        # a long-lived workspace token when local authentication is enabled.
+        # Service principals were rejected, disabled local authentication
+        # returned AccessTokenBasedAuthNotSupported, and the minted token did
+        # not establish standalone test-result access or privilege escalation.
+        "microsoft.loadtestservice/playwrightworkspaces/accesstokens/write",
     }
 )
 
