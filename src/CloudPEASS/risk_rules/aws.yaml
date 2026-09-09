@@ -83,6 +83,14 @@ critical_exact:
 ## Exact actions that are only medium in isolation. Their documented companion
 ## permissions can still form high-impact combinations.
 medium_override_exact:
+  # Hosted MCP actions only gate tool discovery/invocation. Live calls were
+  # delegated as the caller and still enforced every underlying ECS/EKS/IAM
+  # or Kubernetes permission; public knowledge tools expose no account data.
+  - ecs-mcp:InvokeReadOnlyTools
+  - ecs-mcp:UseMcp
+  - eks-mcp:CallPrivilegedTool
+  - eks-mcp:CallReadOnlyTool
+  - eks-mcp:InvokeMcp
   # Modify can alter rows, but every standard Keyspaces driver also needs
   # cassandra:Select on the read-only system* resources to authenticate.
   # That tested pair is High; Modify alone is not usable through the CQL API.

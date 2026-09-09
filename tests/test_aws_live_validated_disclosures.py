@@ -1126,6 +1126,25 @@ def test_live_validated_ec2_instance_connect_access_paths():
     )
 
 
+def test_hosted_mcp_gates_remain_medium_without_underlying_permissions():
+    actions = (
+        "ecs-mcp:InvokeReadOnlyTools",
+        "ecs-mcp:UseMcp",
+        "eks-mcp:CallPrivilegedTool",
+        "eks-mcp:CallReadOnlyTool",
+        "eks-mcp:InvokeMcp",
+    )
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    for action in actions:
+        assert (action,) not in critical
+        assert (action,) not in high
+        assert classify_permission(
+            "aws", action, unknown_default="high"
+        ) == "medium"
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (
