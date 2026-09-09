@@ -321,6 +321,27 @@ def test_every_configured_azure_attack_combination_reaches_its_declared_tier():
                 assert permission in categories[expected], (expected, combination)
 
 
+def test_compute_application_access_requires_workspace_read_combination():
+    combination = [
+        "Microsoft.MachineLearningServices/workspaces/read",
+        "Microsoft.MachineLearningServices/workspaces/computes/applicationaccess/action",
+    ]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    action_only = peas.analyze_group({combination[1]}, [])["permissions_cat"]
+    assert combination[1] in action_only["medium"]
+    assert combination[1] not in action_only["high"]
+
+    complete = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(combination).issubset(complete["high"])
+
+
 def test_azure_multi_permission_attacks_are_not_critical_when_incomplete():
     peas = CloudPEASS(
         very_sensitive_combinations,
