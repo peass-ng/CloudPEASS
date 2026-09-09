@@ -73,6 +73,8 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "ec2:DescribeLaunchTemplateVersions",
     "ec2:DescribeInstanceAttribute",
     "elasticloadbalancing:ModifyListener",
+    "elemental-inference:ExportDictionaryEntries",
+    "elemental-inference:GetMetadata",
     "ebs:GetSnapshotBlock",
     "ecr:GetDownloadUrlForLayer",
     "ecs:DescribeTaskDefinition",
@@ -1186,6 +1188,33 @@ def test_live_validated_efs_policy_client_and_posix_paths():
     for action in policy_actions + (mount_action,) + companion_actions:
         assert live_validated_disclosure_documentation[action] == (
             "aws-privilege-escalation/aws-efs-privesc/README.md"
+        )
+
+
+def test_live_validated_elemental_inference_data_paths():
+    high_actions = (
+        "elemental-inference:ExportDictionaryEntries",
+        "elemental-inference:GetMetadata",
+    )
+    integrity_actions = (
+        "elemental-inference:PutMedia",
+        "elemental-inference:UpdateDictionary",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    for action in high_actions:
+        assert (action,) in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+    for action in integrity_actions:
+        assert (action,) not in high
+        assert classify_permission(
+            "aws", action, unknown_default="high"
+        ) == "medium"
+    for action in high_actions + integrity_actions:
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-elemental-inference-enum.md"
         )
 
 

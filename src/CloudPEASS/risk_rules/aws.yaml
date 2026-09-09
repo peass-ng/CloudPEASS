@@ -101,6 +101,11 @@ medium_override_exact:
   - elasticfilesystem:CreateAccessPoint
   - elasticfilesystem:CreateMountTarget
   - elasticfilesystem:ModifyMountTargetSecurityGroups
+  # PutMedia can inject media into a known active feed, and UpdateDictionary
+  # can replace a known vocabulary. They affect integrity but do not expose
+  # generated metadata or dictionary entries without separate read actions.
+  - elemental-inference:PutMedia
+  - elemental-inference:UpdateDictionary
   # Modify can alter rows, but every standard Keyspaces driver also needs
   # cassandra:Select on the read-only system* resources to authenticate.
   # That tested pair is High; Modify alone is not usable through the CQL API.
@@ -219,6 +224,8 @@ high_exact:
   - ec2-instance-connect:OpenTunnel
   - ec2-instance-connect:SendSerialConsoleSSHPublicKey
   - elasticfilesystem:ClientMount
+  - elemental-inference:ExportDictionaryEntries
+  - elemental-inference:GetMetadata
   - ec2:DescribeLaunchTemplateVersions
   - ec2:DescribeInstanceAttribute
   - elasticache:ModifyUser
@@ -385,6 +392,8 @@ high_override_exact:
   - deadline:AssumeQueueRoleForRead
   - deadline:AssumeQueueRoleForUser
   - datazone:GetEnvironmentCredentials
+  - elemental-inference:ExportDictionaryEntries
+  - elemental-inference:GetMetadata
   - ec2:DescribeLaunchTemplateVersions
   - ec2:DescribeInstanceAttribute
   - ebs:GetSnapshotBlock
