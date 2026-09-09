@@ -217,6 +217,10 @@ sensitive_combinations = [
     # Live validated with an exact role: serverless endpoint keys were
     # returned without resource read and authenticated a model-inference call.
     ["Microsoft.MachineLearningServices/workspaces/serverlessEndpoints/listKeys/action"],
+    # Live validated with an exact role after key authentication was enabled:
+    # both account keys were returned without resource read, and one key
+    # authenticated a protected Semantic Reranker request.
+    ["Microsoft.InferenceService/inferenceAccounts/listKeys/action"],
     # Live validated on a compute instance explicitly assigned to the caller:
     # workspace read plus application access opened a Jupyter terminal and
     # executed a canary while computes/read remained denied. The action alone

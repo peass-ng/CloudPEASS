@@ -442,6 +442,10 @@ _AZURE_HIGH_EXACT = frozenset(
         # one key authenticated a protected chat-completion request. The
         # endpoint's model and exposed data determine the final impact.
         "microsoft.machinelearningservices/workspaces/serverlessendpoints/listkeys/action",
+        # Exact-role live validation recovered both 32-character inference
+        # account keys without resource read. A recovered key authenticated a
+        # Semantic Reranker request while no key and a wrong key returned 401.
+        "microsoft.inferenceservice/inferenceaccounts/listkeys/action",
         # Exact-role cross-principal tests recovered stored OpenAI/Foundry
         # response bodies. The Foundry route is currently authorized by
         # agents/read rather than its advertised responses/read action.

@@ -219,6 +219,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Automation/automationAccounts/variables/read": "high",
             "Microsoft.MachineLearningServices/workspaces/onlineEndpoints/token/action": "high",
             "Microsoft.MachineLearningServices/workspaces/serverlessEndpoints/listKeys/action": "high",
+            "Microsoft.InferenceService/inferenceAccounts/listKeys/action": "high",
             "Microsoft.CognitiveServices/accounts/OpenAI/responses/read": "high",
             "Microsoft.CognitiveServices/accounts/AIServices/agents/read": "high",
             "Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/files/read": "high",
