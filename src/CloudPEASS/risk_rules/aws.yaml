@@ -44,6 +44,10 @@ critical_exact:
   - kafka:UpdateSecurity
   - lambda:UpdateFunctionCode
   - lambda:UpdateFunctionConfiguration
+  - lightsail:CreateBucketAccessKey
+  - lightsail:DownloadDefaultKeyPair
+  - lightsail:GetInstanceAccessDetails
+  - lightsail:UpdateBucket
   - rds:ModifyDBInstance
   - redshift:GetClusterCredentials
   - redshift:GetClusterCredentialsWithIAM

@@ -1785,6 +1785,34 @@ standalone credential, workload payload, or AWS identity, so no new High/Critica
 Connect Cases has zero domains; case/search/audit/related-item reads remain blocked candidates for
 real customer-support PII rather than being inferred from schemas.
 
+### Amazon Lightsail (`lightsail`) — 2026-09-09
+
+The Region initially contained zero instances and buckets; the only key pair was the preserved
+custom key `mykey` from 2022. A disposable Amazon Linux 2023 instance held one exact local canary.
+Two mutually isolated roles had either `lightsail:GetInstanceAccessDetails` on the exact instance
+or `lightsail:DownloadDefaultKeyPair` on `*`. Each action returned private key material that opened
+a real SSH session and read the canary. Empty-role and cross-action controls were denied.
+
+The temporary-access response requires its `certKey` to be stored beside the private key using the
+OpenSSH `-cert.pub` companion name. The Python SDK used in the test returned the misleadingly named
+`privateKeyBase64` field as already decoded PEM, so resilient clients must detect PEM before trying
+Base64 decoding. Both credential paths are Critical because they provide operating-system access
+to an existing instance, subject to the target using the regional default key for the download path.
+
+A separate Lightsail object-storage bucket contained one private canary. A role with only
+`lightsail:CreateBucketAccessKey` received a long-term access key and, after propagation, used it to
+read the exact object while its direct IAM-role S3 request was denied. A role with only
+`lightsail:UpdateBucket` changed `getObject` from private to public; an unsigned request then read
+the canary. The private rule was restored and the same unsigned request returned `AccessDenied`.
+Both actions are Critical credential/boundary-changing data-access primitives.
+
+`OpenInstancePublicPorts`, `PutInstancePublicPorts`, `SetResourceAccessForBucket`, and
+`UpdateContainerService` were removed from the Critical singleton list. Alone they expose network
+reachability or activate service-to-service access; they do not authenticate the caller, return
+data, or provide an AWS identity. They remain Medium unless combined with a separately demonstrated
+access path. The instance, bucket/object/access keys, six IAM roles/policies, and local key material
+were deleted. Exact inventories returned zero, and `mykey` was not modified.
+
 ### AWS Transfer Family (`transfer`) — 2026-09-09
 
 The account initially contained zero Transfer servers. The isolated fixture created a public SFTP

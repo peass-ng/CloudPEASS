@@ -949,6 +949,39 @@ def test_live_validated_transfer_ssh_key_injection():
     )
 
 
+def test_live_validated_lightsail_credential_and_bucket_takeovers():
+    actions = (
+        "lightsail:CreateBucketAccessKey",
+        "lightsail:DownloadDefaultKeyPair",
+        "lightsail:GetInstanceAccessDetails",
+        "lightsail:UpdateBucket",
+    )
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+
+    for action in actions:
+        assert (action,) in critical
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "critical"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-privilege-escalation/aws-lightsail-privesc/README.md"
+        )
+
+
+def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    for action in (
+        "lightsail:OpenInstancePublicPorts",
+        "lightsail:PutInstancePublicPorts",
+        "lightsail:SetResourceAccessForBucket",
+        "lightsail:UpdateContainerService",
+    ):
+        assert (action,) not in critical
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "medium"
+
+
 def test_dlm_create_lifecycle_policy_is_not_high_without_passrole():
     action = "dlm:CreateLifecyclePolicy"
     high = {tuple(candidate) for candidate in sensitive_combinations}
