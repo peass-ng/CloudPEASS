@@ -1145,6 +1145,50 @@ def test_hosted_mcp_gates_remain_medium_without_underlying_permissions():
         ) == "medium"
 
 
+def test_live_validated_efs_policy_client_and_posix_paths():
+    policy_actions = (
+        "elasticfilesystem:DeleteFileSystemPolicy",
+        "elasticfilesystem:PutFileSystemPolicy",
+    )
+    mount_action = "elasticfilesystem:ClientMount"
+    companion_actions = (
+        "elasticfilesystem:ClientRootAccess",
+        "elasticfilesystem:ClientWrite",
+        "elasticfilesystem:CreateAccessPoint",
+    )
+    network_actions = (
+        "elasticfilesystem:CreateMountTarget",
+        "elasticfilesystem:ModifyMountTargetSecurityGroups",
+    )
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    for action in policy_actions:
+        assert (action,) in critical
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "critical"
+    assert (mount_action,) in high
+    assert classify_permission(
+        "aws", mount_action, unknown_default="medium"
+    ) == "high"
+    for action in companion_actions:
+        assert (action,) not in high
+        assert (mount_action, action) in high
+        assert classify_permission(
+            "aws", action, unknown_default="high"
+        ) == "medium"
+    for action in network_actions:
+        assert (action,) not in high
+        assert classify_permission(
+            "aws", action, unknown_default="high"
+        ) == "medium"
+    for action in policy_actions + (mount_action,) + companion_actions:
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-privilege-escalation/aws-efs-privesc/README.md"
+        )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (

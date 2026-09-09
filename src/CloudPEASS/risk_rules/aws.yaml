@@ -28,6 +28,8 @@ critical_exact:
   - ec2:ModifyInstanceAttribute
   - ec2:ReplaceIamInstanceProfileAssociation
   - ec2-instance-connect:SendSSHPublicKey
+  - elasticfilesystem:DeleteFileSystemPolicy
+  - elasticfilesystem:PutFileSystemPolicy
   - ecr-public:GetAuthorizationToken
   - ecr-public:SetRepositoryPolicy
   - ecr:GetAuthorizationToken
@@ -91,6 +93,14 @@ medium_override_exact:
   - eks-mcp:CallPrivilegedTool
   - eks-mcp:CallReadOnlyTool
   - eks-mcp:InvokeMcp
+  # These EFS actions do not authorize a mount by themselves. Live tests
+  # required ClientMount for write/root/POSIX access-point effects; the network
+  # operations have separate documented EC2 dependencies and still need client access.
+  - elasticfilesystem:ClientRootAccess
+  - elasticfilesystem:ClientWrite
+  - elasticfilesystem:CreateAccessPoint
+  - elasticfilesystem:CreateMountTarget
+  - elasticfilesystem:ModifyMountTargetSecurityGroups
   # Modify can alter rows, but every standard Keyspaces driver also needs
   # cassandra:Select on the read-only system* resources to authenticate.
   # That tested pair is High; Modify alone is not usable through the CQL API.
@@ -208,6 +218,7 @@ high_exact:
   - dsql:DbConnectAdmin
   - ec2-instance-connect:OpenTunnel
   - ec2-instance-connect:SendSerialConsoleSSHPublicKey
+  - elasticfilesystem:ClientMount
   - ec2:DescribeLaunchTemplateVersions
   - ec2:DescribeInstanceAttribute
   - elasticache:ModifyUser
