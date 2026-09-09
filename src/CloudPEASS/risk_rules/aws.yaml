@@ -81,6 +81,10 @@ critical_exact:
 ## Exact actions that are only medium in isolation. Their documented companion
 ## permissions can still form high-impact combinations.
 medium_override_exact:
+  # Modify can alter rows, but every standard Keyspaces driver also needs
+  # cassandra:Select on the read-only system* resources to authenticate.
+  # That tested pair is High; Modify alone is not usable through the CQL API.
+  - cassandra:Modify
   # The caller also needs iam:PassRole, a capable restore role, and access to
   # the restored target before this becomes a sensitive-data path.
   - backup:StartRestoreJob
@@ -129,6 +133,7 @@ high_exact:
   - appsync:GraphQL
   - appsync:ListApiKeys
   - appstream:CreateStreamingURL
+  - cassandra:Select
   - autoscaling:DescribeLaunchConfigurations
   - backup:DeleteRecoveryPoint
   - batch:DescribeJobDefinitions
@@ -298,6 +303,7 @@ high_override_exact:
   - appsync:GraphQL
   - appsync:ListApiKeys
   - appstream:CreateStreamingURL
+  - cassandra:Select
   - autoscaling:DescribeLaunchConfigurations
   - backup:DeleteRecoveryPoint
   - batch:DescribeJobDefinitions

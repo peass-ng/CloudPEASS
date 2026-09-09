@@ -1005,6 +1005,25 @@ def test_live_validated_neptune_data_disclosures():
         )
 
 
+def test_live_validated_keyspaces_read_and_write_paths():
+    select_action = "cassandra:Select"
+    modify_chain = ("cassandra:Modify", select_action)
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    assert (select_action,) in high
+    assert modify_chain in high
+    assert classify_permission(
+        "aws", select_action, unknown_default="medium"
+    ) == "high"
+    assert classify_permission(
+        "aws", modify_chain[0], unknown_default="medium"
+    ) == "medium"
+    for action in modify_chain:
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-keyspaces-enum.md"
+        )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (
