@@ -369,6 +369,21 @@ def test_search_elevated_read_requires_document_read_combination():
     assert set(pair["high"]) == set(combination)
 
 
+def test_search_skillset_write_is_a_validated_high_singleton():
+    permission = "Microsoft.Search/searchServices/skillsets/write"
+    assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert categories["high"] == [permission]
+    assert not categories["critical"]
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",

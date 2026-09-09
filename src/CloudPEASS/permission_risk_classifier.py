@@ -502,6 +502,12 @@ _AZURE_HIGH_EXACT = frozenset(
         # to potentially sensitive data but do not authorize data writes.
         "microsoft.search/searchservices/createquerykey/action",
         "microsoft.search/searchservices/listquerykeys/action",
+        # Exact-role live validation replaced a known skillset without Search
+        # read access. Its existing schedule delivered the Search managed-
+        # identity token for a tenant-owned API to an unrelated HTTPS host;
+        # replaying it returned a protected downstream canary. Microsoft
+        # first-party audiences such as ARM are explicitly rejected.
+        "microsoft.search/searchservices/skillsets/write",
         "microsoft.documentdb/databaseaccounts/readonlykeys/action",
         "microsoft.documentdb/databaseaccounts/readonlykeys/read",
         # These operations execute an existing workflow or pipeline. Their

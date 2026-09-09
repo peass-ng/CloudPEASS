@@ -343,6 +343,11 @@ sensitive_combinations = [
         "Microsoft.Search/searchServices/indexes/documents/read",
         "Microsoft.Search/searchServices/indexes/contentSecurity/elevatedOperations/read",
     ],
+    # Live validated with the exact singleton and no Search read permission:
+    # replacing a known skillset caused its untouched scheduled indexer to
+    # send the Search managed-identity token to an unrelated HTTPS endpoint.
+    # The captured token then read a separately Entra-protected canary API.
+    ["Microsoft.Search/searchServices/skillsets/write"],
     ["Microsoft.Search/searchServices/createQueryKey/action"],
     ["Microsoft.Search/searchServices/listQueryKeys/action"],
     ["Microsoft.EventGrid/topics/listKeys/action"],

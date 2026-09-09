@@ -199,6 +199,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
         )
         tested_sensitive_data_credentials = {
             "Microsoft.Search/searchServices/createQueryKey/action": "high",
+            "Microsoft.Search/searchServices/skillsets/write": "high",
             "Microsoft.Search/searchServices/regenerateAdminKey/action": "critical",
             "Microsoft.DocumentDB/databaseAccounts/readonlykeys/action": "high",
             "Microsoft.DocumentDB/databaseAccounts/readonlykeys/read": "high",
@@ -861,6 +862,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "iotjobsdata:UpdateJobExecution": "high",
             "ivs:CreateStreamKey": "high",
             "ivs:UpdateChannel": "high",
+            "lakeformation:PutDataLakeSettings": "high",
             "lambda:GetFunction": "high",
             "route53domains:GetDomainDetail": "high",
             "s3:PutAccessPointPolicy": "critical",
