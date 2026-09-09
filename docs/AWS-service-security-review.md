@@ -1984,6 +1984,30 @@ the stream group, application, S3 bucket/objects/policy, twelve IAM roles/polici
 and local harness were removed. Exact prefixed inventories were empty after the asynchronous
 GameLift Streams deletion completed.
 
+### Amazon Location v2 data planes (`geo-maps`, `geo-places`, `geo-routes`) — 2026-09-09
+
+Three action-only roles and one empty control exercised the current Location v2 data planes in
+`us-west-2` without creating any Location resource:
+
+- `geo-maps:GetStaticMap` returned a valid JPEG for caller-supplied Madrid center, zoom, and image
+  dimensions. The service's other operations return tiles, styles, sprites, and glyphs from the
+  public basemap rather than stored customer data.
+- `geo-places:SearchText` returned a public place match for a caller-supplied query and bias
+  coordinate. The API surface performs autocomplete, geocoding, place lookup, nearby/text search,
+  and suggestions; it has no customer search-history getter.
+- `geo-routes:CalculateRoutes` returned a road route between two caller-supplied coordinates. The
+  other operations calculate isolines/matrices, optimize supplied waypoints, or snap supplied
+  traces to public roads; they do not retrieve stored tenant routes.
+
+The empty role was denied all three equivalent calls. No response contained tenant state,
+credentials, or a privilege boundary, so no High/Critical finding was added. Static map reads stay
+Low; place search and route calculation stay Medium as billable caller-driven computation. When
+IAM calls are denied, public basemap/place/routing sources (for example OpenStreetMap, Nominatim,
+OSRM, or local road data) provide permissionless equivalents. A Location API key exposed by a
+legitimate client is a non-IAM bearer fallback but remains constrained by the key's configured
+actions, resources, expiry, and referrer rules. All four temporary roles/policies and the local
+harness were removed; the tests created no persistent Location infrastructure.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The
