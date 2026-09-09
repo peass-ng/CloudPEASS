@@ -1218,6 +1218,19 @@ def test_live_validated_elemental_inference_data_paths():
         )
 
 
+def test_live_validated_entity_resolution_policy_self_grant():
+    action = "entityresolution:PutPolicy"
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+
+    assert (action,) in critical
+    assert classify_permission(
+        "aws", action, unknown_default="medium"
+    ) == "critical"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-entity-resolution-enum.md"
+    )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (

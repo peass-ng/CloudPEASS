@@ -30,6 +30,7 @@ critical_exact:
   - ec2-instance-connect:SendSSHPublicKey
   - elasticfilesystem:DeleteFileSystemPolicy
   - elasticfilesystem:PutFileSystemPolicy
+  - entityresolution:PutPolicy
   - ecr-public:GetAuthorizationToken
   - ecr-public:SetRepositoryPolicy
   - ecr:GetAuthorizationToken

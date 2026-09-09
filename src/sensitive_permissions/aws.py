@@ -55,6 +55,8 @@ very_sensitive_combinations = [
 
     ["dynamodb:PutResourcePolicy"],
 
+    ["entityresolution:PutPolicy"],
+
     ["ec2:ModifyInstanceAttribute"],
     ["eks:CreateAccessEntry", "eks:AssociateAccessPolicy"],
     ["eks-auth:AssumeRoleForPodIdentity"],
@@ -641,6 +643,7 @@ live_validated_disclosure_documentation = {
     "elemental-inference:GetMetadata": "aws-services/aws-elemental-inference-enum.md",
     "elemental-inference:PutMedia": "aws-services/aws-elemental-inference-enum.md",
     "elemental-inference:UpdateDictionary": "aws-services/aws-elemental-inference-enum.md",
+    "entityresolution:PutPolicy": "aws-services/aws-entity-resolution-enum.md",
     "dynamodb:PutResourcePolicy": "aws-privilege-escalation/aws-dynamodb-privesc/README.md",
     "dynamodb:BatchGetItem": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
     "dynamodb:GetItem": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
