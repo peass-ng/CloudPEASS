@@ -182,6 +182,8 @@ high_exact:
   - dax:GetItem
   - dax:Query
   - dax:Scan
+  - devicefarm:GetRemoteAccessSession
+  - devicefarm:ListArtifacts
   - dynamodb:BatchGetItem
   - dynamodb:GetItem
   - dynamodb:Query
@@ -348,6 +350,8 @@ high_override_exact:
   - dax:GetItem
   - dax:Query
   - dax:Scan
+  - devicefarm:GetRemoteAccessSession
+  - devicefarm:ListArtifacts
   - dynamodb:BatchGetItem
   - dynamodb:GetItem
   - dynamodb:Query

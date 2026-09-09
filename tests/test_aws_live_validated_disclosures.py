@@ -1056,6 +1056,23 @@ def test_live_validated_dax_inherited_table_access():
         )
 
 
+def test_live_validated_device_farm_session_and_artifact_disclosures():
+    actions = (
+        "devicefarm:GetRemoteAccessSession",
+        "devicefarm:ListArtifacts",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-device-farm-enum.md"
+        )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (
