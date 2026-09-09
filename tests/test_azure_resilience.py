@@ -432,6 +432,25 @@ def test_deployment_script_write_requires_validated_execution_combination():
     assert set(combination).issubset(combined["critical"])
 
 
+def test_deployment_script_resource_and_log_reads_are_high_singletons():
+    permissions = {
+        "Microsoft.Resources/deploymentScripts/read",
+        "Microsoft.Resources/deploymentScripts/logs/read",
+    }
+    for permission in permissions:
+        assert [permission] in sensitive_combinations
+
+        peas = CloudPEASS(
+            very_sensitive_combinations,
+            sensitive_combinations,
+            "Azure",
+            1,
+        )
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert categories["high"] == [permission]
+        assert not categories["critical"]
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",

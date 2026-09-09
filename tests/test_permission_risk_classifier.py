@@ -154,9 +154,9 @@ class AzureWildcardClassificationTest(unittest.TestCase):
         self.assertEqual(self.classify("Microsoft.Authorization/roleDefinitions/*"), "high")
         self.assertEqual(self.classify("Microsoft.ManagedIdentity/userAssignedIdentities/*"), "critical")
         self.assertEqual(self.classify("Microsoft.Storage/storageAccounts/*"), "critical")
-        # The service wildcard still lacks the independently required UAMI,
-        # ACI, and Storage support actions, so it cannot execute by itself.
-        self.assertEqual(self.classify("Microsoft.Resources/deploymentScripts/*"), "medium")
+        # The service wildcard cannot execute without cross-provider support
+        # actions, but it includes the validated output/log disclosures.
+        self.assertEqual(self.classify("Microsoft.Resources/deploymentScripts/*"), "high")
 
     def test_cross_provider_wildcard_verbs_are_not_treated_as_literal_operations(self) -> None:
         self.assertEqual(self.classify("*/read"), "medium")
@@ -422,6 +422,14 @@ class AzureWildcardClassificationTest(unittest.TestCase):
         self.assertEqual(
             self.classify("Microsoft.Resources/deploymentScripts/write"),
             "medium",
+        )
+        self.assertEqual(
+            self.classify("Microsoft.Resources/deploymentScripts/read"),
+            "high",
+        )
+        self.assertEqual(
+            self.classify("Microsoft.Resources/deploymentScripts/logs/read"),
+            "high",
         )
         self.assertEqual(
             self.classify("Microsoft.Authorization/roleDefinitions/write"), "high"
@@ -896,6 +904,10 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "ssm:StartAutomationExecution": "critical",
             "sts:GetFederationToken": "high",
             "synthetics:StartCanaryDryRun": "medium",
+            "textract:GetDocumentAnalysis": "high",
+            "textract:GetDocumentTextDetection": "high",
+            "textract:GetExpenseAnalysis": "high",
+            "vpc-lattice-svcs:Invoke": "high",
         }
         self.assertEqual(set(tested_risk_documentation), set(expected))
         for permission, level in expected.items():

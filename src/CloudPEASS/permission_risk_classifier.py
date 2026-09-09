@@ -590,6 +590,11 @@ _AZURE_HIGH_EXACT = frozenset(
         "microsoft.compute/restorepointcollections/restorepoints/diskrestorepoints/begingetaccess/action",
         "microsoft.managedidentity/userassignedidentities/assign/action",
         "microsoft.app/containerapps/getauthtoken/action",
+        # Live exact-role tests isolated both endpoints. Resource read exposed
+        # a declared output and plain environment value (but redacted the
+        # secure environment value); logs/read exposed the stdout canary.
+        "microsoft.resources/deploymentscripts/read",
+        "microsoft.resources/deploymentscripts/logs/read",
         "microsoft.web/staticsites/createinvitation/action",
         # Live tests created attacker-chosen function-scoped keys on both a
         # production Function App and a deployment slot. Requests without a

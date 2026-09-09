@@ -337,6 +337,11 @@ sensitive_combinations = [
     ["Microsoft.HybridContainerService/provisionedClusters/listClusterUserCredential/action"],
     ["Microsoft.Compute/virtualMachines/login/action"],
     ["Microsoft.Compute/galleries/applications/versions/write"],
+    # Exact singleton tests disclosed a declared output/plain environment
+    # value through resource read and stdout through the separate logs route.
+    # secureValue remained redacted in the resource representation.
+    ["Microsoft.Resources/deploymentScripts/read"],
+    ["Microsoft.Resources/deploymentScripts/logs/read"],
     ["Microsoft.Logic/workflows/triggers/listCallbackUrl/action"],
     ["Microsoft.Logic/workflows/versions/triggers/listCallbackUrl/action"],
     ["Microsoft.Logic/workflows/triggers/run/action"],
