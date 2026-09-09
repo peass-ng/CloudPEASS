@@ -21,6 +21,17 @@ very_sensitive_combinations = [
     ["codebuild:StartBuild"],
     ["codebuild:StartBuildBatch"],
 
+    [
+        "synthetics:StartCanaryDryRun",
+        "lambda:GetFunctionConfiguration",
+        "lambda:PublishLayerVersion",
+        "lambda:GetLayerVersion",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:PublishVersion",
+        "lambda:AddPermission",
+        "iam:PassRole",
+    ],
+
     ["cognito-identity:UpdateIdentityPool"],
     ["cognito-idp:AdminAddUserToGroup"],
     ["cognito-idp:AdminConfirmSignUp"],
@@ -275,6 +286,13 @@ sensitive_combinations = [
     ["iot:Publish"],
     ["memorydb:UpdateUser"],
     ["iot:Connect", "iot:Subscribe", "iot:Receive"],
+    [
+        "kafka-cluster:Connect",
+        "kafka-cluster:DescribeTopic",
+        "kafka-cluster:ReadData",
+        "kafka-cluster:DescribeGroup",
+        "kafka-cluster:AlterGroup",
+    ],
     ["iotwireless:GetWirelessDevice"],
     ["iotsitewise:BatchGetAssetPropertyAggregates"],
     ["iotsitewise:BatchGetAssetPropertyValue"],
@@ -507,6 +525,7 @@ tested_risk_documentation = {
     "signer:StartSigningJob": "aws-privilege-escalation/aws-lambda-privesc/README.md",
     "sts:GetFederationToken": "aws-privilege-escalation/aws-sts-privesc/README.md",
     "ssm:StartAutomationExecution": "aws-privilege-escalation/aws-ssm-privesc/README.md",
+    "synthetics:StartCanaryDryRun": "aws-privilege-escalation/aws-synthetics-privesc/README.md",
 }
 
 
@@ -645,6 +664,12 @@ live_validated_disclosure_documentation = {
     "iottwinmaker:GetPropertyValue": "aws-services/aws-iot-twinmaker-enum.md",
     "iottwinmaker:GetWorkspace": "aws-services/aws-iot-twinmaker-enum.md",
     "ivschat:CreateChatToken": "aws-services/aws-ivs-chat-enum.md",
+    "kafka:UpdateSecurity": "aws-privilege-escalation/aws-msk-privesc/README.md",
+    "kafka-cluster:Connect": "aws-services/aws-msk-enum.md",
+    "kafka-cluster:DescribeTopic": "aws-services/aws-msk-enum.md",
+    "kafka-cluster:ReadData": "aws-services/aws-msk-enum.md",
+    "kafka-cluster:DescribeGroup": "aws-services/aws-msk-enum.md",
+    "kafka-cluster:AlterGroup": "aws-services/aws-msk-enum.md",
     "kinesis:GetRecords": "aws-services/aws-kinesis-data-streams-enum.md",
     "kinesisanalytics:DescribeApplication": "aws-services/aws-managed-flink-enum.md",
     "kinesisvideo:GetClip": "aws-services/aws-kinesis-video-streams-enum.md",

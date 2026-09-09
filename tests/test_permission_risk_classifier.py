@@ -182,6 +182,21 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             self.classify("Microsoft.Search/searchServices/listQueryKeys/action"),
             "high",
         )
+        # Live exact-role checks did not return keys for either operation:
+        # online endpoint requests stayed 400 and batch endpoints reject key
+        # authentication/listKeys entirely. Do not promote by name alone.
+        self.assertEqual(
+            self.classify(
+                "Microsoft.MachineLearningServices/workspaces/onlineEndpoints/listKeys/action"
+            ),
+            "medium",
+        )
+        self.assertEqual(
+            self.classify(
+                "Microsoft.MachineLearningServices/workspaces/batchEndpoints/listKeys/action"
+            ),
+            "medium",
+        )
         tested_sensitive_data_credentials = {
             "Microsoft.Search/searchServices/createQueryKey/action": "high",
             "Microsoft.Search/searchServices/regenerateAdminKey/action": "critical",
@@ -203,6 +218,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Automation/automationAccounts/jobs/streams/read": "high",
             "Microsoft.Automation/automationAccounts/variables/read": "high",
             "Microsoft.MachineLearningServices/workspaces/onlineEndpoints/token/action": "high",
+            "Microsoft.MachineLearningServices/workspaces/serverlessEndpoints/listKeys/action": "high",
             "Microsoft.App/jobs/start/action": "critical",
             "Microsoft.App/jobs/listSecrets/action": "critical",
             "Microsoft.App/managedEnvironments/daprComponents/listSecrets/action": "critical",
@@ -779,6 +795,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "signer:StartSigningJob": "high",
             "ssm:StartAutomationExecution": "critical",
             "sts:GetFederationToken": "high",
+            "synthetics:StartCanaryDryRun": "medium",
         }
         self.assertEqual(set(tested_risk_documentation), set(expected))
         for permission, level in expected.items():
@@ -1069,10 +1086,18 @@ def test_workspaces_control_plane_reads_remain_low_without_data_evidence():
         ) == "low"
 
 
-def test_synthetics_get_canary_stays_low_when_environment_values_are_omitted():
+def test_synthetics_reads_and_code_updates_keep_evidence_backed_severity():
     assert classify_permission(
         "aws", "synthetics:GetCanary", unknown_default="medium"
     ) == "low"
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in ("synthetics:StartCanaryDryRun", "synthetics:UpdateCanary"):
+        assert (action,) not in critical
+        assert (action,) not in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "medium"
 
 
 if __name__ == "__main__":

@@ -1415,6 +1415,376 @@ plane was contacted; it was completely deleted. The successful cluster, ACL, use
 candidate/control roles and policy, service endpoint, snapshots, and newly created service-linked
 role were also deleted. Final exact-prefix inventories returned zero.
 
+### Amazon MSK control and data planes (`kafka`, `kafka-cluster`) — 2026-09-09
+
+Two isolated Provisioned MSK clusters established both permission boundaries. On the IAM-authenticated
+TLS data plane, a full-control fixture role created an exact private topic and produced a unique
+canary. An empty role consumed nothing. A second role with only `kafka-cluster:Connect` on the exact
+cluster, `DescribeTopic` and `ReadData` on the exact topic, plus `DescribeGroup` and `AlterGroup` on
+the exact consumer group consumed that canary. It was independently denied
+`kafka:DescribeClusterV2`. This standard consumer combination is High because it directly reads
+protected stream data, conditional on known brokers/topic/group and network reachability.
+
+The control-plane candidate held only `kafka:UpdateSecurity` on the exact cluster and was denied
+`DescribeClusterV2`. Given the known ARN and current version, it enabled unauthenticated access
+without any `kafka-cluster:*`, KMS, list, or describe permission. IAM auth remained enabled. After
+the cluster returned to `ACTIVE`, AWS returned its unauthenticated TLS bootstrap brokers and a fresh
+client with no AWS credentials consumed the exact protected canary. This is Critical because the
+single control-plane action removed the IAM authentication/authorization boundary for any client
+with a private network path to a topic whose Kafka ACL posture allows anonymous access. Explicit
+Kafka ACLs may still deny that principal, and the update does not make a private cluster
+Internet-reachable.
+
+The first cluster was a calibration run: its security update was rejected before mutation because
+the request unnecessarily resubmitted immutable inter-broker encryption. CloudTrail confirmed that
+exact `BadRequestException`; the corrected request omitted the field and succeeded. Both clusters,
+topics, brokers, roles, inline policies, and newly created Kafka service-linked roles were deleted.
+Exact-prefix cluster and IAM inventories returned zero.
+
+### Amazon Machine Learning (`machinelearning`) — 2026-09-09
+
+The legacy Amazon ML endpoint in us-east-1 rejected `DescribeDataSources`, `DescribeMLModels`,
+`DescribeEvaluations`, and `DescribeBatchPredictions` with its service-level “no longer
+available to new customers” response, even for the lab administrator. This account cannot create
+or access an Amazon ML target.
+
+The remaining API model exposes data sources, models, prediction endpoints, evaluations, and batch
+prediction jobs, but no standalone operation that returns a credential, assumes an existing
+identity, changes a resource policy, or executes code under a selectable privileged role. A
+prediction against attacker-provided input is not access to protected training data. The row is
+blocked on service eligibility rather than promoted from legacy API names; nothing was created or
+changed.
+
+### Amazon Macie (`macie2`) — 2026-09-09
+
+Macie is disabled in both eu-west-1 and us-east-1. `GetMacieSession`, `ListFindings`, and
+`ListClassificationJobs` all returned the explicit not-enabled boundary. Detailed finding and
+sensitive-data-occurrence operations require a real finding, and reveal configuration can add a
+separate role dependency.
+
+Enabling Macie merely to manufacture a target would start billable security discovery and leave
+scan/finding history that cannot be erased in the same session. Configuration, suppression, and
+disable actions are defense evasion rather than direct privilege or protected-data access. The
+sensitive-occurrence hypothesis remains blocked; no session, job, finding, bucket classification,
+IAM role, or setting was created or changed.
+
+### AWS Marketplace Commerce Analytics (`marketplacecommerceanalytics`) — 2026-09-09
+
+Commerce Analytics is a seller-only service whose `GenerateDataSet` operation can deliver
+confidential usage, subscriber, billing, tax, and disbursement datasets to a requested S3 bucket
+through a previously enrolled Marketplace role, then notify SNS. The authorization reference does
+not expose a resource scope or service-specific condition key, making this a strong data
+exfiltration candidate in a seller account.
+
+This lab has no role trusted to Marketplace's documented account `452565589796`, no
+marketplace/commerce destination bucket, no seller-report SNS topic, and no seller dataset.
+Creating a role, bucket, and topic cannot manufacture the missing victim seller enrollment or
+private commerce records. `StartSupportDataExport` has the same target prerequisite. Both remain
+blocked rather than being called with fake destinations that could leave an undeletable
+asynchronous request. No Marketplace, IAM, S3, or SNS state was changed.
+
+### AWS Elemental MediaConvert (`mediaconvert`) — 2026-09-09
+
+An all-region inventory covered the 17 enabled Regions supported by the current MediaConvert SDK
+and found zero customer jobs, queues, job templates, presets, or account resource policies.
+`CreateJob` is the execution and data-movement operation: its request chooses input/output
+locations and a service role, and AWS's current authorization mapping explicitly requires
+`iam:PassRole`. Job templates deliberately do not store the role.
+
+Creating or updating a template, preset, queue, or resource policy therefore cannot by itself make
+MediaConvert read protected S3 input, write an attacker destination, or act with an existing role.
+Read operations expose configuration and paths rather than the media objects. No standalone
+credential, privilege, or protected-data primitive remains, so the prefix is
+`no_new_positive`; nothing was created or changed.
+
+### AWS Elemental MediaStore (`mediastore`) — 2026-09-09
+
+AWS lists MediaStore in full shutdown since 12 November 2025. Current `ListContainers` calls in
+eu-west-1 and us-east-1 return empty inventories, and full-shutdown services are no longer
+available in any capacity. Historical object/container-policy operations have no reachable
+resource. The generic `PutMetricPolicy` match remains an operational Low action, not a privilege
+boundary. The prefix is `no_new_positive`; nothing was created or changed.
+
+### AWS Elemental MediaTailor (`mediatailor`) — 2026-09-09
+
+An all-region inventory across 15 enabled supported Regions found zero playback configurations,
+source locations, or channels. The current public API and service-authorization reference expose
+no operation named `GetSecretsManagerAccessToken`, despite that permission-shaped name appearing
+in some generated policy catalogs.
+
+MediaTailor source locations can be configured to use a Secrets Manager access token, but the
+service—not the API caller—retrieves that separately authorized secret and sends it as an origin
+HTTP header. The workflow needs a secret resource policy, a customer KMS key/grant, and source
+content; it does not return the secret to a caller holding only a MediaTailor permission. Channel
+policies and schedule mutations affect media delivery but do not independently grant AWS
+privilege or protected source access. The prefix is `no_new_positive`; nothing was created or
+changed.
+
+### AWS Application Migration Service (`mgn`) — 2026-09-09
+
+Every one of the 18 enabled Regions supported by the current MGN SDK returned
+`UninitializedAccountException` for source-server, application, wave, and import inventories.
+There is no replication agent, source server, launch configuration/template, staging area,
+application, or wave.
+
+`StartTest`, `StartCutover`, launch-configuration mutation, and injected post-launch actions are
+valuable future hypotheses because an initialized migration can cause EC2 and SSM to act through
+existing MGN roles. A valid privilege result requires a replicated victim source, its derived
+launch template, a useful target instance profile, and proof of resulting code execution or
+credential access. Initializing the service alone creates account-wide roles and staging
+infrastructure but cannot manufacture that victim boundary. The row remains blocked; nothing was
+created or changed.
+
+### Amazon Mobile Analytics (`mobileanalytics`) — 2026-09-09
+
+AWS discontinued Amazon Mobile Analytics on 30 April 2018 and moved its functionality to Amazon
+Pinpoint. The legacy `PutEvents` REST path was redirected to Pinpoint for existing clients, while
+the querying API disappeared. Current Botocore no longer includes a `mobileanalytics` client.
+
+The legacy IAM prefix therefore has no caller-facing read, credential-return, resource-policy, or
+identity operation. Event ingestion is telemetry integrity, not privilege or protected-data
+access, and is now owned by the replacement service. The prefix is `no_new_positive`; nothing was
+created or changed.
+
+### AWS networking observability and control services — 2026-09-09
+
+An all-region inventory across all 18 enabled Regions found zero AWS Network Firewall firewalls,
+policies, rule groups, TLS inspection configurations, analysis reports, or flow operations; zero
+Network Flow Monitor scopes or monitors; zero CloudWatch Network Monitor monitors or probes; and
+zero OAM sinks or links. The Network Flow Monitor endpoint advertised for eu-south-2 was the sole
+unreachable endpoint. Global Network Manager in us-west-2 likewise has zero global/core networks,
+attachments, connect peers, or peerings, and organization service access is disabled.
+
+Several specific hypotheses remain blocked on real victim targets. Network Firewall
+`StartFlowCapture` exposes flow tuples rather than packet contents, while analysis reports can
+disclose observed HTTP host and TLS SNI domains. Network Flow Monitor contributor/insight queries
+can disclose workload and traffic metadata. Network Manager peer, attachment, policy, and routing
+operations could redirect connectivity only in an existing core network. Creating idle synthetic
+resources would not prove access to protected traffic, and enabling organization-wide integration
+would exceed isolated scope.
+
+OAM `CreateLink` is the strongest untested cross-account candidate: a source-account caller may
+export logs, metrics, or traces into a separately controlled monitoring-account sink whose policy
+accepts the source. This lab has no second controlled account or pre-existing sink, and a
+same-account link is not evidence for that boundary. The candidate therefore remains blocked
+rather than promoted from its request schema. No network, firewall, monitor, sink, link, policy,
+route, telemetry source, organization setting, or role was created or changed.
+
+CloudWatch Network Monitor operations expose reachability measurements and endpoint metadata, not
+packet payloads or identities, so no standalone High/Critical primitive was found. Network Manager
+Chat has no current Botocore client and its official action set only manages AWS-console chat
+conversations/messages. Shield network security director likewise has no current client and only
+offers posture finding/resource/insight/remediation reads plus finding-status updates. The latter
+may reveal security context or support defense evasion, but neither prefix returns workload data,
+credentials, or privilege. These three rows are `no_new_positive`.
+
+### Database, legacy, and application-platform batch — 2026-09-09
+
+Oracle Database@AWS rejected onboarding and inventory calls in eu-west-1, eu-central-1, us-east-1,
+and us-west-2 because this account is not enrolled. Database-node control and IAM-role association
+remain target-dependent candidates, but require Marketplace/OCI onboarding, a network, and an
+existing database. All 18 enabled Regions contained zero Aurora clusters, so RDS Data API direct
+SQL cannot be tested against protected data. Redshift Serverless likewise has zero namespaces,
+workgroups, snapshots, or recovery points across all enabled supported Regions. Credential/token,
+SQL, restore, and policy hypotheses for those three prefixes remain blocked, and no empty database
+was created merely to restate its intended access behavior.
+
+The current SDK no longer exposes clients for OpsWorks Stacks, OpsWorks Configuration Management,
+or Private Networks. Their legacy IAM prefixes have no current reachable target, so each is
+`no_new_positive`. Polly has zero lexicons in all supported enabled Regions. One completed
+synthetic task record remains in us-east-1, but its destination bucket is already absent, task
+metadata only contains the dead output URI, and Polly exposes no API to erase completed task
+history. Synthesis processes caller-provided text and depends on explicit S3 write access for
+asynchronous output; no privilege, identity, secret, or protected-input primitive was found.
+
+Private CA Connector for AD has zero connectors and directory registrations in the three checked
+service Regions. Template and group-access-control mutation could become an AD certificate logon
+escalation against an existing managed directory/CA/template/principal, but those targets are
+absent and a disposable Private CA cannot be permanently deleted in-session. Proton has zero
+environments, services, components, repositories, and provisioning-role settings in every enabled
+supported Region. Its component/service update paths remain candidates only where an existing
+deployment reuses a useful provisioning role. Both services remain blocked without manufacturing
+the victim boundary.
+
+Q Business has zero applications in every reachable service Region, so Q Apps has no backing
+instance, app, library item, document, or session. Corpus search/document reads, Q Apps session
+exports, plugin actions, and data-accessor token paths remain concrete protected-content candidates
+but cannot be classified from schemas without a real application and identity context. QuickSight
+is unsubscribed in every enabled supported Region: account/namespace/user calls report no tenant
+and data source/dataset inventories are empty. Subscribing would create a billable persistent
+tenant without victim content. These three services remain blocked and unchanged.
+
+Resource Explorer has six preserved local indexes and default views. Its `Search` operation is a
+valuable resource-discovery fallback, but the result is indexed resource identity/metadata rather
+than workload payload, credential, or assumable role; mutation of indexes/views does not grant
+access to a result. No new High/Critical post-exploitation primitive was found, and none of the
+pre-existing indexes or views was changed.
+
+### Security, messaging, and workflow batch — 2026-09-09
+
+Security Incident Response is inactive and has no case or attachment; Shield Advanced is inactive
+and has no protection or attack; Security Hub is unsubscribed in all 18 enabled Regions; and
+Security Lake rejects inventory because this account is not enabled. The important future targets
+remain case-attachment download, Shield attack/DRT context, Security Hub finding disclosure, and
+especially Security Lake `CreateSubscriber` as a possible cross-account export of an existing
+victim lake. None can be promoted without real protected content and, for Security Lake, a second
+controlled subscriber account. Enabling paid security products would leave retained state and
+cannot manufacture victim data, so no setting was changed.
+
+The current SDK exposes neither SageMaker data science assistant nor Security Agent as a public
+client, and the lab has no Studio assistant session, managed agent, repository, assessment, or
+finding target. Both remain blocked rather than inferred from console/preview permission names.
+Serverless Application Repository has zero account-owned applications in every enabled supported
+Region. Private template retrieval or policy self-grant needs an existing private app, while an
+actual deployment crosses separate CloudFormation/IAM authorization boundaries. No repository
+application or stack was created.
+
+Current SMS/Voice inventories contain zero phone numbers, pools, configuration sets, registrations,
+or legacy voice configurations. Send/configuration operations support spend or messaging abuse but
+do not return protected messages, credentials, or an identity; the prefix is `no_new_positive`.
+End User Messaging Social has zero linked WhatsApp accounts, leaving message-media reads and
+impersonating sends blocked on real account/content identifiers. Snowball has zero jobs; unlock-code
+and manifest access remains a sensitive device-data candidate, but requires an actual job/device
+and physical or network access. No messaging or Snowball resource was created.
+
+IAM Identity Center still has zero instances, so OIDC token endpoints have no registered client,
+grant, user authorization, or target account. AWS Support rejects case inventory because Premium
+Support is absent, leaving real case attachments unavailable. SWF has zero registered domains in
+all enabled supported Regions; activity/decision polling could reveal workflow input and task
+tokens, but its domains can only be deprecated rather than deleted immediately, preventing a
+clean disposable test. These rows remain blocked.
+
+WorkSpaces Thin Client has zero environments/devices across all seven enabled supported Regions;
+its appliance configuration does not expose a workspace credential or session and is
+`no_new_positive`. Timestream for LiveAnalytics rejects this account because only existing
+customers can access it, leaving direct `Select` and scheduled-query role-reuse hypotheses blocked.
+Timestream for InfluxDB has zero instances/clusters and no caller-facing query or password-return
+operation, so its control-plane mutations are `no_new_positive`. Telco Network Builder explicitly
+returns that the deprecated service blocks every API operation. Trusted Advisor is unavailable at
+this support level and its recommendations/lifecycle state expose context rather than privilege or
+workload payload. No resource or setting in this batch was created or changed.
+
+### Authorization, collaboration, and traffic-policy batch — 2026-09-09
+
+Verified Permissions has zero policy stores in all 18 enabled Regions. Policy/schema mutation only
+changes an application's authorization when a real application delegates decisions to that store;
+the service returns decisions rather than AWS credentials. VPC Lattice has zero services, service
+networks, target groups, resource configurations, or gateways in every enabled supported Region.
+Its auth/resource-policy and association operations remain important boundary-changing candidates,
+but need a protected, reachable backend and a successful data-plane proof. Both rows remain blocked
+and no synthetic topology was created.
+
+WAF has zero regional web ACLs, API keys, rule groups, or IP sets. Its mutations provide traffic
+control/defense evasion rather than AWS privilege or backend-data access; decrypted mobile client
+keys are integration material, not backend authorization credentials. WorkSpaces Application
+Manager has no current SDK client, and WorkSpaces Managed Instances has zero instances/volumes;
+its create path crosses explicit IAM/EC2 provisioning boundaries. These three prefixes are
+`no_new_positive`.
+
+Wickr has zero networks. OIDC/user/device mutations require an existing Wickr tenant and identity
+flow before an impersonation claim can be tested. WorkDocs has no active site, organization,
+document, or user target and is closed to new setup, leaving direct document-version download
+blocked on an existing customer. WorkMail lists only a preserved organization tombstone already in
+`Deleted` state; every user, impersonation-role, token, and export inventory rejects it as inactive.
+`ResetPassword`, `AssumeImpersonationRole`, mailbox export, and Message Flow
+`GetRawMessageContent` remain high-value takeover/data candidates against a live organization, but
+creating a paid directory-backed tenant would persist state without victim mail. Nothing was
+created or changed.
+
+X-Ray contains zero trace summaries in the last six hours across every enabled supported Region.
+Trace and insight retrieval can disclose URLs, annotations, errors, and service topology, but a
+synthetic trace cannot be deleted before service retention expires. No retained trace was injected
+solely to prove the intended read API, so the row remains blocked.
+
+### CloudWatch Synthetics (`synthetics`) — 2026-09-09
+
+The lab initially contained zero canaries. A disposable canary was created with an execution role
+that could write to one exact S3 bucket and call `organizations:DescribeOrganization`. The
+candidate role was denied `synthetics:GetCanary`, direct S3 writes, direct Organizations access,
+and direct Lambda code updates; an empty role was denied the dry-run action.
+
+`synthetics:StartCanaryDryRun` alone accepted the request but failed asynchronously. One-action-at-
+a-time CloudTrail calibration found that replacement code is installed through the generated
+Lambda in the caller's authorization context. The exact successful permission chain was
+`synthetics:StartCanaryDryRun`, `lambda:GetFunctionConfiguration`,
+`lambda:PublishLayerVersion`, `lambda:GetLayerVersion` on both the AWS runtime layer and generated
+code layer, `lambda:UpdateFunctionConfiguration`, `lambda:PublishVersion`,
+`lambda:AddPermission`, and `iam:PassRole` on the existing execution role. The constrained final
+run passed and wrote proof containing that execution-role ARN and the protected organization
+identifier. It did not require `lambda:InvokeFunction` in the caller policy because
+`AddPermission` authorized the Synthetics service on the generated function version.
+
+`UpdateCanary` was tested separately. It also accepted replacement code with the Synthetics action
+alone, then rolled back after sequentially exposing the same hidden Lambda preparation checks and
+an `iam:PassRole` check. Consequently, neither Synthetics action is High/Critical alone; the tested
+dry-run combination is a conditional role-reuse escalation when the caller can pass a useful
+existing canary role and modify the generated Lambda resources.
+
+The canary, artifact/proof bucket and objects, generated Lambda function and layer versions, log
+groups, three IAM roles and inline policies, lock, bytecode, and test harness were removed. Exact
+post-cleanup inventories returned zero for every created resource type.
+
+### Developer, collaboration, and legacy application batch — 2026-09-09
+
+Clean Rooms and Clean Rooms ML have zero collaborations, memberships, configured tables, protected
+queries/jobs, model channels, or exports. Their query/model paths remain protected partner-data
+candidates but cannot be assessed without the missing multi-account boundary. App notification and
+chat services likewise have no rules, targets, Slack/Teams/Chime channels, or identities; exporting
+source events or using a configured chat role needs those real integrations. Nothing was connected
+to an external service.
+
+Cloud9 has one preserved root-owned legacy EC2 environment named `eksworkshop`, with managed AWS
+credentials explicitly disabled by its owner. Testing membership/token hypotheses would mutate
+user infrastructure and would not prove inherited AWS privilege under that setting, so it was left
+untouched. CloudFront has zero key-value stores, CloudHSM has zero clusters/backups, and CloudSearch
+rejects this non-existing customer account. Key/value disclosure, HSM backup sharing, and search
+domain data/policy paths remain blocked on real targets.
+
+CodeGuru Security explicitly reports that its feature is no longer available. Profiler and Reviewer
+have zero groups, repository associations, or reviews, leaving application stack/profile and source
+diff reads target-blocked. CodeStar is retired; CodeWhisperer is superseded by Amazon Q Developer;
+and the secure CodeDeploy command prefix is an internal agent channel. The five preserved
+CodeStar/CodeConnections installations were not consumed: `UseConnection` still needs a separately
+authorized consumer service and role, as recorded in the earlier review. No connection changed.
+
+Cognito Sync has no identity-pool dataset target. Comprehend has zero endpoints/flywheels/models and
+Comprehend Medical has zero jobs; real-time APIs process caller-supplied text and asynchronous
+objects stay behind S3/role boundaries. Connect Campaigns has no enabled tenant. Console Mobile,
+Consolidated Billing, Control Catalog, Cost Optimization Hub, CloudShell, and similar preference or
+catalog surfaces do not provide separate credentials or workload access. Customer Verification
+remains blocked because there is no public client or enrolled document/PII target. No resource or
+setting in this batch was created or changed.
+
+### Emerging, orchestration, and billing-service batch — 2026-09-09
+
+The retired Alexa for Business and BugBust services have no current SDK client or reachable target.
+Action Recommendations exposes only recommendation listing, AWS Connector only registration/health,
+and Bedrock Web Search only caller-selected public-web retrieval. ARC Region Switch and Auto Scaling
+Plans have zero plans and provide failover/capacity control rather than data or identity. These are
+`no_new_positive`.
+
+Several new or externally provisioned services have no public client/target but retain worthwhile
+future candidates: Agent Registry resource-policy self-grant plus MCP invocation; DevOps Agent
+access-token, one-time-login, asset-content and resource-search operations; Claude Platform
+AssumeConsole/file/webhook-secret operations; and Mantle file/inference content. Activate may expose
+member contact/credit/cost data, while App Studio deployment and AIOps investigation policies need
+an enabled tenant/group. They remain blocked rather than classified from action names alone.
+
+AppFabric has zero bundles/authorizations/ingestions, AppFlow has zero connector profiles/flows in
+all enabled supported Regions, and App Mesh has zero meshes. Existing SaaS authorization reuse,
+flow redirection, and mesh route/backend redirection are concrete data-exfiltration hypotheses, but
+need a real protected source or Envoy workload and an observable receiving endpoint. No empty
+fixture can prove that victim boundary, and nothing was created. The separate App Mesh Preview
+prefix has no current distinct client or target.
+
+Billing dashboards contain only five AWS-managed defaults; GetDashboard returns widget/query
+configuration rather than evaluated cost values. Pricing Calculator has no accessible workspace,
+Recommended Actions is read-only optimization metadata, and Billing Conductor has zero billing
+groups. Braket has zero jobs/tasks and retains S3 authorization for output objects. None provides a
+standalone credential, workload payload, or AWS identity, so no new High/Critical path was added.
+Connect Cases has zero domains; case/search/audit/related-item reads remain blocked candidates for
+real customer-support PII rather than being inferred from schemas.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

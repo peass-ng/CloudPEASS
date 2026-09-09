@@ -41,6 +41,7 @@ critical_exact:
   - kms:CreateGrant
   - kms:Decrypt
   - kms:PutKeyPolicy
+  - kafka:UpdateSecurity
   - lambda:UpdateFunctionCode
   - lambda:UpdateFunctionConfiguration
   - rds:ModifyDBInstance
@@ -100,6 +101,12 @@ medium_override_exact:
   - events:PutTargets
   # No supported caller-facing API exposes connection credentials directly.
   - events:RetrieveConnectionCredentials
+  # Both operations accept replacement code, but the service performs the
+  # update in the caller's context. Live tests required the generated Lambda
+  # preparation actions and iam:PassRole before attacker code ran under the
+  # existing canary execution role.
+  - synthetics:StartCanaryDryRun
+  - synthetics:UpdateCanary
 
 ## =====================
 ## HIGH RULES

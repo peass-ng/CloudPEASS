@@ -884,6 +884,57 @@ def test_live_validated_memorydb_update_user_password_takeover():
     )
 
 
+def test_live_validated_msk_authentication_bypass_and_topic_read():
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    update_action = "kafka:UpdateSecurity"
+    reader = (
+        "kafka-cluster:Connect",
+        "kafka-cluster:DescribeTopic",
+        "kafka-cluster:ReadData",
+        "kafka-cluster:DescribeGroup",
+        "kafka-cluster:AlterGroup",
+    )
+
+    assert (update_action,) in critical
+    assert classify_permission(
+        "aws", update_action, unknown_default="medium"
+    ) == "critical"
+    assert reader in high
+    assert live_validated_disclosure_documentation[update_action] == (
+        "aws-privilege-escalation/aws-msk-privesc/README.md"
+    )
+    for action in reader:
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-msk-enum.md"
+        )
+
+
+def test_live_validated_synthetics_dry_run_role_reuse_requires_full_chain():
+    combination = (
+        "synthetics:StartCanaryDryRun",
+        "lambda:GetFunctionConfiguration",
+        "lambda:PublishLayerVersion",
+        "lambda:GetLayerVersion",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:PublishVersion",
+        "lambda:AddPermission",
+        "iam:PassRole",
+    )
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    assert combination in critical
+    assert (combination[0],) not in critical
+    assert (combination[0],) not in high
+    assert classify_permission(
+        "aws", combination[0], unknown_default="medium"
+    ) == "medium"
+    assert tested_risk_documentation[combination[0]] == (
+        "aws-privilege-escalation/aws-synthetics-privesc/README.md"
+    )
+
+
 def test_dlm_create_lifecycle_policy_is_not_high_without_passrole():
     action = "dlm:CreateLifecyclePolicy"
     high = {tuple(candidate) for candidate in sensitive_combinations}
