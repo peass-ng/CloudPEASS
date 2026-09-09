@@ -131,10 +131,6 @@ very_sensitive_combinations = [
     ["lightsail:UpdateDomainEntry"],
     ["lightsail:CreateDomainEntry"],
 
-    ["mq:CreateUser"],
-    ["mq:UpdateUser"],
-    ["mq:UpdateBroker"],
-
     ["kafka:UpdateSecurity"],
 
     ["rds:ModifyDBInstance"],
@@ -163,6 +159,8 @@ very_sensitive_combinations = [
     ["s3:PutAccessPointPolicy"],
     ["s3:PutObjectAcl"],
     ["s3:PutObjectVersionAcl"],
+    ["s3tables:PutTableBucketPolicy"],
+    ["s3tables:PutTablePolicy"],
 
     ["sagemaker:CreatePresignedNotebookInstanceUrl"],
     ["sagemaker:UpdateNotebookInstanceLifecycleConfig"],
@@ -189,6 +187,8 @@ very_sensitive_combinations = [
 ]
 
 sensitive_combinations = [
+    ["mq:CreateUser"],
+    ["mq:UpdateUser"],
     ["account:GetContactInformation"],
     ["amplify:GetApp"],
     ["amplify:GetArtifactUrl"],
@@ -392,6 +392,7 @@ sensitive_combinations = [
     ["sns:ListSubscriptionsByTopic"],
     ["sqs:ReceiveMessage"],
     ["scheduler:GetSchedule"],
+    ["servicediscovery:RegisterInstance"],
     ["pipes:DescribePipe"],
     ["profile:SearchProfiles"],
     ["ssm:GetDocument"],
@@ -404,10 +405,14 @@ sensitive_combinations = [
     ["sts:GetFederationToken"],
     ["tax:GetTaxRegistration"],
     ["tax:ListTaxRegistrations"],
+    ["textract:GetDocumentAnalysis"],
+    ["textract:GetDocumentTextDetection"],
+    ["textract:GetExpenseAnalysis"],
     ["transcribe:GetTranscriptionJob"],
     ["transfer:ImportSshPublicKey"],
     ["translate:GetParallelData"],
     ["translate:GetTerminology"],
+    ["vpc-lattice-svcs:Invoke"],
     ["wisdom:GetContent"],
 
     ["apigateway:POST"],
@@ -576,13 +581,22 @@ tested_risk_documentation = {
     "mediapackagev2:PutOriginEndpointPolicy": "aws-services/aws-mediapackage-v2-enum.md",
     "notifications:GetManagedNotificationEvent": "aws-services/aws-user-notifications-enum.md",
     "notifications:ListManagedNotificationEvents": "aws-services/aws-user-notifications-enum.md",
+    "mq:CreateUser": "aws-privilege-escalation/aws-mq-privesc/README.md",
+    "mq:UpdateUser": "aws-privilege-escalation/aws-mq-privesc/README.md",
     "lambda:GetFunction": "aws-privilege-escalation/aws-lambda-privesc/README.md",
     "route53domains:GetDomainDetail": "aws-privilege-escalation/aws-route53-domains-privesc/README.md",
     "s3:PutAccessPointPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
+    "s3tables:PutTableBucketPolicy": "aws-services/aws-s3-tables-and-vectors-enum.md",
+    "s3tables:PutTablePolicy": "aws-services/aws-s3-tables-and-vectors-enum.md",
+    "servicediscovery:RegisterInstance": "aws-services/aws-cloud-map-enum.md",
     "signer:StartSigningJob": "aws-privilege-escalation/aws-lambda-privesc/README.md",
     "sts:GetFederationToken": "aws-privilege-escalation/aws-sts-privesc/README.md",
     "ssm:StartAutomationExecution": "aws-privilege-escalation/aws-ssm-privesc/README.md",
     "synthetics:StartCanaryDryRun": "aws-privilege-escalation/aws-synthetics-privesc/README.md",
+    "textract:GetDocumentAnalysis": "aws-services/aws-textract-enum.md",
+    "textract:GetDocumentTextDetection": "aws-services/aws-textract-enum.md",
+    "textract:GetExpenseAnalysis": "aws-services/aws-textract-enum.md",
+    "vpc-lattice-svcs:Invoke": "aws-services/aws-vpc-lattice-enum.md",
 }
 
 
@@ -784,6 +798,11 @@ live_validated_disclosure_documentation = {
     "mediapackagev2:PutOriginEndpointPolicy": "aws-services/aws-mediapackage-v2-enum.md",
     "notifications:GetManagedNotificationEvent": "aws-services/aws-user-notifications-enum.md",
     "notifications:ListManagedNotificationEvents": "aws-services/aws-user-notifications-enum.md",
+    "mq:CreateUser": "aws-privilege-escalation/aws-mq-privesc/README.md",
+    "mq:UpdateUser": "aws-privilege-escalation/aws-mq-privesc/README.md",
+    "s3tables:PutTableBucketPolicy": "aws-services/aws-s3-tables-and-vectors-enum.md",
+    "s3tables:PutTablePolicy": "aws-services/aws-s3-tables-and-vectors-enum.md",
+    "servicediscovery:RegisterInstance": "aws-services/aws-cloud-map-enum.md",
     "kafka:UpdateSecurity": "aws-privilege-escalation/aws-msk-privesc/README.md",
     "kafka-cluster:Connect": "aws-services/aws-msk-enum.md",
     "kafka-cluster:DescribeTopic": "aws-services/aws-msk-enum.md",
@@ -791,6 +810,10 @@ live_validated_disclosure_documentation = {
     "kafka-cluster:DescribeGroup": "aws-services/aws-msk-enum.md",
     "kafka-cluster:AlterGroup": "aws-services/aws-msk-enum.md",
     "kinesis:GetRecords": "aws-services/aws-kinesis-data-streams-enum.md",
+    "textract:GetDocumentAnalysis": "aws-services/aws-textract-enum.md",
+    "textract:GetDocumentTextDetection": "aws-services/aws-textract-enum.md",
+    "textract:GetExpenseAnalysis": "aws-services/aws-textract-enum.md",
+    "vpc-lattice-svcs:Invoke": "aws-services/aws-vpc-lattice-enum.md",
     "kinesisanalytics:DescribeApplication": "aws-services/aws-managed-flink-enum.md",
     "kinesisvideo:GetClip": "aws-services/aws-kinesis-video-streams-enum.md",
     "kinesisvideo:GetDASHStreamingSessionURL": "aws-services/aws-kinesis-video-streams-enum.md",

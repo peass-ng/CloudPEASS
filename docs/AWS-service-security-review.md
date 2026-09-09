@@ -45,8 +45,10 @@ data, create signed URLs, or cause a more privileged service to act. Record fail
 commit as the evidence-backed implementation, then open a new HackTricks PR for documented true
 positives.
 
-The first completed service is AWS Backup (`backup`). The next service is selected from the P0
-queue after the AWS Backup changes and cleanup verification are published.
+The 2026-09-10 campaign completed the service-by-service pass over all 455 prefixes: 134 are
+`validated`, 159 are `no_new_positive`, 162 are precisely `blocked`, and none remain `queued` or
+`in_progress`. Blocked rows remain explicit future test plans when their missing prerequisite can
+be supplied without violating the cleanup gate.
 
 On 2026-09-08 the tracker was reconciled with
 `live_validated_disclosure_documentation` and its regression suite. Fifty-six previously queued
@@ -2501,6 +2503,421 @@ echo tool and exposes no service role, AWS credential, or autonomous AWS action 
 tool schema, run metadata, and optional S3 export/log locations remain Medium workflow data. Local
 SDK state, browser traces, CloudWatch logs, S3 exports, source/IaC, application logs, and
 CloudTrail/SIEM copies are fallbacks. Both runs and definitions were deleted; inventory is zero.
+
+### Amazon MQ (`mq`) — 2026-09-10
+
+One disposable public ActiveMQ broker validated two exact-resource, one-action attacks. A role with
+only `CreateUser` added a console-enabled member of the `admins` group. A different role with only
+`UpdateUser` reset an existing user's password, enabled console access, and assigned that group.
+An empty role was denied both operations. After an administrator reboot applied the pending
+changes, both new attacker-controlled credentials returned HTTP `200` from `/admin/`; a wrong
+password and the victim's old password returned `401`.
+
+Both are High broker takeover and message-data access paths. Listing is optional when the broker ID,
+console URL, or username is recovered from client configs, connection strings, DNS, source/IaC,
+process environments, logs, or CloudTrail/SIEM copies. `UpdateBroker` was downgraded to Medium: its
+previous LDAP-redirection description is conditional/inferential and was not a reproduced
+standalone takeover. The broker, dedicated security group, users, exact/empty roles, and policies
+were deleted; exact inventories are zero.
+
+### Nimble Studio (`nimble`) — 2026-09-10
+
+The service reached full shutdown on 2024-06-30, and current AWS CLI/Botocore distributions expose
+no client. Historical StudioBuilder state, EC2/FSx resources, NICE DCV/session logs, directory data,
+source/IaC, local SDK caches, and CloudTrail/SIEM archives are fallbacks. No resource was created.
+
+### CloudWatch Observability Admin (`observabilityadmin`) — 2026-09-10
+
+Telemetry-pipeline inventory was empty and enrichment was not enabled. Configuration/model review
+covered rules, S3-table integration, sources/processors/sinks, test records, and organization
+evaluation. Referenced pipeline roles require `iam:PassRole`; CloudWatch Logs sources additionally
+require Logs rule permissions. `TestTelemetryPipeline` processes caller-supplied records. No
+standalone stored-role or arbitrary external-sink primitive was found. IaC, OpenTelemetry configs,
+CloudWatch/S3 exports, agent configs, and CloudTrail/SIEM copies are fallbacks. No resource changed.
+
+### Amazon One Enterprise (`one`) — 2026-09-10
+
+Current AWS CLI and Botocore expose no client and this account has no preview site/device fixture.
+User/site/device reads, activation-QR creation, template/device updates, and reboot actions were
+reviewed. `ListUsers` may expose enrolled identity metadata and `CreateDeviceActivationQrCode` may
+activate a device, but neither is promoted without controlled hardware. Physical-access-controller
+exports, badge directories, device/installer logs, source/IaC, browser history, and CloudTrail/SIEM
+copies are fallbacks. No resource was created.
+
+### OpenSearch Ingestion (`osis`) — 2026-09-10
+
+Pipeline and endpoint inventories were empty. Pipeline configuration, role ARN, resource policies,
+VPC endpoints, lifecycle mutations, and blueprints were reviewed. Pipeline roles require
+`iam:PassRole`; source integration changes also need their source/resource-policy permissions, so
+`UpdatePipeline` alone is not a stored-role escalation. Data Prepper YAML, OpenSearch/CloudWatch/S3
+configs, source/IaC, VPC endpoint DNS, logs, and CloudTrail/SIEM copies are fallbacks. No resource
+was created or changed.
+
+### AWS Outposts (`outposts`) — 2026-09-10
+
+Outpost inventory was empty. Sites/addresses, assets, orders/billing, capacity tasks, and the
+`StartConnection`/`GetConnection` tunnel were reviewed. The tunnel requires real hardware identifiers,
+network interface context, and a client public key, so no action is promoted without an Outpost.
+Purchase records, rack inventories, device labels, BMC/network configs, Direct Connect/VPN data,
+source/IaC, support cases, and CloudTrail/SIEM copies are fallbacks. No resource was created.
+
+### AWS Panorama (`panorama`) — 2026-09-10
+
+Panorama reached full shutdown on 2026-05-31. `ListDevices` and an exact one-action
+`ProvisionDevice` call now return the service-side unknown-operation authorization failure. A
+tagged attempt first demonstrated an extra `TagResource` dependency. The modeled certificate bundle
+was not obtained and is not promoted. Historical IoT identities, manifests/packages, appliance
+storage, camera config, source/IaC, logs, and CloudTrail/SIEM archives are fallbacks. No device was
+created and every test role/policy was deleted.
+
+### AWS Partner Central (`partnercentral`) — 2026-09-10
+
+Selling, Benefits, and Channel models were reviewed across invitations, engagements, opportunities,
+customer/project snapshots, benefits, relationships, and stored job-role ARNs. Live list calls all
+required an active AWS Partner benefit. No cross-account path is promoted without that fixture.
+CRM/APN exports, opportunity sheets, contracts, email, source/IaC, browser history, logs, and
+CloudTrail/SIEM copies are fallbacks. No resource or setting was created.
+
+### Partner Central account management (`partnercentral-account-management`) — 2026-09-10
+
+Partner and connection inventories were empty. Profile/contact data, invitations, visibility,
+verification, training-email association, and update tasks expose business metadata but no
+credential, arbitrary role assumption, or access to another participant's AWS resources. CRM/APN
+exports, contracts, training records, email, source/IaC, browser history, and logs are fallbacks.
+
+### AWS Payment Cryptography (`payment-cryptography`) — 2026-09-10
+
+The only two keys are `DELETE_PENDING` artifacts tagged as separate concurrent tests and were not
+touched. `ExportKey` is a credible exportable-key candidate, but creating a fresh key would leave a
+mandatory delayed-deletion tombstone. No export is promoted without a successful isolated unwrap
+and cryptographic-use test. HSM ceremony records, TR-31/TR-34 archives, payment configs, KCV/alias
+inventories, source/IaC, and CloudTrail/SIEM copies are fallbacks. This review created no resource.
+
+### AWS Payments (`payments`) — 2026-09-10
+
+Financing, payment instruments/preferences, and permission-only `MakePayment` were reviewed. No
+current SDK client is exposed, and exercising these actions would cause real financial/external
+effects rather than a reversible fixture. Billing exports, bank/processor records, invoices,
+funding documents, payer downloads, browser history, and CloudTrail/SIEM copies are fallbacks.
+
+### Private CA Connector for SCEP (`pca-connector-scep`) — 2026-09-10
+
+Connector inventory was empty. `GetChallengePassword` explicitly returns a SCEP enrollment secret,
+but a connector requires a live private CA. This account has none, and a new CA cannot be fully
+destroyed inside AWS's recovery window. The action is therefore not promoted without a retrieved
+password and successful synthetic enrollment. MDM exports, enrollment profiles, setup artifacts,
+CA audit records, source/IaC, client caches, and CloudTrail/SIEM copies are fallbacks.
+
+### Parallel Computing Service (`pcs`) — 2026-09-10
+
+Cluster inventory was empty. Cluster, queue, node-group, launch-template, AMI, scaling, registration,
+and instance-profile paths were reviewed. AWS declares `iam:PassRole` to EC2 as a dependency for
+both node-group create and update, so no standalone stored-role escalation is claimed. Slurm
+configs/accounting, launch templates, EC2/SSM inventory, shared storage, source/IaC, scheduler logs,
+and CloudTrail/SIEM copies are fallbacks. No resource was created.
+
+### Amazon Personalize (`personalize`) — 2026-09-10
+
+Dataset-group inventory was empty. Dataset/schema import/export, trackers, campaigns, filters,
+recommenders, solutions, batch jobs, S3, KMS, and roles were reviewed. These workflows require
+explicit data targets and role/S3 access; no credential-return or standalone execution path was
+found. Source datasets, S3, event caches, analytics exports, model artifacts, source/IaC, and
+CloudTrail/SIEM copies are fallbacks. No resource changed.
+
+### Performance Insights (`pi`) — 2026-09-10
+
+All 18 enabled Regions were checked for RDS and DocumentDB instances/clusters; none exist. SQL
+dimensions/details and analysis reports may contain query text and topology, but expose no database
+credential or AWS execution primitive. Database/slow-query logs, engine views, CloudWatch/APM
+exports, source/IaC, local reports, and CloudTrail/SIEM copies are fallbacks.
+
+### AWS Price List (`pricing`) — 2026-09-10
+
+The API returns public product catalogs and price-list file URLs, not account-owned pricing,
+credentials, workload data, or execution. Public AWS pricing pages and offer files, public query
+endpoints, local cost models, contracts, and calculator exports are permissionless fallbacks.
+
+### Pricing and purchase-order consoles (`pricingplanmanager`, `purchase-orders`) — 2026-09-10
+
+Neither prefix has a current AWS CLI/Botocore client. Pricing-plan subscription approval/purchase
+and purchase-order balance/status administration can create real billing commitments, so those
+mutations were not exercised against the account. Model review found no credential, workload
+payload, execution, or identity-assumption return path. Billing exports, contracts, invoices,
+procurement systems, payer reports, email approvals, browser history, and CloudTrail/SIEM copies are
+fallbacks. No financial record, subscription, plan, approval, role, or setting was changed.
+
+### Amazon Q console and Developer (`q`, `qdeveloper`) — 2026-09-10
+
+These prefixes expose no directly invocable current SDK client. Conversations, OAuth-app controls,
+agent sessions, artifact import/export, and code transformation were reviewed. `q:PassRequest`
+allows Q to act only with the caller's existing permissions and is not an independent expansion.
+Chats, source artifacts, and OAuth configuration remain Medium data. IDE/Q caches, repositories,
+build artifacts, browser history, application logs, source/IaC, and CloudTrail/SIEM are fallbacks.
+No conversation, app, session, artifact, transform, subscription, role, or setting was changed.
+
+### Amazon QLDB (`qldb`) — 2026-09-10
+
+QLDB reached full shutdown on 2025-07-31 and current AWS CLI/Botocore no longer expose its client.
+Historical S3 journal exports, application database copies, source/IaC, local SDK caches, logs, and
+CloudTrail/SIEM archives are fallbacks. No service resource was created or changed.
+
+### AWS Recycle Bin (`rbin`) — 2026-09-10
+
+Retention-rule inventory was empty. Rule administration controls recovery retention but does not
+read retained resources, return credentials, or independently grant restore/use permission. IaC,
+EBS/EC2 and backup inventories, policy exports, browser history, and CloudTrail/SIEM are fallbacks.
+
+### Migration Hub Refactor Spaces (`refactor-spaces`) — 2026-09-10
+
+A disposable environment and an exact one-action `PutResourcePolicy` role reached the service; an
+empty role was denied. Multiple policies reproducing AWS's mandatory RAM environment action and
+condition template were rejected before any grant took effect, so no self-grant is promoted.
+Source/IaC, API Gateway, Transit Gateway/RAM inventory, deployment logs, browser history, and
+CloudTrail/SIEM are identifier fallbacks. The share, role, environment, and managed-network
+resources were deleted.
+
+### Amazon Rekognition (`rekognition`) — 2026-09-10
+
+Collection and Custom Labels project inventories were empty; stream-processor/media-analysis lists
+were unavailable to this account. Faces, users, liveness results, video jobs, datasets, project
+policies, and processors were reviewed. Populated results can be sensitive service data and remain
+target-scoped Medium reads, not untested High claims. Source media/S3, application databases, model
+datasets, client caches, logs, and CloudTrail/SIEM are fallbacks. No resource was created.
+
+### rePost Private (`repostspace`) — 2026-09-10
+
+Space inventory was empty. Channel, accessor, role, invitation, and admin operations manage the
+collaboration workspace without returning an AWS credential or independently accessing workloads.
+Workspace content remains Medium. Exports, email invitations, browser caches, support tickets,
+source/IaC, application logs, and CloudTrail/SIEM are fallbacks. No resource was created.
+
+### Amazon Bio Discovery (`researchstudio`) — 2026-09-10
+
+There is no current SDK client or onboarded workspace. Research/project/dataset workflows expose no
+standalone AWS credential or identity-assumption primitive. Existing scientific datasets may be
+sensitive reads. Lab exports, notebooks, object storage, source/IaC, browser caches, logs, and
+CloudTrail/SIEM are fallbacks. No resource or setting was created.
+
+### AWS Resilience Hub (`resiliencehub`) — 2026-09-10
+
+Application inventory was empty. Templates/resources, assessments, recommendations, resiliency
+policies, imports, and metrics exports expose architecture metadata but no standalone credential or
+execution primitive. IaC, Config/resource inventories, assessment exports, runbooks, browser
+history, and CloudTrail/SIEM are fallbacks. No resource was created.
+
+### Legacy Tag Editor (`resource-explorer`) — 2026-09-10
+
+This legacy prefix has no current caller-facing SDK; Resource Explorer 2 and the Resource Groups
+Tagging API provide current inventory and are reviewed separately. Their searches, service-native
+inventories, AWS Config, tag exports, IaC, and CloudTrail/SIEM are fallbacks. No resource changed.
+
+### RHEL Knowledgebase Portal (`rhelkb`) — 2026-09-10
+
+No current SDK client exists. The prefix gates an AWS-managed Red Hat support/knowledge portal, not
+customer workload APIs, and exposes no AWS credential or execution primitive. Red Hat exports,
+system logs, browser caches, tickets, and local documentation mirrors are fallbacks.
+
+### AWS RoboMaker (`robomaker`) — 2026-09-10
+
+RoboMaker reached full shutdown on 2025-09-10 and current SDKs expose no client. Historical
+simulation artifacts, S3 bundles, ROS workspaces, fleet/device state, IaC, CloudWatch logs, and
+CloudTrail/SIEM archives are fallbacks. No service resource was created or changed.
+
+### Amazon S3 Tables (`s3tables`) — 2026-09-10
+
+Independent roles holding only `PutTablePolicy` or only `PutTableBucketPolicy` self-granted
+`GetTableData`. Each changed a real 792-byte Iceberg metadata-object read from `AccessDenied` to
+success; the table policy targeted one table and the bucket policy targeted `table/*`. An empty
+control remained denied. Both are Critical because the policy setters independently authorize
+reads of table metadata, manifests, and Parquet data objects, with bucket-wide scope for the latter.
+Listing is optional: recover identifiers and warehouse paths from Glue/Athena/Redshift catalogs,
+query-engine configuration, source/IaC, deployment output, logs, browser history, or CloudTrail/SIEM
+copies. Both policies, tables, namespaces, buckets, exact/empty roles, and IAM policies were
+deleted; exact inventories are zero.
+
+### Route 53 recovery and resolver services — 2026-09-10
+
+ARC clusters, control panels, recovery groups, cells, checks, resource sets, and cross-account
+authorizations were empty. Route 53 Profiles were empty. Resolver endpoints, query-log configs,
+firewall groups, and Outpost resolvers were empty; only AWS-managed recursive/threat-list resources
+exist. Failover and DNS mutations can affect availability or routing, but no standalone credential,
+identity, log-object read, or victim-VPC access path was found. IaC, Route 53 health checks, VPC
+DNS/DHCP configuration, DNS/query logs, runbooks, monitoring, browser history, and CloudTrail/SIEM
+copies are fallbacks. No recovery, profile, or customer Resolver resource changed.
+
+The preview `route53globalresolver` model includes access tokens, but publishes no supported
+commercial Region and its modeled endpoint is not resolvable. No token impact is promoted without
+a successful controlled DNS-query test. Global Resolver client configuration, DNS logs, IaC,
+deployment output, browser history, and CloudTrail/SIEM are fallbacks. No preview resource changed.
+
+### RTB Fabric (`rtbfabric`) — 2026-09-10
+
+Requester/responder gateway inventories were empty and the preview model publishes no supported
+commercial Region. Bidstream/configuration data can be sensitive but no credential or AWS identity
+primitive was found. Ad-platform exports, network captures, partner configs, IaC, application logs,
+and CloudTrail/SIEM copies are fallbacks. No resource changed.
+
+### S3 on Outposts and S3 Files (`s3-outposts`, `s3files`) — 2026-09-10
+
+S3 on Outposts endpoints and Outposts-with-S3 inventories were empty. Endpoint lifecycle needs
+physical Outposts context and does not authorize object reads. The `s3files` prefix has no current
+SDK client; underlying file/object access remains governed by S3. S3/access-point inventories,
+mounted filesystem/gateway configs, endpoint ENIs/DNS, IaC, device/client logs, browser downloads,
+and CloudTrail/SIEM are fallbacks. No resource changed.
+
+### SageMaker MLflow and Unified Studio MCP — 2026-09-10
+
+MLflow tracking-server and app inventories were empty. The presigned-URL path remains documented,
+but there is no target to newly isolate its UI/experiment/artifact permissions. Unified Studio MCP
+has no dedicated SDK client or fixture; its modeled permissions gate hosted tool calls rather than
+independently returning credentials or assuming a role. MLflow/S3 exports, Studio and IDE caches,
+DataZone exports, MCP configs/tool logs, source/IaC, browser history, and CloudTrail/SIEM are
+fallbacks. No app, server, MCP session, tool call, role, or setting changed.
+
+### Savings Plans (`savingsplans`) — 2026-09-10
+
+Plan inventory was empty. Purchase, queued-plan deletion, and eligible-plan return cause real
+billing effects and were not exercised; they expose no workload credential or AWS identity. Billing
+and Cost Explorer exports, invoices, contracts, payer reports, browser history, and CloudTrail/SIEM
+are fallbacks. No plan or financial setting changed.
+
+### EventBridge Schemas (`schemas`) — 2026-09-10
+
+Only the AWS-managed `aws.events` registry exists. Customer schemas and generated bindings can be
+sensitive integration metadata but provide no credential or execution primitive. Event archives,
+repositories, registry exports, IaC, local SDK caches, logs, and CloudTrail/SIEM are fallbacks. No
+registry, schema, discoverer, binding, or policy changed.
+
+### AWS Supply Chain (`scn`) — 2026-09-10
+
+Instance inventory was empty. Data-lake datasets/namespaces, integration flows/events, and bill-of-
+material imports contain potentially sensitive business data but expose no standalone credential
+or AWS identity primitive. ERP/EDI and data-lake exports, integration logs, IaC, browser caches, and
+CloudTrail/SIEM are fallbacks. No resource changed.
+
+### AWS Cloud Map (`servicediscovery`) — 2026-09-10
+
+A role holding only `RegisterInstance` on one exact HTTP service overwrote the existing trusted
+instance ID from `127.0.0.1` / `legitimate.internal` to `127.0.0.2` / `attacker.example`.
+`DiscoverInstances` then returned only the attacker-controlled attributes; an empty role was denied.
+This is High because applications that trust Cloud Map can be redirected for traffic and credential
+interception. Listing is optional: recover service and instance IDs from DNS/client configuration,
+ECS definitions, environment variables, source/IaC, deployment output, logs, browser history, or
+CloudTrail/SIEM copies. The instance, service, namespace, exact/empty roles, and policies were
+deleted; the asynchronous namespace deletion operation completed successfully and the namespace
+inventory is empty.
+
+### Amazon Textract (`textract`) — 2026-09-10
+
+Separate exact-action roles holding only `GetDocumentTextDetection`, `GetDocumentAnalysis`, or
+`GetExpenseAnalysis` recovered OCR text from jobs started by the administrator. An empty role was
+denied all three. A known job ID is therefore sufficient across principals; the reader needs no S3,
+start, or list action. These are High protected-document disclosures. Job IDs are available from
+start responses, SNS/SQS completion messages, workflow/application state, logs, browser/client
+caches, and CloudTrail/SIEM copies. A `DetectDocumentText`-only role could not OCR the private S3
+object, so that separate hypothesis was not promoted. The source bucket/object and every test role
+and policy were deleted; Textract has no API to delete its fixed-lifetime completed job records.
+
+### VPC Lattice service invocation (`vpc-lattice-svcs`) — 2026-09-10
+
+Two identically networked EC2 clients called an `AWS_IAM`-authenticated disposable Lattice service
+backed by a healthy canary HTTP target. The instance role holding only `Invoke` received the exact
+canary with HTTP `200`; the empty-role instance received HTTP `403` explicitly for lacking
+`vpc-lattice-svcs:Invoke`. This is High direct private-application access. Listing is optional:
+recover generated/custom DNS names from client/service-discovery config, DNS/Route 53, source/IaC,
+environment variables, deployment output, logs, browser history, or CloudTrail/SIEM copies. Both
+generations of instances were terminated; the service/network/listener/associations/auth policy,
+roles/profiles, security group, local user-data file, and target group were deleted; the exact
+service/network/target inventories are empty.
+
+### AWS Support surfaces (`support-console`, `supportapp`, `supportauthz`, `supportplans`) — 2026-09-10
+
+The account has no Premium Support subscription, so the underlying Support `DescribeCases` API
+returned `SubscriptionRequiredException`. Support App Slack workspace and channel inventories were
+empty. Console case-draft/help actions, Slack OAuth installation flows, support permits, registered
+keys, and commercial plan agreements were reviewed. They can expose support/ticket or billing
+metadata when configured, but no caller credential, customer-role assumption, or independent
+workload access path was reproduced. Email/ticket exports, downloaded attachments, Slack history,
+browser storage, contracts/invoices, source/IaC, and CloudTrail/SIEM copies are fallbacks. No case,
+draft, attachment, Slack installation, OAuth exchange, permit, key, plan, role, or setting changed.
+
+### AWS Sustainability (`sustainability`) — 2026-09-10
+
+Aggregate carbon and water estimation/reporting reads expose business-usage trends and remain
+Medium. They do not return a credential, protected workload payload, execution primitive, or AWS
+identity. Billing/Cost Explorer exports, sustainability reports, invoices, dashboards, browser
+caches, and CloudTrail/SIEM copies are fallbacks. No resource or setting changed.
+
+### AWS Tiros (`tiros`) — 2026-09-10
+
+Reachability-query create/extend/read actions return modeled network paths, explanations, and
+account scope rather than packet/session access or credentials. The lab has no query fixture or
+current SDK client. Reachability Analyzer/Network Access Analyzer results, VPC Flow Logs, Config,
+topology/IaC, diagrams, deployment output, and CloudTrail/SIEM copies are fallbacks. No query,
+network resource, role, or setting changed.
+
+### AWS Transform (`transform`, `transform-custom`) — 2026-09-10
+
+Profile, connector, agent, repository, analysis, campaign, remediation, source, transformation
+package, web-app URL, and artifact/package download URL operations were reviewed. The lab has no
+onboarded connector/repository/profile/artifact or current SDK client. Potential URL-backed content
+is therefore not promoted without an exact-action successful retrieval. Repository/CI exports,
+downloaded artifacts, browser storage, IDE caches, source/IaC, deployment logs, and CloudTrail/SIEM
+copies are fallbacks. No profile, connector, agent, session, repository, analysis, package, role, or
+setting changed.
+
+### AWS Diagnostic Tools (`ts`) — 2026-09-10
+
+The new partner-led-support API exposes tool/execution metadata and `GetExecutionOutput`; AWS says
+outputs are retained for up to 30 days in the destination chosen at execution time. The lab is not
+enrolled and has neither a CLI/Botocore client nor an execution fixture, so no protected-output
+bypass or credential path is claimed. Execution identifiers may still be recovered from start
+responses, destination configuration, partner dashboards, browser storage, application logs,
+source/IaC, and CloudTrail/SIEM copies. No execution, output, destination, role, or setting changed.
+
+### User subscriptions and console customization (`user-subscriptions`, `uxc`) — 2026-09-10
+
+Claims, limits, usage, and entitlements manage commercial user licenses; `uxc` actions change
+account colors and console presentation. These can expose billing/license metadata or alter UI but
+do not return AWS credentials, assume roles, or access protected workloads. Billing/license exports,
+invoices, identity-center assignments, application portals, email, screenshots, browser caches, and
+CloudTrail/SIEM copies are fallbacks. No claim, entitlement, assignment, customization, or setting
+changed.
+
+### AWS Marketplace Vendor Insights (`vendor-insights`) — 2026-09-10
+
+Security profiles, snapshots, and data sources can expose vendor compliance posture and remain
+Medium. There is no entitlement/profile fixture or current SDK client, and no credential or
+workload-access primitive was identified. Marketplace reports, procurement/GRC exports, downloaded
+snapshots, vendor portals, browser caches, email, and CloudTrail/SIEM copies are fallbacks. No
+profile, snapshot, data source, entitlement, role, or setting changed.
+
+### Verified Access and PrivateLink dependency prefixes (`verified-access`, `vpce`) — 2026-09-10
+
+Verified Access instances, groups, endpoints, and trust providers were empty.
+`verified-access:AllowVerifiedAccess` and `vpce:AllowMultiRegion` are permission-only dependencies
+consumed by the owning service workflows, not callable data-plane APIs. Neither independently
+creates a session, enumerates a service, or bypasses endpoint/trust policy. Client/DNS configuration,
+endpoint/ENI inventories, route tables, device/IdP logs, VPC Flow Logs, source/IaC, browser history,
+and CloudTrail/SIEM copies are fallbacks. No endpoint, service, association, policy, or setting
+changed.
+
+### Retired Voice ID, WAF Classic, and WorkLink (`voiceid`, `waf`, `waf-regional`, `worklink`) — 2026-09-10
+
+AWS fully shut down Connect Customer Voice ID on 2026-05-20; `ListDomains` now rejects the lab as
+unavailable. AWS WAF Classic support ended on 2025-09-30 and both global and regional WebACL
+inventories were empty. Amazon WorkLink reached full shutdown on 2021-11-30 and current SDKs expose
+no client. Historical Connect recordings/exports, WAF rules and access logs, WorkLink fleet/device
+configuration, ACM/DNS/IdP logs, source/IaC, browser/mobile artifacts, and CloudTrail/SIEM archives
+are fallbacks. No domain, speaker, ACL, rule, fleet, device, role, or setting changed.
+
+### AWS Well-Architected Tool (`wellarchitected`) — 2026-09-10
+
+Workload and share-invitation inventories were empty. Answers, milestones, reports, lens reviews,
+profiles, and findings can expose architecture/business metadata and remain Medium; agent/assistant
+operations do not independently return credentials or execute in workloads. Downloaded reports,
+diagrams, ticketing/GRC exports, source/IaC, browser storage, application logs, and CloudTrail/SIEM
+copies are fallbacks. No workload, invitation, lens, profile, review, agent, role, or setting changed.
 
 ### AWS KMS (`kms`) — 2026-09-08
 

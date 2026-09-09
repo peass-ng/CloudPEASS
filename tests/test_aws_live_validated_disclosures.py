@@ -116,6 +116,8 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "mediapackagev2:PutOriginEndpointPolicy",
     "notifications:GetManagedNotificationEvent",
     "notifications:ListManagedNotificationEvents",
+    "mq:CreateUser",
+    "mq:UpdateUser",
     "iotwireless:GetWirelessDevice",
     "iotsitewise:BatchGetAssetPropertyAggregates",
     "iotsitewise:BatchGetAssetPropertyValue",
@@ -151,6 +153,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "s3vectors:GetVectors",
     "s3express:CreateSession",
     "scheduler:GetSchedule",
+    "servicediscovery:RegisterInstance",
     "pipes:DescribePipe",
     "profile:SearchProfiles",
     "rum:GetAppMonitorData",
@@ -173,10 +176,14 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "sts:GetFederationToken",
     "tax:GetTaxRegistration",
     "tax:ListTaxRegistrations",
+    "textract:GetDocumentAnalysis",
+    "textract:GetDocumentTextDetection",
+    "textract:GetExpenseAnalysis",
     "transcribe:GetTranscriptionJob",
     "transfer:ImportSshPublicKey",
     "translate:GetParallelData",
     "translate:GetTerminology",
+    "vpc-lattice-svcs:Invoke",
     "wisdom:GetContent",
 }
 
@@ -1599,3 +1606,73 @@ def test_live_validated_user_notifications_health_event_disclosure():
         assert live_validated_disclosure_documentation[action] == (
             "aws-services/aws-user-notifications-enum.md"
         )
+
+
+def test_live_validated_mq_user_takeover():
+    actions = ("mq:CreateUser", "mq:UpdateUser")
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert tested_risk_documentation[action] == (
+            "aws-privilege-escalation/aws-mq-privesc/README.md"
+        )
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-privilege-escalation/aws-mq-privesc/README.md"
+        )
+    assert ("mq:UpdateBroker",) not in high
+    assert classify_permission(
+        "aws", "mq:UpdateBroker", unknown_default="medium"
+    ) == "medium"
+
+
+def test_live_validated_s3_tables_policy_self_grant():
+    actions = ("s3tables:PutTableBucketPolicy", "s3tables:PutTablePolicy")
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    for action in actions:
+        assert (action,) in critical
+        assert classify_permission("aws", action, unknown_default="medium") == "critical"
+        assert tested_risk_documentation[action] == (
+            "aws-services/aws-s3-tables-and-vectors-enum.md"
+        )
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-s3-tables-and-vectors-enum.md"
+        )
+
+
+def test_live_validated_cloud_map_instance_overwrite():
+    action = "servicediscovery:RegisterInstance"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (action,) in high
+    assert classify_permission("aws", action, unknown_default="medium") == "high"
+    assert tested_risk_documentation[action] == "aws-services/aws-cloud-map-enum.md"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-cloud-map-enum.md"
+    )
+
+
+def test_live_validated_textract_completed_job_disclosures():
+    actions = (
+        "textract:GetDocumentAnalysis",
+        "textract:GetDocumentTextDetection",
+        "textract:GetExpenseAnalysis",
+    )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert tested_risk_documentation[action] == "aws-services/aws-textract-enum.md"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-textract-enum.md"
+        )
+
+
+def test_live_validated_vpc_lattice_service_invocation():
+    action = "vpc-lattice-svcs:Invoke"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (action,) in high
+    assert classify_permission("aws", action, unknown_default="medium") == "high"
+    assert tested_risk_documentation[action] == "aws-services/aws-vpc-lattice-enum.md"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-vpc-lattice-enum.md"
+    )

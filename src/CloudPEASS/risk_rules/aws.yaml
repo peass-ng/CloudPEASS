@@ -65,6 +65,8 @@ critical_exact:
   - s3:PutBucketAcl
   - s3:PutObjectAcl
   - s3:PutObjectVersionAcl
+  - s3tables:PutTableBucketPolicy
+  - s3tables:PutTablePolicy
   - sagemaker:CreatePresignedNotebookInstanceUrl
   - sagemaker:UpdateNotebookInstanceLifecycleConfig
   - secretsmanager:GetSecretValue
@@ -303,6 +305,8 @@ high_exact:
   - mediapackagev2:PutOriginEndpointPolicy
   - notifications:GetManagedNotificationEvent
   - notifications:ListManagedNotificationEvents
+  - mq:CreateUser
+  - mq:UpdateUser
   - memorydb:UpdateUser
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
@@ -353,6 +357,7 @@ high_exact:
   - sagemaker:DescribeModel
   - sagemaker:DescribeTrainingJob
   - scheduler:GetSchedule
+  - servicediscovery:RegisterInstance
   - ses:GetSuppressedDestination
   - ses:GetEmailTemplate
   - ses:ListSuppressedDestinations
@@ -372,10 +377,14 @@ high_exact:
   - sts:GetFederationToken
   - tax:GetTaxRegistration
   - tax:ListTaxRegistrations
+  - textract:GetDocumentAnalysis
+  - textract:GetDocumentTextDetection
+  - textract:GetExpenseAnalysis
   - transcribe:GetTranscriptionJob
   - transfer:ImportSshPublicKey
   - translate:GetParallelData
   - translate:GetTerminology
+  - vpc-lattice-svcs:Invoke
   - wisdom:GetContent
 
 ## Evidence-backed corrections for stale upstream/cache entries. These take
@@ -488,6 +497,8 @@ high_override_exact:
   - mediapackagev2:PutOriginEndpointPolicy
   - notifications:GetManagedNotificationEvent
   - notifications:ListManagedNotificationEvents
+  - mq:CreateUser
+  - mq:UpdateUser
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue
@@ -527,6 +538,7 @@ high_override_exact:
   - sagemaker:DescribeModel
   - sagemaker:DescribeTrainingJob
   - scheduler:GetSchedule
+  - servicediscovery:RegisterInstance
   - ses:GetSuppressedDestination
   - ses:GetEmailTemplate
   - ses:ListSuppressedDestinations
@@ -549,10 +561,14 @@ high_override_exact:
   - tax:GetTaxRegistration
   - wisdom:GetContent
   - tax:ListTaxRegistrations
+  - textract:GetDocumentAnalysis
+  - textract:GetDocumentTextDetection
+  - textract:GetExpenseAnalysis
   - transcribe:GetTranscriptionJob
   - transfer:ImportSshPublicKey
   - translate:GetParallelData
   - translate:GetTerminology
+  - vpc-lattice-svcs:Invoke
 
 ## =====================
 ## MEDIUM RULES

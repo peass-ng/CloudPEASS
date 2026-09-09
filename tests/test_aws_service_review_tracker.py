@@ -43,3 +43,12 @@ def test_live_validated_aws_prefixes_are_not_left_queued():
         if status_by_prefix.get(prefix) == "queued"
     )
     assert still_queued == []
+
+
+def test_aws_service_review_campaign_has_no_open_queue():
+    open_rows = [
+        row["iam_prefix"]
+        for row in _rows()
+        if row["status"] in {"queued", "in_progress"}
+    ]
+    assert open_rows == []
