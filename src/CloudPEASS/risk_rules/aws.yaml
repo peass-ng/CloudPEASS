@@ -270,6 +270,7 @@ high_exact:
   - tax:GetTaxRegistration
   - tax:ListTaxRegistrations
   - transcribe:GetTranscriptionJob
+  - transfer:ImportSshPublicKey
   - translate:GetParallelData
   - translate:GetTerminology
   - wisdom:GetContent
@@ -413,6 +414,7 @@ high_override_exact:
   - wisdom:GetContent
   - tax:ListTaxRegistrations
   - transcribe:GetTranscriptionJob
+  - transfer:ImportSshPublicKey
   - translate:GetParallelData
   - translate:GetTerminology
 

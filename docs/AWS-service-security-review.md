@@ -1785,6 +1785,24 @@ standalone credential, workload payload, or AWS identity, so no new High/Critica
 Connect Cases has zero domains; case/search/audit/related-item reads remain blocked candidates for
 real customer-support PII rather than being inferred from schemas.
 
+### AWS Transfer Family (`transfer`) — 2026-09-09
+
+The account initially contained zero Transfer servers. The isolated fixture created a public SFTP
+server, one service-managed user, and an execution role able to read one exact private S3 canary.
+The original SSH key read the canary, while an unrelated key could not authenticate.
+
+An empty role was denied `transfer:ImportSshPublicKey`. A candidate with only that action on the
+exact user ARN imported its public key and then opened a fresh SFTP session as the existing user.
+The session read the exact protected canary through the user's Transfer role even though the
+candidate was denied `transfer:DescribeUser`, direct S3 access, and had no `iam:PassRole`. This is
+High because it impersonates the selected Transfer user and inherits that user's configured S3 or
+EFS scope; it does not disclose reusable AWS role credentials.
+
+The path requires a known server ID and user name, a service-managed user with SFTP enabled,
+network reachability to the endpoint, and useful permissions on the user's configured role. The
+server/user, SSH-key records, bucket/object, three roles and inline policies, local keys, harness,
+lock, and bytecode were deleted. Exact post-cleanup checks returned zero for every fixture resource.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

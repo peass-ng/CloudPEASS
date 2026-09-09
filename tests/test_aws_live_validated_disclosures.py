@@ -152,6 +152,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "tax:GetTaxRegistration",
     "tax:ListTaxRegistrations",
     "transcribe:GetTranscriptionJob",
+    "transfer:ImportSshPublicKey",
     "translate:GetParallelData",
     "translate:GetTerminology",
     "wisdom:GetContent",
@@ -932,6 +933,19 @@ def test_live_validated_synthetics_dry_run_role_reuse_requires_full_chain():
     ) == "medium"
     assert tested_risk_documentation[combination[0]] == (
         "aws-privilege-escalation/aws-synthetics-privesc/README.md"
+    )
+
+
+def test_live_validated_transfer_ssh_key_injection():
+    action = "transfer:ImportSshPublicKey"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    assert (action,) in high
+    assert classify_permission(
+        "aws", action, unknown_default="medium"
+    ) == "high"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-privilege-escalation/aws-transfer-family-privesc/README.md"
     )
 
 
