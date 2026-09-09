@@ -2186,6 +2186,47 @@ removed. Four command records created during MQTT calibration/retries are deacti
 service's `pendingDeletion` state; all active thing, certificate, policy, role, execution, and job
 inventories are empty.
 
+### IoT Device Tester and Device Advisor (`iot-device-tester`, `iotdeviceadvisor`) — 2026-09-09
+
+The current CLI and SDK expose no IoT Device Tester client. Its authorization-catalog actions are
+limited to obtaining public local-test tooling/version information and sending metrics, so they do
+not expose tenant IoT state. Device Advisor was reachable in its four supported Regions, but every
+suite inventory was empty. `GetEndpoint` returned an account service endpoint rather than a secret.
+A role-reuse or report-disclosure test therefore needs an existing suite, device, permission role,
+and completed run and remains blocked. Public IDT downloads, local IDT/device artifacts, source and
+IaC, CI outputs, owned-device packet capture, and CloudWatch/CloudTrail exports are useful fallbacks.
+No suite, run, report, device, role, or setting was created or changed.
+
+### AWS IQ (`iq`, `iq-permission`) — 2026-09-09
+
+AWS IQ and its engagement-specific permission workflow reached end of support in May 2026. There is
+no current control plane in which to create/enumerate engagements or reproduce a role assumption.
+The historical `AssumePermissionRole` behavior depended on a role deliberately attached to an IQ
+engagement and is not a current new escalation. Archived messages/contracts, billing exports,
+email, IAM/CloudTrail records, credential caches, and SIEM copies are the non-service fallbacks. No
+request, proposal, engagement, role, session, payment, or setting was created or changed.
+
+### Amazon Interactive Video Service (`ivs`) — 2026-09-09
+
+An isolated private BASIC channel produced four independently validated High single-permission
+paths. Roles holding only `ivs:GetStreamKey` or `ivs:BatchGetStreamKey` on its stream-key ARN
+returned the complete secret; the recovered key successfully started an RTMPS broadcast. After an
+administrator deleted that key, `ivs:CreateStreamKey` alone created a replacement secret and that
+key also started a confirmed live broadcast. An empty role was denied.
+
+The channel's anonymous playback URL returned HTTP 403 while playback authorization was enabled.
+`ivs:UpdateChannel` alone could not modify the channel while it was live, as documented. After the
+stream stopped, the same role set `authorized=false`; on the next broadcast, the unchanged URL
+returned HTTP 200 without a playback token. This is a conditional playback-access downgrade, not
+unconditional account privilege escalation. `ListStreamKeys` exposes identifiers but never key
+values, while `StopStream` and `DeleteStreamKey` are availability impacts, so those remain Medium.
+
+No IVS list permission was needed once an ARN was known. Source/IaC, OBS and encoder profiles,
+deployment secrets, process environments, application/log output, public pages and DNS, and
+CloudTrail/SIEM copies are useful discovery fallbacks. All channels, keys, broadcasts, exact test
+roles/policies, ffmpeg processes, and local material were removed; IVS and test-role inventories
+are empty.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

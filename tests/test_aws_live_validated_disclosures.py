@@ -101,6 +101,10 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "iotjobsdata:DescribeJobExecution",
     "iotjobsdata:StartNextPendingJobExecution",
     "iotjobsdata:UpdateJobExecution",
+    "ivs:BatchGetStreamKey",
+    "ivs:CreateStreamKey",
+    "ivs:GetStreamKey",
+    "ivs:UpdateChannel",
     "iotwireless:GetWirelessDevice",
     "iotsitewise:BatchGetAssetPropertyAggregates",
     "iotsitewise:BatchGetAssetPropertyValue",
@@ -1450,3 +1454,32 @@ def test_live_validated_iot_jobs_documents_and_remote_command_execution():
     assert classify_permission(
         "aws", "iotjobsdata:GetPendingJobExecutions", unknown_default="medium"
     ) == "medium"
+
+
+def test_live_validated_ivs_stream_key_and_playback_authorization_attacks():
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    actions = (
+        "ivs:BatchGetStreamKey",
+        "ivs:CreateStreamKey",
+        "ivs:GetStreamKey",
+        "ivs:UpdateChannel",
+    )
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-ivs-enum.md"
+        )
+
+    for action in ("ivs:CreateStreamKey", "ivs:UpdateChannel"):
+        assert tested_risk_documentation[action] == "aws-services/aws-ivs-enum.md"
+
+    # Listing exposes identifiers but never the stream-key value. Stopping a
+    # stream and deleting its key are availability impacts, not secret access.
+    for action in (
+        "ivs:ListStreamKeys",
+        "ivs:StopStream",
+        "ivs:DeleteStreamKey",
+    ):
+        assert (action,) not in high
+        assert classify_permission("aws", action, unknown_default="medium") == "medium"

@@ -156,6 +156,9 @@ medium_override_exact:
   # Returns queued/in-progress IoT job execution metadata but never the job
   # document. Live validation kept it below the three document-returning APIs.
   - iotjobsdata:GetPendingJobExecutions
+  # Returns stream-key identifiers but never the secret value. It is useful
+  # reconnaissance for the separately High Get/BatchGet actions.
+  - ivs:ListStreamKeys
 
 ## =====================
 ## HIGH RULES
@@ -277,6 +280,10 @@ high_exact:
   - iotjobsdata:DescribeJobExecution
   - iotjobsdata:StartNextPendingJobExecution
   - iotjobsdata:UpdateJobExecution
+  - ivs:BatchGetStreamKey
+  - ivs:CreateStreamKey
+  - ivs:GetStreamKey
+  - ivs:UpdateChannel
   - memorydb:UpdateUser
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
@@ -447,6 +454,10 @@ high_override_exact:
   - iotjobsdata:DescribeJobExecution
   - iotjobsdata:StartNextPendingJobExecution
   - iotjobsdata:UpdateJobExecution
+  - ivs:BatchGetStreamKey
+  - ivs:CreateStreamKey
+  - ivs:GetStreamKey
+  - ivs:UpdateChannel
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue
