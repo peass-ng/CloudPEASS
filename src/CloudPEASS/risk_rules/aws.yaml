@@ -210,6 +210,8 @@ high_exact:
   - iot:GetThingShadow
   - iot:Publish
   - memorydb:UpdateUser
+  - mediapackage:RotateChannelCredentials
+  - mediapackage:RotateIngestEndpointCredentials
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue
@@ -380,6 +382,8 @@ high_override_exact:
   - kinesisvideo:GetMediaForFragmentList
   - medical-imaging:GetImageFrame
   - medical-imaging:GetImageSetMetadata
+  - mediapackage:RotateChannelCredentials
+  - mediapackage:RotateIngestEndpointCredentials
   - omics:GetReadSet
   - invoicing:BatchGetInvoiceProfile
   - invoicing:GetInvoicePDF

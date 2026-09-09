@@ -968,6 +968,25 @@ def test_live_validated_lightsail_credential_and_bucket_takeovers():
         )
 
 
+def test_live_validated_mediapackage_ingest_credential_takeovers():
+    actions = (
+        "mediapackage:RotateChannelCredentials",
+        "mediapackage:RotateIngestEndpointCredentials",
+    )
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    for action in actions:
+        assert (action,) not in critical
+        assert (action,) in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-privilege-escalation/aws-mediapackage-privesc/README.md"
+        )
+
+
 def test_lightsail_network_and_service_role_toggles_are_not_critical_alone():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     for action in (

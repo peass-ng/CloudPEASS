@@ -125,9 +125,6 @@ very_sensitive_combinations = [
     ["lightsail:UpdateDomainEntry"],
     ["lightsail:CreateDomainEntry"],
 
-    ["mediapackage:RotateChannelCredentials"],
-    ["mediapackage:RotateIngestEndpointCredentials"],
-
     ["mq:CreateUser"],
     ["mq:UpdateUser"],
     ["mq:UpdateBroker"],
@@ -281,6 +278,8 @@ sensitive_combinations = [
     ["iot:GetThingShadow"],
     ["iot:Publish"],
     ["memorydb:UpdateUser"],
+    ["mediapackage:RotateChannelCredentials"],
+    ["mediapackage:RotateIngestEndpointCredentials"],
     ["iot:Connect", "iot:Subscribe", "iot:Receive"],
     [
         "kafka-cluster:Connect",
@@ -631,6 +630,8 @@ live_validated_disclosure_documentation = {
     "es:UpdateDomainConfig": "aws-services/aws-opensearch-enum.md",
     "iam:CreateAccessKey": "aws-privilege-escalation/aws-iam-privesc/README.md",
     "memorydb:UpdateUser": "aws-services/aws-memorydb-enum.md",
+    "mediapackage:RotateChannelCredentials": "aws-privilege-escalation/aws-mediapackage-privesc/README.md",
+    "mediapackage:RotateIngestEndpointCredentials": "aws-privilege-escalation/aws-mediapackage-privesc/README.md",
     "execute-api:Invoke": "aws-services/aws-api-gateway-enum.md",
     "glue:GetConnection": "aws-post-exploitation/aws-glue-post-exploitation/README.md",
     "glue:GetJob": "aws-post-exploitation/aws-glue-post-exploitation/README.md",
