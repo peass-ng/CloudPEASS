@@ -533,6 +533,17 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             with self.subTest(permission=permission):
                 self.assertEqual(self.classify(permission), "medium")
 
+    def test_inference_service_scoped_use_and_availability_stay_medium(self) -> None:
+        for permission in (
+            "Microsoft.InferenceService/inferenceAccounts/regenerateKeys/action",
+            "Microsoft.InferenceService/inferenceAccounts/invoke/semanticReranker/action",
+            "Microsoft.InferenceService/inferenceAccounts/invoke/embedding/action",
+            "Microsoft.InferenceService/inferenceAccounts/write",
+            "Microsoft.InferenceService/inferenceAccounts/delete",
+        ):
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), "medium")
+
     def test_unusable_azure_ml_notebook_credentials_stay_medium(self) -> None:
         for permission in (
             "Microsoft.MachineLearningServices/workspaces/listNotebookAccessToken/read",

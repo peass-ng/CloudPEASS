@@ -666,6 +666,16 @@ _AZURE_MEDIUM_EXACT = frozenset(
         "microsoft.cognitiveservices/accounts/aiservices/responses/read",
         "microsoft.cognitiveservices/accounts/openai/stored-completions/read",
         "microsoft.cognitiveservices/accounts/openai/stored-completions/action",
+        # Exact-role Inference Service tests bounded these to scoped service
+        # use or availability/configuration impact. Key rotation changed only
+        # the primary key and returned no replacement; direct reranking spent
+        # only the selected account's inference quota. Embedding needed account
+        # read but had no provisioned backend on the deployable reranker fixture.
+        "microsoft.inferenceservice/inferenceaccounts/regeneratekeys/action",
+        "microsoft.inferenceservice/inferenceaccounts/invoke/semanticreranker/action",
+        "microsoft.inferenceservice/inferenceaccounts/invoke/embedding/action",
+        "microsoft.inferenceservice/inferenceaccounts/write",
+        "microsoft.inferenceservice/inferenceaccounts/delete",
     }
 )
 
