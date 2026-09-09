@@ -2104,6 +2104,53 @@ role, or device order was created. For both legacy surfaces, permissionless fall
 exports, source-control/IaC, CloudTrail/SIEM history, emails and shipping records, S3 source/output
 objects already accessible to the caller, and application caches.
 
+### Inspector auxiliary surfaces (`inspector`, `inspector-scan`, `inspector2-telemetry`) — 2026-09-09
+
+Inspector Classic passed its May 20, 2026 end-of-support date, and its `us-east-1` and `us-west-2`
+endpoints timed out. AWS states that Classic resources are no longer accessible after that date;
+the current Inspector2 control plane is tracked separately.
+
+The single `inspector-scan:ScanSbom` operation returned seven known vulnerabilities for a supplied
+CycloneDX 1.5 Log4j 2.14.1 component, while the identical unsigned call failed with
+`MissingAuthenticationToken`. It analyzes caller input rather than reading an account's stored
+SBOM or findings, so it remains a billable Medium computation and is not sensitive-data access.
+Trivy, Grype, OSV-Scanner, vendor advisories, and local vulnerability databases provide
+permissionless alternatives.
+
+The `inspector2-telemetry` catalog contains only session/heartbeat/telemetry write actions and has
+no public SDK client or read/list surface. A scan-poisoning hypothesis requires an already active
+agent's internal session and observed downstream finding impact; action names alone are not proof.
+Owned-host agent state/logs, packet capture, CloudTrail/SIEM copies, and Inspector2 findings are
+fallback evidence sources. No Inspector resource, role, report, finding, or setting was changed.
+
+### AWS Interconnect (`interconnect`) — 2026-09-09
+
+All eight supported multicloud Regions returned no existing connection. A disposable Direct
+Connect gateway successfully appeared in `ListAttachPoints`. An empty role was denied
+`CreateConnection`; a role with only `interconnect:CreateConnection` passed the IAM boundary for
+that gateway without any `directconnect:*` permission, then AWS rejected the requested free
+500 Mbps GCP connection because the account's free-trial billing information could not be verified.
+
+This leaves a valuable but unvalidated hypothesis: a caller who knows a Direct Connect gateway ID
+may be able to request a connection to an attacker-controlled GCP, Azure, or OCI account, receive
+the activation key, and activate it provider-side without Direct Connect permissions. Actual impact
+still requires provider activation plus pre-existing gateway associations/routes, and must be
+proved by packets traversing the boundary before assigning High/Critical severity. No connection
+was created; the gateway reached deletion, both test roles/policies were deleted, connection
+inventory is empty, and no provider network or route was created. DNS/BGP data, Direct Connect
+inventories exposed elsewhere, IaC, CloudTrail/SIEM copies, and network diagrams remain useful
+permissionless discovery fallbacks.
+
+### CloudWatch Internet Monitor (`internetmonitor`) — 2026-09-09
+
+`ListMonitors` returned empty in all 18 reachable current endpoint Regions. The API observes health,
+performance, client geography/ASN, and traffic-volume signals or changes the resource set being
+observed; it does not reroute traffic or execute workload code. Existing query results can be useful
+operational reconnaissance but do not contain packet payloads or credentials, so no High/Critical
+path is promoted. Public AWS health data, DNS/BGP/RIPE sources, browser telemetry, CloudWatch
+exports, application logs, and IaC are permissionless discovery alternatives. No monitor, query,
+role, log, or setting was changed.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The
