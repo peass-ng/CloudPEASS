@@ -214,6 +214,9 @@ sensitive_combinations = [
     # bearer token that invoked a deployed scoring service after an
     # unauthenticated request was rejected.
     ["Microsoft.MachineLearningServices/workspaces/onlineEndpoints/token/action"],
+    # Live validated with an exact role: serverless endpoint keys were
+    # returned without resource read and authenticated a model-inference call.
+    ["Microsoft.MachineLearningServices/workspaces/serverlessEndpoints/listKeys/action"],
     ["Microsoft.ContainerRegistry/registries/tasks/write"],
     ["Microsoft.ContainerRegistry/registries/taskruns/write"],
     ["Microsoft.ContainerRegistry/registries/scheduleRun/action"],

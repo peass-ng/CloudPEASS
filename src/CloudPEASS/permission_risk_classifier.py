@@ -438,6 +438,10 @@ _AZURE_HIGH_EXACT = frozenset(
         # and used it to invoke a deployed scoring service. Impact depends on
         # the model behind the selected endpoint, so keep this High.
         "microsoft.machinelearningservices/workspaces/onlineendpoints/token/action",
+        # Exact-role live validation recovered both serverless endpoint keys;
+        # one key authenticated a protected chat-completion request. The
+        # endpoint's model and exposed data determine the final impact.
+        "microsoft.machinelearningservices/workspaces/serverlessendpoints/listkeys/action",
         # These live-tested credentials or signed callbacks reached only the
         # configured API, bot, map service, artifact, or workflow. Their exact
         # downstream impact is configuration-dependent, so keep them High.
