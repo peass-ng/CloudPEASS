@@ -105,6 +105,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "ivs:CreateStreamKey",
     "ivs:GetStreamKey",
     "ivs:UpdateChannel",
+    "lakeformation:PutDataLakeSettings",
     "iotwireless:GetWirelessDevice",
     "iotsitewise:BatchGetAssetPropertyAggregates",
     "iotsitewise:BatchGetAssetPropertyValue",
@@ -1483,3 +1484,16 @@ def test_live_validated_ivs_stream_key_and_playback_authorization_attacks():
     ):
         assert (action,) not in high
         assert classify_permission("aws", action, unknown_default="medium") == "medium"
+
+
+def test_live_validated_lake_formation_self_admin_assignment():
+    action = "lakeformation:PutDataLakeSettings"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (action,) in high
+    assert classify_permission("aws", action, unknown_default="medium") == "high"
+    assert tested_risk_documentation[action] == (
+        "aws-services/aws-lake-formation-enum.md"
+    )
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-lake-formation-enum.md"
+    )

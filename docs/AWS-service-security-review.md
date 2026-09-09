@@ -2227,6 +2227,45 @@ CloudTrail/SIEM copies are useful discovery fallbacks. All channels, keys, broad
 roles/policies, ffmpeg processes, and local material were removed; IVS and test-role inventories
 are empty.
 
+### MSK Connect (`kafkaconnect`) — 2026-09-09
+
+Connector, custom-plugin, and worker-configuration inventories were empty in every reachable
+supported Region. `UpdateConnector` can replace connector configuration without receiving a new
+service-execution-role ARN, so retained-role data movement through a compatible source/sink plugin
+is plausible. A functioning Kafka network, existing connector/plugin, privileged connector role,
+and observable external system are required to prove it; action metadata alone is not a finding.
+Source/IaC, Kafka Connect REST/config backups, plugin archives, worker logs, broker metadata, and
+CloudTrail/SIEM copies are fallbacks. No connector, plugin, worker configuration, cluster, network,
+role, or setting was created or changed.
+
+### Amazon Kendra (`kendra`) — 2026-09-09
+
+All ten supported Regions returned no index. The API documentation shows that `Query` and
+`Retrieve` return indexed text and accept caller-supplied `UserContext`; notably, omitting context
+returns all documents. A disposable ACL test could not be manufactured because `CreateIndex`
+returned `NotAuthorizedException`: Kendra no longer accepts new customers. The hypothesis remains
+blocked rather than promoted without live evidence. Public pages/search caches, source and IaC,
+data-source repositories, browser history, application logs, CloudTrail/SIEM copies, and local RAG
+caches are fallback discovery paths. The temporary service role was deleted and index, test-role,
+and log inventories are empty.
+
+### AWS Lake Formation (`lakeformation`) — 2026-09-09
+
+An empty role was denied `PutDataLakeSettings`. A second role whose only permission was
+`lakeformation:PutDataLakeSettings` on `Resource: *` successfully submitted the existing settings
+plus its own ARN and became the fourth Lake Formation data-lake administrator. This confirms a High
+privilege-escalation primitive across Lake Formation's administrator boundary. It is not labeled
+unconditional Critical: AWS documents that even a data-lake administrator still needs the IAM
+grant/revoke actions to exercise those APIs, and administrators do not automatically receive
+`SELECT` on pre-existing data.
+
+Existing legitimate SageMaker/DataZone administrator ARNs were never assumed or used to access
+data. Cleanup restored the same three-member administrator set and every other setting and removed
+both roles/policies; AWS only returned the original administrator list in a different order. The
+disposable ARN is absent. Without IAM enumeration, useful fallbacks are Glue/Athena configuration,
+Terraform/CloudFormation, application query code, local credential/config caches, S3 path names,
+CloudTrail/SIEM exports, and analytics-engine logs.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

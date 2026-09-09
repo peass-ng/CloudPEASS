@@ -284,6 +284,7 @@ high_exact:
   - ivs:CreateStreamKey
   - ivs:GetStreamKey
   - ivs:UpdateChannel
+  - lakeformation:PutDataLakeSettings
   - memorydb:UpdateUser
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
@@ -458,6 +459,7 @@ high_override_exact:
   - ivs:CreateStreamKey
   - ivs:GetStreamKey
   - ivs:UpdateChannel
+  - lakeformation:PutDataLakeSettings
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue
