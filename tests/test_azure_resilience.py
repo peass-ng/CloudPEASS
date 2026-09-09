@@ -403,6 +403,35 @@ def test_synapse_admin_writes_are_validated_critical_singletons():
         assert not categories["high"]
 
 
+def test_deployment_script_write_requires_validated_execution_combination():
+    write = "Microsoft.Resources/deploymentScripts/write"
+    combination = [
+        write,
+        "Microsoft.ManagedIdentity/userAssignedIdentities/assign/action",
+        "Microsoft.ContainerInstance/containerGroups/read",
+        "Microsoft.ContainerInstance/containerGroups/write",
+        "Microsoft.Storage/storageAccounts/read",
+        "Microsoft.Storage/storageAccounts/write",
+        "Microsoft.Storage/storageAccounts/listKeys/action",
+    ]
+    assert [write] not in sensitive_combinations
+    assert combination in very_sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    singleton = peas.analyze_group({write}, [])["permissions_cat"]
+    assert singleton["medium"] == [write]
+    assert not singleton["high"]
+    assert not singleton["critical"]
+
+    combined = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(combination).issubset(combined["critical"])
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",

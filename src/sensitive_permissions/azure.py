@@ -58,6 +58,20 @@ very_sensitive_combinations = [
     ["Microsoft.Synapse/workspaces/administrators/write"],
     ["Microsoft.Synapse/workspaces/sqlAdministrators/write"],
 
+    # Live exact-role validation replaced an OnSuccess deployment script and
+    # exfiltrated a Key Vault secret as its pre-attached UAMI. The write action
+    # alone was denied even when the identity was already attached. Retained
+    # support containers additionally require containerGroups/delete.
+    [
+        "Microsoft.Resources/deploymentScripts/write",
+        "Microsoft.ManagedIdentity/userAssignedIdentities/assign/action",
+        "Microsoft.ContainerInstance/containerGroups/read",
+        "Microsoft.ContainerInstance/containerGroups/write",
+        "Microsoft.Storage/storageAccounts/read",
+        "Microsoft.Storage/storageAccounts/write",
+        "Microsoft.Storage/storageAccounts/listKeys/action",
+    ],
+
     ["Microsoft.ContainerRegistry/registries/listCredentials/action"],
     ["Microsoft.ContainerRegistry/registries/regenerateCredential/action"],
     ["Microsoft.ContainerRegistry/registries/generateCredentials/action"],
@@ -323,7 +337,6 @@ sensitive_combinations = [
     ["Microsoft.HybridContainerService/provisionedClusters/listClusterUserCredential/action"],
     ["Microsoft.Compute/virtualMachines/login/action"],
     ["Microsoft.Compute/galleries/applications/versions/write"],
-    ["Microsoft.Resources/deploymentScripts/write"],
     ["Microsoft.Logic/workflows/triggers/listCallbackUrl/action"],
     ["Microsoft.Logic/workflows/versions/triggers/listCallbackUrl/action"],
     ["Microsoft.Logic/workflows/triggers/run/action"],

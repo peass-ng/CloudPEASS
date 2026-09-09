@@ -154,7 +154,9 @@ class AzureWildcardClassificationTest(unittest.TestCase):
         self.assertEqual(self.classify("Microsoft.Authorization/roleDefinitions/*"), "high")
         self.assertEqual(self.classify("Microsoft.ManagedIdentity/userAssignedIdentities/*"), "critical")
         self.assertEqual(self.classify("Microsoft.Storage/storageAccounts/*"), "critical")
-        self.assertEqual(self.classify("Microsoft.Resources/deploymentScripts/*"), "high")
+        # The service wildcard still lacks the independently required UAMI,
+        # ACI, and Storage support actions, so it cannot execute by itself.
+        self.assertEqual(self.classify("Microsoft.Resources/deploymentScripts/*"), "medium")
 
     def test_cross_provider_wildcard_verbs_are_not_treated_as_literal_operations(self) -> None:
         self.assertEqual(self.classify("*/read"), "medium")
@@ -413,6 +415,13 @@ class AzureWildcardClassificationTest(unittest.TestCase):
         self.assertEqual(
             self.classify("Microsoft.ManagedIdentity/userAssignedIdentities/assign/action"),
             "high",
+        )
+        # Live exact-role tests proved that write alone cannot even update an
+        # existing UAMI-bound script: ARM required the identity assign action,
+        # followed by exact ACI and Storage support-resource permissions.
+        self.assertEqual(
+            self.classify("Microsoft.Resources/deploymentScripts/write"),
+            "medium",
         )
         self.assertEqual(
             self.classify("Microsoft.Authorization/roleDefinitions/write"), "high"
@@ -870,8 +879,19 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "mediaconnect:AddFlowOutputs": "high",
             "mediaconnect:DescribeFlowSourceThumbnail": "high",
             "mediaconnect:UpdateFlowOutput": "high",
+            "medialive:DescribeThumbnails": "high",
+            "medialive:UpdateChannel": "high",
+            "mediapackagev2:PutChannelPolicy": "high",
+            "mediapackagev2:PutOriginEndpointPolicy": "high",
+            "mq:CreateUser": "high",
+            "mq:UpdateUser": "high",
+            "notifications:GetManagedNotificationEvent": "high",
+            "notifications:ListManagedNotificationEvents": "high",
             "route53domains:GetDomainDetail": "high",
             "s3:PutAccessPointPolicy": "critical",
+            "s3tables:PutTableBucketPolicy": "critical",
+            "s3tables:PutTablePolicy": "critical",
+            "servicediscovery:RegisterInstance": "high",
             "signer:StartSigningJob": "high",
             "ssm:StartAutomationExecution": "critical",
             "sts:GetFederationToken": "high",

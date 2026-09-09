@@ -590,7 +590,6 @@ _AZURE_HIGH_EXACT = frozenset(
         "microsoft.compute/restorepointcollections/restorepoints/diskrestorepoints/begingetaccess/action",
         "microsoft.managedidentity/userassignedidentities/assign/action",
         "microsoft.app/containerapps/getauthtoken/action",
-        "microsoft.resources/deploymentscripts/write",
         "microsoft.web/staticsites/createinvitation/action",
         # Live tests created attacker-chosen function-scoped keys on both a
         # production Function App and a deployment slot. Requests without a
