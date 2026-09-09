@@ -2151,6 +2151,41 @@ path is promoted. Public AWS health data, DNS/BGP/RIPE sources, browser telemetr
 exports, application logs, and IaC are permissionless discovery alternatives. No monitor, query,
 role, log, or setting was changed.
 
+### AWS IoT commands and Jobs DataPlane (`iot`, `iotjobsdata`) — 2026-09-09
+
+A disposable IoT job targeted three things and stored a private URL/token canary in its inline job
+document. Three STS sessions were each scoped to one thing ARN and held exactly one data-plane
+action:
+
+- `iotjobsdata:DescribeJobExecution` with `jobId=$next` returned the queued execution and complete
+  job document without knowing the job ID.
+- `iotjobsdata:StartNextPendingJobExecution` likewise returned the document and changed the next
+  execution from `QUEUED` to `IN_PROGRESS` without knowing the job ID.
+- `iotjobsdata:UpdateJobExecution`, given the job ID, changed a queued execution to `IN_PROGRESS`
+  and returned the document when both include flags were requested.
+
+An empty role was denied the equivalent describe call. `GetPendingJobExecutions` returned queued
+execution metadata but no job document, so it remains Medium rather than High. The three
+document-returning actions are High where production documents contain firmware URLs, bootstrap
+tokens, configuration, or operational instructions. The two write actions can also lie about or
+terminate device-maintenance state, depending on the requested transition.
+
+A second isolated fixture tested current IoT Device Management Commands. A role with only
+`iot:StartCommandExecution` on the exact command and thing ARNs started the execution; a
+certificate-authenticated device simulator subscribed to the exact reserved request topic and
+received the stored payload canary. An empty role was denied. This is High conditional remote-device
+action: it invokes an existing command but neither changes its stored payload nor guarantees how a
+device processes it, so it is not labeled unconditional code execution.
+
+No list permission was required for either path once identifiers were known. Useful discovery
+fallbacks include device firmware and local agent state, configuration/certificate filenames,
+source code and IaC, S3-hosted job documents, deployment pipelines, application logs, MQTT packet
+captures from an owned endpoint, and CloudTrail/SIEM copies. The Jobs fixture, executions, things,
+certificates/private keys, IoT policies, roles/policies, temporary SDK, and local material were
+removed. Four command records created during MQTT calibration/retries are deactivated and in the
+service's `pendingDeletion` state; all active thing, certificate, policy, role, execution, and job
+inventories are empty.
+
 ### AWS KMS (`kms`) — 2026-09-08
 
 The isolated `kms:CreateGrant` self-grant test is blocked by the mandatory cleanup requirement. The

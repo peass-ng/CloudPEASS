@@ -97,6 +97,10 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "healthlake:SearchWithPost",
     "imagebuilder:GetComponent",
     "iot:GetThingShadow",
+    "iot:StartCommandExecution",
+    "iotjobsdata:DescribeJobExecution",
+    "iotjobsdata:StartNextPendingJobExecution",
+    "iotjobsdata:UpdateJobExecution",
     "iotwireless:GetWirelessDevice",
     "iotsitewise:BatchGetAssetPropertyAggregates",
     "iotsitewise:BatchGetAssetPropertyValue",
@@ -1412,3 +1416,37 @@ def test_live_validated_global_accelerator_endpoint_hijack():
     assert live_validated_disclosure_documentation[action] == (
         "aws-services/aws-global-accelerator-enum.md"
     )
+
+
+def test_live_validated_iot_jobs_documents_and_remote_command_execution():
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    actions = (
+        "iot:StartCommandExecution",
+        "iotjobsdata:DescribeJobExecution",
+        "iotjobsdata:StartNextPendingJobExecution",
+        "iotjobsdata:UpdateJobExecution",
+    )
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-services/aws-iot-core-enum.md"
+        )
+
+    assert tested_risk_documentation["iot:StartCommandExecution"] == (
+        "aws-services/aws-iot-core-enum.md"
+    )
+    assert tested_risk_documentation[
+        "iotjobsdata:StartNextPendingJobExecution"
+    ] == "aws-services/aws-iot-core-enum.md"
+    assert tested_risk_documentation["iotjobsdata:UpdateJobExecution"] == (
+        "aws-services/aws-iot-core-enum.md"
+    )
+
+    # This listing action returned only execution metadata, not a job document.
+    assert (
+        "iotjobsdata:GetPendingJobExecutions",
+    ) not in high
+    assert classify_permission(
+        "aws", "iotjobsdata:GetPendingJobExecutions", unknown_default="medium"
+    ) == "medium"

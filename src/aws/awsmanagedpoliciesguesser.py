@@ -1112,6 +1112,8 @@ aws_bf_permissions_detectable = [
     "iot:DescribeFleetMetric",
     "iot:DescribeJob",
     "iot:DescribeJobExecution",
+    "iotjobsdata:DescribeJobExecution",
+    "iotjobsdata:GetPendingJobExecutions",
     "iot:DescribeJobTemplate",
     "iot:DescribeMitigationAction",
     "iot:DescribeProvisioningTemplate",

@@ -153,6 +153,9 @@ medium_override_exact:
   # A live READY-build request was rejected, so this cannot replace an
   # immutable build or execute code without a later fleet/deployment action.
   - gamelift:RequestUploadCredentials
+  # Returns queued/in-progress IoT job execution metadata but never the job
+  # document. Live validation kept it below the three document-returning APIs.
+  - iotjobsdata:GetPendingJobExecutions
 
 ## =====================
 ## HIGH RULES
@@ -270,6 +273,10 @@ high_exact:
   - imagebuilder:GetComponent
   - iot:GetThingShadow
   - iot:Publish
+  - iot:StartCommandExecution
+  - iotjobsdata:DescribeJobExecution
+  - iotjobsdata:StartNextPendingJobExecution
+  - iotjobsdata:UpdateJobExecution
   - memorydb:UpdateUser
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
@@ -436,6 +443,10 @@ high_override_exact:
   - imagebuilder:GetComponent
   - iot:GetThingShadow
   - iot:Publish
+  - iot:StartCommandExecution
+  - iotjobsdata:DescribeJobExecution
+  - iotjobsdata:StartNextPendingJobExecution
+  - iotjobsdata:UpdateJobExecution
   - iotwireless:GetWirelessDevice
   - iotsitewise:BatchGetAssetPropertyAggregates
   - iotsitewise:BatchGetAssetPropertyValue
