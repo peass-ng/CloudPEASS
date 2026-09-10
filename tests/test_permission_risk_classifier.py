@@ -900,6 +900,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "backup:DeleteRecoveryPoint": "high",
             "backup:PutBackupVaultAccessPolicy": "critical",
             "iot:OpenTunnel": "critical",
+            "iot:RotateTunnelAccessToken": "critical",
             "iot:Publish": "high",
             "iot:StartCommandExecution": "high",
             "iotjobsdata:StartNextPendingJobExecution": "high",

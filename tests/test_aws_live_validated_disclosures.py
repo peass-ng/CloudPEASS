@@ -235,6 +235,15 @@ def test_live_validated_appstream_app_block_builder_role_takeover():
     assert live_validated_disclosure_documentation[action] == document
 
 
+def test_live_validated_iot_rotate_tunnel_access_token():
+    action = "iot:RotateTunnelAccessToken"
+    document = "aws-services/aws-iot-core-enum.md"
+    assert [action] in very_sensitive_combinations
+    assert classify_permission("aws", action, unknown_default="medium") == "critical"
+    assert tested_risk_documentation[action] == document
+    assert live_validated_disclosure_documentation[action] == document
+
+
 def test_live_validated_disclosures_have_service_specific_evidence():
     for action in LIVE_VALIDATED_HIGH_ACTIONS:
         document = live_validated_disclosure_documentation[action]

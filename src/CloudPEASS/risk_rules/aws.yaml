@@ -51,6 +51,7 @@ critical_exact:
   - iam:CreateAccessKey
   - iam:PassRole
   - iot:OpenTunnel
+  - iot:RotateTunnelAccessToken
   - kms:CreateGrant
   - kms:Decrypt
   - kms:PutKeyPolicy

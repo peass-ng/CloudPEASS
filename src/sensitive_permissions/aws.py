@@ -121,6 +121,7 @@ very_sensitive_combinations = [
     ["iam:UpdateOpenIDConnectProviderThumbprint"],
 
     ["iot:OpenTunnel"],
+    ["iot:RotateTunnelAccessToken"],
 
     ["kms:PutKeyPolicy"],
     ["kms:CreateGrant"],
@@ -585,6 +586,7 @@ tested_risk_documentation = {
     "backup:PutBackupVaultAccessPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "codebuild:StartCommandExecution": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
     "iot:OpenTunnel": "aws-services/aws-iot-core-enum.md",
+    "iot:RotateTunnelAccessToken": "aws-services/aws-iot-core-enum.md",
     "iot:Publish": "aws-services/aws-iot-core-enum.md",
     "iot:StartCommandExecution": "aws-services/aws-iot-core-enum.md",
     "iotjobsdata:StartNextPendingJobExecution": "aws-services/aws-iot-core-enum.md",
@@ -795,6 +797,7 @@ live_validated_disclosure_documentation = {
     "imagebuilder:GetComponent": "aws-services/aws-ec2-image-builder-enum.md",
     "iot:Connect": "aws-services/aws-iot-core-enum.md",
     "iot:GetThingShadow": "aws-services/aws-iot-core-enum.md",
+    "iot:RotateTunnelAccessToken": "aws-services/aws-iot-core-enum.md",
     "iot:Receive": "aws-services/aws-iot-core-enum.md",
     "iot:StartCommandExecution": "aws-services/aws-iot-core-enum.md",
     "iot:Subscribe": "aws-services/aws-iot-core-enum.md",
