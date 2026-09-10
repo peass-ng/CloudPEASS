@@ -428,6 +428,7 @@ sensitive_combinations = [
     ["translate:GetParallelData"],
     ["translate:GetTerminology"],
     ["vpc-lattice-svcs:Invoke"],
+    ["wickr:GetOidcInfo"],
     ["wisdom:GetContent"],
 
     ["apigateway:POST"],
@@ -611,6 +612,7 @@ tested_risk_documentation = {
     "lambda:GetFunction": "aws-privilege-escalation/aws-lambda-privesc/README.md",
     "route53domains:GetDomainDetail": "aws-privilege-escalation/aws-route53-domains-privesc/README.md",
     "route53domains:RetrieveDomainAuthCode": "aws-privilege-escalation/aws-route53-domains-privesc/README.md",
+    "wickr:GetOidcInfo": "aws-services/aws-wickr-enum.md",
     "s3:PutAccessPointPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "s3tables:PutTableBucketPolicy": "aws-services/aws-s3-tables-and-vectors-enum.md",
     "s3tables:PutTablePolicy": "aws-services/aws-s3-tables-and-vectors-enum.md",
@@ -928,4 +930,5 @@ live_validated_disclosure_documentation = {
     "translate:GetParallelData": "aws-services/aws-translate-enum.md",
     "translate:GetTerminology": "aws-services/aws-translate-enum.md",
     "wisdom:GetContent": "aws-services/aws-q-in-connect-enum.md",
+    "wickr:GetOidcInfo": "aws-services/aws-wickr-enum.md",
 }

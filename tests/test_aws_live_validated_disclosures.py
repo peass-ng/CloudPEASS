@@ -189,6 +189,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "translate:GetParallelData",
     "translate:GetTerminology",
     "vpc-lattice-svcs:Invoke",
+    "wickr:GetOidcInfo",
     "wisdom:GetContent",
 }
 

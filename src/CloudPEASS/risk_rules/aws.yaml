@@ -397,6 +397,7 @@ high_exact:
   - translate:GetParallelData
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
+  - wickr:GetOidcInfo
   - wisdom:GetContent
 
 ## Evidence-backed corrections for stale upstream/cache entries. These take
@@ -582,6 +583,7 @@ high_override_exact:
   - translate:GetParallelData
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
+  - wickr:GetOidcInfo
 
 ## =====================
 ## MEDIUM RULES

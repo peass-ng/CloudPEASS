@@ -925,6 +925,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "notifications:ListManagedNotificationEvents": "high",
             "route53domains:GetDomainDetail": "high",
             "route53domains:RetrieveDomainAuthCode": "high",
+            "wickr:GetOidcInfo": "high",
             "s3:PutAccessPointPolicy": "critical",
             "s3tables:PutTableBucketPolicy": "critical",
             "s3tables:PutTablePolicy": "critical",
