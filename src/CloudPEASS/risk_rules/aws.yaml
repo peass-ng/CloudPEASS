@@ -358,6 +358,7 @@ high_exact:
   - rds-db:connect
   - route53:ChangeResourceRecordSets
   - route53domains:GetDomainDetail
+  - route53domains:RetrieveDomainAuthCode
   - rum:GetAppMonitorData
   - sdb:GetAttributes
   - sdb:Select

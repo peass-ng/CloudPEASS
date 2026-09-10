@@ -161,6 +161,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "profile:SearchProfiles",
     "rum:GetAppMonitorData",
     "route53domains:GetDomainDetail",
+    "route53domains:RetrieveDomainAuthCode",
     "sdb:GetAttributes",
     "sdb:Select",
     "ses:GetSuppressedDestination",
@@ -706,15 +707,19 @@ def test_live_validated_ec2_security_group_replacement():
 
 
 def test_live_validated_route53_domain_registration_disclosure():
-    action = "route53domains:GetDomainDetail"
-    high = {tuple(candidate) for candidate in sensitive_combinations}
-    assert (action,) in high
-    assert classify_permission(
-        "aws", action, unknown_default="medium"
-    ) == "high"
-    assert live_validated_disclosure_documentation[action] == (
-        "aws-privilege-escalation/aws-route53-domains-privesc/README.md"
+    actions = (
+        "route53domains:GetDomainDetail",
+        "route53domains:RetrieveDomainAuthCode",
     )
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    for action in actions:
+        assert (action,) in high
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high"
+        assert live_validated_disclosure_documentation[action] == (
+            "aws-privilege-escalation/aws-route53-domains-privesc/README.md"
+        )
 
 
 def test_live_validated_acm_private_key_export():
