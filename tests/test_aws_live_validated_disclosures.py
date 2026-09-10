@@ -71,6 +71,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "dynamodb:TransactGetItems",
     "deadline:AssumeQueueRoleForRead",
     "deadline:AssumeQueueRoleForUser",
+    "deadline:AssumeFleetRoleForRead",
     "datazone:GetEnvironmentCredentials",
     "dms:ModifyEndpoint",
     "ec2:DescribeLaunchTemplateVersions",

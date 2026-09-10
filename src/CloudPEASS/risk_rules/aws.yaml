@@ -257,6 +257,7 @@ high_exact:
   - dynamodb:TransactGetItems
   - deadline:AssumeQueueRoleForRead
   - deadline:AssumeQueueRoleForUser
+  - deadline:AssumeFleetRoleForRead
   - datazone:GetEnvironmentCredentials
   - datasync:StartTaskExecution
   - dms:ModifyEndpoint
@@ -469,6 +470,7 @@ high_override_exact:
   - dynamodb:TransactGetItems
   - deadline:AssumeQueueRoleForRead
   - deadline:AssumeQueueRoleForUser
+  - deadline:AssumeFleetRoleForRead
   - datazone:GetEnvironmentCredentials
   - elemental-inference:ExportDictionaryEntries
   - elemental-inference:GetMetadata
