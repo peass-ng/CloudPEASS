@@ -18,6 +18,7 @@ critical_exact:
   - acm:ExportCertificate
   - aps:PutResourcePolicy
   - athena:CreatePresignedNotebookUrl
+  - athena:StartCalculationExecution
   - backup:PutBackupVaultAccessPolicy
   - codeartifact:GetAuthorizationToken
   - cognito-identity:UpdateIdentityPool

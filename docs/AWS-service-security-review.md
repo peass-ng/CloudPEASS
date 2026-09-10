@@ -921,7 +921,7 @@ and application logs. App IDs remain recoverable from public Amplify hostnames a
 configuration without `ListApps`. All disposable apps, backends, tokens, IAM users, access keys, and
 policies used by the validation were removed and the exact app inventory returned empty.
 
-### Amazon Athena (`athena`) — presigned notebook takeover, 2026-09-10
+### Amazon Athena (`athena`) — Spark-session takeovers, 2026-09-10
 
 A disposable PySpark workgroup, notebook, running notebook session, S3 output bucket, execution
 role, and Secrets Manager canary were used to test `CreatePresignedNotebookUrl`. An IAM user holding
@@ -930,6 +930,13 @@ identical empty-permission user was denied. The bearer URL returned HTTP 200 and
 Jupyter notebook in a headless browser with no AWS credentials. The browser submitted arbitrary
 Python calculations, and the service executed them under the existing notebook execution role.
 The URL-minting user required neither `StartCalculationExecution` nor `iam:PassRole`.
+
+A separate normal Spark session validated the direct API path. An exact-action user holding only
+`athena:StartCalculationExecution` submitted inline Python to the administrator-created session.
+The calculation completed and recovered a real `ASIA...` execution-role access-key ID, secret-key
+length, session-token length, and one-way secret-key fingerprint. The empty control was denied.
+The candidate did not have `StartSession`, `GetSession`, direct role access, or `iam:PassRole`, and
+`GetCalculationExecution` was used only by the administrator to verify the already executed result.
 
 This path requires a known, live notebook-session ID and is Critical when the session's execution
 role can reach privileged APIs or sensitive data. A normal programmatic Spark session is not enough:
