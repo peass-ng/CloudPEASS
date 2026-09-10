@@ -131,6 +131,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "iotsitewise:GetAssetPropertyValueHistory",
     "iotsitewise:GetInterpolatedAssetPropertyValues",
     "ivschat:CreateChatToken",
+    "ivs:CreateParticipantToken",
     "kinesis:GetRecords",
     "kinesisanalytics:DescribeApplication",
     "kinesisanalytics:CreateApplicationPresignedUrl",

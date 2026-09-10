@@ -307,6 +307,7 @@ high_exact:
   - iotjobsdata:UpdateJobExecution
   - ivs:BatchGetStreamKey
   - ivs:CreateStreamKey
+  - ivs:CreateParticipantToken
   - ivs:GetStreamKey
   - ivs:UpdateChannel
   - lakeformation:PutDataLakeSettings
@@ -509,6 +510,7 @@ high_override_exact:
   - iotjobsdata:UpdateJobExecution
   - ivs:BatchGetStreamKey
   - ivs:CreateStreamKey
+  - ivs:CreateParticipantToken
   - ivs:GetStreamKey
   - ivs:UpdateChannel
   - lakeformation:PutDataLakeSettings
