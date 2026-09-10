@@ -180,6 +180,20 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             self.classify("Microsoft.KeyVault/vaults/secrets/getSecret/action"),
             "critical",
         )
+        # These operations have meaningful contextual impact, but an
+        # operation name alone does not prove standalone privilege escalation
+        # or sensitive-data access. Keep them below the severe tiers until an
+        # exact-role attack is reproduced end to end.
+        for permission in (
+            "Microsoft.KeyVault/vaults/keys/sign/action",
+            "Microsoft.KeyVault/vaults/keys/unwrap/action",
+            "Microsoft.KeyVault/vaults/keys/unwrapKey/action",
+            "Microsoft.Authorization/roleAssignmentSchedules/write",
+            "Microsoft.Authorization/roleAssignmentScheduleRequests/write",
+            "Microsoft.Authorization/roleEligibilityScheduleRequests/write",
+        ):
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), "medium")
         self.assertEqual(
             self.classify("Microsoft.Search/searchServices/listQueryKeys/action"),
             "high",

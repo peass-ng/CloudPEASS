@@ -243,9 +243,6 @@ _AZURE_CRITICAL_EXACT = frozenset(
     {
         "microsoft.authorization/elevateaccess/action",
         "microsoft.authorization/roleassignments/write",
-        "microsoft.authorization/roleassignmentschedules/write",
-        "microsoft.authorization/roleassignmentschedulerequests/write",
-        "microsoft.authorization/roleeligibilityschedulerequests/write",
         # Live exact-role validation showed that either Synapse administrator
         # alias can replace the workspace Entra administrator. The selected
         # principal authenticated to the dedicated SQL control endpoint as
@@ -257,9 +254,6 @@ _AZURE_CRITICAL_EXACT = frozenset(
         "microsoft.keyvault/vaults/accesspolicies/write",
         "microsoft.keyvault/vaults/secrets/getsecret/action",
         "microsoft.keyvault/vaults/keys/decrypt/action",
-        "microsoft.keyvault/vaults/keys/unwrap/action",
-        "microsoft.keyvault/vaults/keys/unwrapkey/action",
-        "microsoft.keyvault/vaults/keys/sign/action",
         "microsoft.compute/virtualmachines/extensions/write",
         "microsoft.compute/virtualmachines/runcommand/action",
         "microsoft.compute/virtualmachines/runcommands/write",
