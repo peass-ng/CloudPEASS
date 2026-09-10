@@ -888,6 +888,9 @@ class AwsRiskClassificationTest(unittest.TestCase):
 
     def test_live_validated_high_impact_paths_have_evidence(self) -> None:
         expected = {
+            "airflow-serverless:GetTaskInstance": "high",
+            "airflow-serverless:GetWorkflow": "high",
+            "airflow-serverless:GetWorkflowRun": "high",
             "athena:CreatePresignedNotebookUrl": "critical",
             "athena:StartCalculationExecution": "critical",
             "codebuild:StartCommandExecution": "critical",

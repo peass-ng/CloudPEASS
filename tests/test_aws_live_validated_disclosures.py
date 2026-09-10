@@ -8,6 +8,9 @@ from sensitive_permissions.aws import (
 
 
 LIVE_VALIDATED_HIGH_ACTIONS = {
+    "airflow-serverless:GetTaskInstance",
+    "airflow-serverless:GetWorkflow",
+    "airflow-serverless:GetWorkflowRun",
     "account:GetContactInformation",
     "amplify:GetApp",
     "amplify:GetArtifactUrl",
@@ -199,6 +202,19 @@ def test_live_validated_disclosures_have_single_action_findings():
     combinations = {tuple(combination) for combination in sensitive_combinations}
     for action in LIVE_VALIDATED_HIGH_ACTIONS:
         assert (action,) in combinations
+
+
+def test_live_validated_mwaa_serverless_sensitive_workflow_reads():
+    document = "aws-post-exploitation/aws-mwaa-post-exploitation/README.md"
+    for action in (
+        "airflow-serverless:GetTaskInstance",
+        "airflow-serverless:GetWorkflow",
+        "airflow-serverless:GetWorkflowRun",
+    ):
+        assert classify_permission("aws", action, unknown_default="medium") == "high"
+        assert [action] in sensitive_combinations
+        assert tested_risk_documentation[action] == document
+        assert live_validated_disclosure_documentation[action] == document
 
 
 def test_live_validated_disclosures_have_service_specific_evidence():

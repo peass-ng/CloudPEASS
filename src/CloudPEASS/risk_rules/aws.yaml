@@ -180,6 +180,9 @@ medium_override_exact:
 
 ## Exact action names that must always be classified as `high`.
 high_exact:
+  - airflow-serverless:GetTaskInstance
+  - airflow-serverless:GetWorkflow
+  - airflow-serverless:GetWorkflowRun
   - account:GetContactInformation
   - amplify:GetApp
   - amplify:GetArtifactUrl

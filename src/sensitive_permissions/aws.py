@@ -192,6 +192,9 @@ very_sensitive_combinations = [
 ]
 
 sensitive_combinations = [
+    ["airflow-serverless:GetTaskInstance"],
+    ["airflow-serverless:GetWorkflow"],
+    ["airflow-serverless:GetWorkflowRun"],
     ["mq:CreateUser"],
     ["mq:UpdateUser"],
     ["account:GetContactInformation"],
@@ -568,6 +571,9 @@ sensitive_combinations = [
 # evidence. Keep this deliberately narrow: documentation-only candidates do
 # not belong here.
 tested_risk_documentation = {
+    "airflow-serverless:GetTaskInstance": "aws-post-exploitation/aws-mwaa-post-exploitation/README.md",
+    "airflow-serverless:GetWorkflow": "aws-post-exploitation/aws-mwaa-post-exploitation/README.md",
+    "airflow-serverless:GetWorkflowRun": "aws-post-exploitation/aws-mwaa-post-exploitation/README.md",
     "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:StartCalculationExecution": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "glue:RunStatement": "aws-privilege-escalation/aws-glue-privesc/README.md",
@@ -612,6 +618,9 @@ tested_risk_documentation = {
 
 
 live_validated_disclosure_documentation = {
+    "airflow-serverless:GetTaskInstance": "aws-post-exploitation/aws-mwaa-post-exploitation/README.md",
+    "airflow-serverless:GetWorkflow": "aws-post-exploitation/aws-mwaa-post-exploitation/README.md",
+    "airflow-serverless:GetWorkflowRun": "aws-post-exploitation/aws-mwaa-post-exploitation/README.md",
     "acm:ExportCertificate": "aws-services/aws-certificate-manager-acm-and-private-certificate-authority-pca.md",
     "account:GetContactInformation": "aws-services/aws-account-management-enum.md",
     "amplify:GetApp": "aws-privilege-escalation/aws-amplify-privesc/README.md",

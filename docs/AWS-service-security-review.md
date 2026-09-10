@@ -45,8 +45,8 @@ data, create signed URLs, or cause a more privileged service to act. Record fail
 commit as the evidence-backed implementation, then open a new HackTricks PR for documented true
 positives.
 
-The 2026-09-10 campaign completed the service-by-service pass over all 455 prefixes: 135 are
-`validated`, 159 are `no_new_positive`, 161 are precisely `blocked`, and none remain `queued` or
+The 2026-09-10 campaign completed the service-by-service pass over all 455 prefixes: 136 are
+`validated`, 159 are `no_new_positive`, 160 are precisely `blocked`, and none remain `queued` or
 `in_progress`. Blocked rows remain explicit future test plans when their missing prerequisite can
 be supplied without violating the cleanup gate.
 
@@ -922,6 +922,27 @@ Access Analyzer returned no analyzers. A real management trail and existing poli
 were not consumed; policy-generation behavior therefore remains blocked behind a separate
 synthetic trail/role and pass-role validation rather than being inferred safe. These rows are
 recorded as prerequisite blockers, not negative security conclusions.
+
+### AWS MWAA Serverless (`airflow-serverless`) — sensitive workflow reads, 2026-09-10
+
+Three independent IAM users, each restricted to one read action, recovered different sensitive
+fields from one disposable workflow. `GetWorkflow` returned the complete snapshotted YAML
+definition and its embedded randomized canary. `GetWorkflowRun` returned a separate canary passed
+in `OverrideParameters`. Finally, a `BashOperator` used the workflow execution role to read one
+Secrets Manager canary, and `GetTaskInstance` returned that exact role-only value in `Xcom`.
+An empty-permission control was denied all three reads.
+
+The actions do not create data that was not already stored by a workflow or run, so they are High
+sensitive-data reads rather than unconditional Critical escalation. `UpdateWorkflow` was tested as
+a neighboring execution hypothesis and AWS required `iam:PassRole` even when the request supplied
+the workflow's existing role; no singleton update takeover is claimed. Listing is optional when
+workflow, run, and task-instance identifiers are recovered from console URLs, events and
+notifications, CloudWatch logs, earlier API/CLI output, source/IaC, browser or shell history,
+support bundles, or CloudTrail/SIEM copies.
+
+The workflow and run reached terminal/deleted states. Its versioned S3 objects and bucket, secret,
+execution role and inline policy, test users and access keys, automatically created service-linked
+role, and every exact-prefix CloudWatch log group were removed. Exact live inventories are empty.
 
 ### AWS Amplify Admin (`amplifybackend`) — 2026-09-10
 
