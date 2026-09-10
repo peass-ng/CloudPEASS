@@ -26,6 +26,7 @@ very_sensitive_combinations = [
     ["codebuild:StartBuild"],
     ["codebuild:StartBuildBatch"],
     ["codebuild:StartCommandExecution"],
+    ["codebuild:CreateProject", "codebuild:StartBuild", "iam:PassRole"],
 
     [
         "synthetics:StartCanaryDryRun",

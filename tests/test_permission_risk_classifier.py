@@ -1317,6 +1317,7 @@ def test_live_validated_ecs_and_rds_actions_require_complete_attack_chains():
 
     # Creating a CodeBuild project did not pass or execute the selected role
     # by itself. PassRole and a build-start action completed the live chain.
+    assert ["codebuild:CreateProject", "codebuild:StartBuild", "iam:PassRole"] in very_sensitive_combinations
     assert ["codebuild:CreateProject"] not in very_sensitive_combinations
     assert ["codebuild:CreateProject"] not in sensitive_combinations
     assert ["codebuild:StartBuild"] in very_sensitive_combinations
