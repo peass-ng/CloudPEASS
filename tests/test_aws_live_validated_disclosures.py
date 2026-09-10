@@ -160,6 +160,8 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "kinesisvideo:GetMedia",
     "kinesisvideo:GetMediaForFragmentList",
     "lambda:GetFunctionConfiguration",
+    "lambda:ListFunctions",
+    "lambda:ListVersionsByFunction",
     "lambda:GetLayerVersion",
     "logs:FilterLogEvents",
     "logs:GetLogRecord",

@@ -366,6 +366,8 @@ high_exact:
   - kinesisvideo:GetMediaForFragmentList
   - lambda:GetFunction
   - lambda:GetFunctionConfiguration
+  - lambda:ListFunctions
+  - lambda:ListVersionsByFunction
   - lambda:GetLayerVersion
   - logs:FilterLogEvents
   - logs:GetLogRecord
