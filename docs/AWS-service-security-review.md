@@ -45,8 +45,8 @@ data, create signed URLs, or cause a more privileged service to act. Record fail
 commit as the evidence-backed implementation, then open a new HackTricks PR for documented true
 positives.
 
-The 2026-09-10 campaign completed the service-by-service pass over all 455 prefixes: 134 are
-`validated`, 159 are `no_new_positive`, 162 are precisely `blocked`, and none remain `queued` or
+The 2026-09-10 campaign completed the service-by-service pass over all 455 prefixes: 135 are
+`validated`, 159 are `no_new_positive`, 161 are precisely `blocked`, and none remain `queued` or
 `in_progress`. Blocked rows remain explicit future test plans when their missing prerequisite can
 be supplied without violating the cleanup gate.
 
@@ -718,6 +718,29 @@ names cannot start with `system:`. The singleton was therefore not promoted; the
 the validated Critical result. Both access entries and clusters were deleted and polled absent,
 then their roles, users, every access key, policies, generated ENIs/security groups, and exact local
 kubeconfig files were removed. All exact-prefix inventories returned empty.
+
+### AWS CodeBuild (`codebuild`) — running-sandbox command injection, 2026-09-10
+
+`codebuild:StartCommandExecution` alone was validated as a direct takeover of a running CodeBuild
+sandbox's execution role. An administrator created the project and started a disposable sandbox
+whose service role could read exactly one Secrets Manager canary. A new IAM user with only
+`StartCommandExecution` and a known sandbox ID submitted arbitrary shell/Python, and the completed
+command's `standardOutputContent` contained the exact randomized canary. A separate empty user was
+denied the same request.
+
+The caller did not have `StartSandbox`, `StartBuild`, `BatchGetProjects`, `BatchGetSandboxes`,
+Secrets Manager access, `iam:PassRole`, or access to the project's service role. Reading command
+output through the API is also optional because attacker code can use the sandbox role directly or
+send results to a destination it controls. The prerequisite is a still-running sandbox and its ID;
+without CodeBuild list/read access, IDs can still be recovered from console URLs, earlier API/CLI
+output, local shell history, CI artifacts, logs, EventBridge events, CloudTrail/SIEM copies,
+screenshots, and support bundles.
+
+The test sandbox was stopped and its live state reached `STOPPED`; the project, secret, inline
+role policy, role, both IAM users, and all access keys were deleted. Exact project, secret, role,
+and user lookups returned absent. CodeBuild retains the terminal sandbox record in its historical
+inventory and exposes no delete-sandbox operation; the retained record is stopped and cannot run
+commands.
 
 ### CodeConnections and agent-channel prerequisite review — 2026-09-08
 

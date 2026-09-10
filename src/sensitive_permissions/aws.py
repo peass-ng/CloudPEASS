@@ -22,6 +22,7 @@ very_sensitive_combinations = [
 
     ["codebuild:StartBuild"],
     ["codebuild:StartBuildBatch"],
+    ["codebuild:StartCommandExecution"],
 
     [
         "synthetics:StartCanaryDryRun",
@@ -572,6 +573,7 @@ tested_risk_documentation = {
     "glue:RunStatement": "aws-privilege-escalation/aws-glue-privesc/README.md",
     "backup:DeleteRecoveryPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "backup:PutBackupVaultAccessPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
+    "codebuild:StartCommandExecution": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
     "iot:OpenTunnel": "aws-services/aws-iot-core-enum.md",
     "iot:Publish": "aws-services/aws-iot-core-enum.md",
     "iot:StartCommandExecution": "aws-services/aws-iot-core-enum.md",
@@ -664,6 +666,7 @@ live_validated_disclosure_documentation = {
     "aws-marketplace:GetAgreementTerms": "aws-services/aws-marketplace-enum.md",
     "codebuild:BatchGetBuilds": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
     "codebuild:BatchGetProjects": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "codebuild:StartCommandExecution": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
     "codeartifact:GetPackageVersionAsset": "aws-services/aws-codeartifact-enum.md",
     "codecommit:GetBlob": "aws-services/aws-datapipeline-codepipeline-codebuild-and-codecommit.md",
     "codecommit:GetCommit": "aws-services/aws-datapipeline-codepipeline-codebuild-and-codecommit.md",

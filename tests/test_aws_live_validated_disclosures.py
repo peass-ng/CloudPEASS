@@ -388,6 +388,15 @@ def test_live_validated_backup_vault_policy_self_grant_and_deletion():
     ) == "high"
 
 
+def test_live_validated_codebuild_sandbox_command_role_takeover():
+    action = "codebuild:StartCommandExecution"
+    assert [action] in very_sensitive_combinations
+    assert classify_permission("aws", action, unknown_default="medium") == "critical"
+    expected_document = "aws-privilege-escalation/aws-codebuild-privesc/README.md"
+    assert tested_risk_documentation[action] == expected_document
+    assert live_validated_disclosure_documentation[action] == expected_document
+
+
 def test_live_validated_backup_access_point_requires_full_policy_chain():
     combination = (
         "backup:CreateBackupAccessPoint",

@@ -20,6 +20,7 @@ critical_exact:
   - athena:CreatePresignedNotebookUrl
   - athena:StartCalculationExecution
   - backup:PutBackupVaultAccessPolicy
+  - codebuild:StartCommandExecution
   - codeartifact:GetAuthorizationToken
   - cognito-identity:UpdateIdentityPool
   - docdb-elastic:UpdateCluster

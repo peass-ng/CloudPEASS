@@ -845,7 +845,8 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "s3:GetObject*": "high",
             "lambda:Invoke*": "high",
             "ec2:Run*": "high",
-            "codebuild:Start*": "high",
+            # Includes the exact-action sandbox command role takeover.
+            "codebuild:Start*": "critical",
             # Includes DescribeLaunchTemplateVersions, which returns user data.
             "ec2:Describe*": "high",
             "s3:List*": "low",
@@ -889,6 +890,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
         expected = {
             "athena:CreatePresignedNotebookUrl": "critical",
             "athena:StartCalculationExecution": "critical",
+            "codebuild:StartCommandExecution": "critical",
             "glue:RunStatement": "critical",
             "backup:DeleteRecoveryPoint": "high",
             "backup:PutBackupVaultAccessPolicy": "critical",
