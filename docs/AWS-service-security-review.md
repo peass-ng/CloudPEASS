@@ -45,8 +45,8 @@ data, create signed URLs, or cause a more privileged service to act. Record fail
 commit as the evidence-backed implementation, then open a new HackTricks PR for documented true
 positives.
 
-The 2026-09-10 campaign completed the service-by-service pass over all 455 prefixes: 136 are
-`validated`, 159 are `no_new_positive`, 160 are precisely `blocked`, and none remain `queued` or
+The 2026-09-10 campaign completed the service-by-service pass over all 455 prefixes: 137 are
+`validated`, 159 are `no_new_positive`, 159 are precisely `blocked`, and none remain `queued` or
 `in_progress`. Blocked rows remain explicit future test plans when their missing prerequisite can
 be supplied without violating the cleanup gate.
 

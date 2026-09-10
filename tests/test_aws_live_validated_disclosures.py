@@ -119,6 +119,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "medialive:UpdateChannel",
     "mediapackagev2:PutChannelPolicy",
     "mediapackagev2:PutOriginEndpointPolicy",
+    "mediapackage:DescribeChannel",
     "notifications:GetManagedNotificationEvent",
     "notifications:ListManagedNotificationEvents",
     "mq:CreateUser",
@@ -1108,6 +1109,7 @@ def test_live_validated_lightsail_credential_and_bucket_takeovers():
 
 def test_live_validated_mediapackage_ingest_credential_takeovers():
     actions = (
+        "mediapackage:DescribeChannel",
         "mediapackage:RotateChannelCredentials",
         "mediapackage:RotateIngestEndpointCredentials",
     )

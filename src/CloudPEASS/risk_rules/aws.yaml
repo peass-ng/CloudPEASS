@@ -326,6 +326,7 @@ high_exact:
   - mq:CreateUser
   - mq:UpdateUser
   - memorydb:UpdateUser
+  - mediapackage:DescribeChannel
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
   - neptune-db:GetStreamRecords
@@ -550,6 +551,7 @@ high_override_exact:
   - kinesisvideo:GetMediaForFragmentList
   - medical-imaging:GetImageFrame
   - medical-imaging:GetImageSetMetadata
+  - mediapackage:DescribeChannel
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
   - neptune-db:GetStreamRecords
