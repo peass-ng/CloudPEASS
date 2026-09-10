@@ -2074,6 +2074,19 @@ capacity was set to zero, and the managed fleet/build, service-owned upload, fou
 and local credential material were removed. No new service role remained, and exact active
 inventories were empty after GameLift's activation/deletion state machine completed.
 
+An additional 2026-09-10 isolated test covered Anywhere fleets. A user holding only
+`gamelift:GetComputeAuthToken` on `Resource: *` received a nonempty, three-hour authentication
+token for a known registered compute; an empty-permission user was denied the identical request.
+The token is the credential that a game-server process supplies to Server SDK `InitSDK` and on
+every subsequent GameLift service communication. This is High compute-service impersonation: it
+can let the caller pose as a server process and reach server-only session/player operations, but it
+does not by itself provide an operating-system shell or general AWS credentials. Fleet and compute
+names can be recovered from deployment state, agent/server configuration, environment variables,
+application logs, IaC, tickets, monitoring, or CloudTrail/SIEM copies when listing is denied. The
+compute was deregistered and its Anywhere fleet and custom location were deleted; both IAM users,
+access keys, and the exact-action policy were also removed, and the active fleet inventory is
+empty.
+
 ### Amazon GameLift Streams (`gameliftstreams`) — 2026-09-09
 
 A disposable Ubuntu application wrote a private canary under its user profile, and a zero-idle

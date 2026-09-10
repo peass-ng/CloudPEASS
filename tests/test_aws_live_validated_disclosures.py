@@ -1522,6 +1522,16 @@ def test_live_validated_gamelift_compute_host_access_and_upload_boundary():
         "aws", upload_action, unknown_default="medium"
     ) == "medium"
 
+    anywhere_action = "gamelift:GetComputeAuthToken"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (anywhere_action,) in high
+    assert classify_permission(
+        "aws", anywhere_action, unknown_default="medium"
+    ) == "high"
+    assert live_validated_disclosure_documentation[anywhere_action] == (
+        "aws-services/aws-gamelift-enum.md"
+    )
+
 
 def test_live_validated_gamelift_streams_shell_and_secret_disclosures():
     critical_action = "gameliftstreams:CreateStreamSessionAdminShell"
