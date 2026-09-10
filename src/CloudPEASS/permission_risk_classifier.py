@@ -396,6 +396,19 @@ _AZURE_CRITICAL_EXACT = frozenset(
 
 _AZURE_HIGH_EXACT = frozenset(
     {
+        # Live exact-role validation proved that these actions execute only
+        # unchanged existing Container App configuration: activate starts a
+        # retained inactive revision, restart reruns revision startup, and
+        # start restores active revisions of a stopped app. Their conditional
+        # workload/identity impact is High rather than arbitrary-code Critical.
+        "microsoft.app/containerapps/revisions/activate/action",
+        "microsoft.app/containerapps/revisions/restart/action",
+        "microsoft.app/containerapps/start/action",
+        # Live exact-role validation reran an existing ACI startup command on
+        # restart and after starting a stopped group. The actions cannot alter
+        # the container spec, so their conditional execution impact is High.
+        "microsoft.containerinstance/containergroups/restart/action",
+        "microsoft.containerinstance/containergroups/start/action",
         "microsoft.eventgrid/domains/listkeys/action",
         "microsoft.eventgrid/domains/regeneratekey/action",
         "microsoft.eventgrid/namespaces/listkeys/action",
