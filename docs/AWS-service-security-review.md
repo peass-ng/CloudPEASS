@@ -1904,12 +1904,17 @@ and Bedrock Web Search only caller-selected public-web retrieval. ARC Region Swi
 Plans have zero plans and provide failover/capacity control rather than data or identity. These are
 `no_new_positive`.
 
-Several new or externally provisioned services have no public client/target but retain worthwhile
-future candidates: Agent Registry resource-policy self-grant plus MCP invocation; DevOps Agent
+Several new or externally provisioned services have no usable target but retain worthwhile future
+candidates: Agent Registry resource-policy self-grant plus MCP invocation; DevOps Agent
 access-token, one-time-login, asset-content and resource-search operations; Claude Platform
 AssumeConsole/file/webhook-secret operations; and Mantle file/inference content. Activate may expose
 member contact/credit/cost data, while App Studio deployment and AIOps investigation policies need
 an enabled tenant/group. They remain blocked rather than classified from action names alone.
+
+A 2026-09-10 compatibility recheck used a current isolated Boto3 environment: the DevOps Agent
+client now exists and `ListAgentSpaces` returned an authoritative empty list. The installed older
+CLI/model remains a compatibility fallback, and the current public SDK model still does not expose
+the permission-only access-token operations. No Agent Space or other service state was created.
 
 AppFabric has zero bundles/authorizations/ingestions, AppFlow has zero connector profiles/flows in
 all enabled supported Regions, and App Mesh has zero meshes. Existing SaaS authorization reuse,
