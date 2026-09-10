@@ -315,6 +315,10 @@ sensitive_combinations = [
     # Live validated with an exact DataAction: code submitted under a known
     # session identifier read a retained file created by a different caller.
     ["Microsoft.App/sessionPools/executions/action"],
+    # Live validated independently: a content-read-only principal recovered a
+    # retained file by known pool, session identifier, and filename. It needed
+    # neither ARM/resource read nor the sibling file-metadata read action.
+    ["Microsoft.App/sessionPools/files/content/read"],
     # Live validated independently: the direct-process action returned the
     # victim environment, and the shell action returned victim file/env data.
     ["Microsoft.App/sandboxGroups/sandboxes/executeCommand/action"],

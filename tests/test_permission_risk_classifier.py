@@ -246,6 +246,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.ContainerRegistry/registries/taskruns/write": "high",
             "Microsoft.ContainerRegistry/registries/scheduleRun/action": "high",
             "Microsoft.App/sessionPools/executions/action": "high",
+            "Microsoft.App/sessionPools/files/content/read": "high",
             "Microsoft.App/sandboxGroups/sandboxes/executeCommand/action": "high",
             "Microsoft.App/sandboxGroups/sandboxes/executeShellCommand/action": "high",
             "Microsoft.App/sandboxGroups/sandboxes/files/read": "high",

@@ -666,6 +666,10 @@ _AZURE_HIGH_EXACT = frozenset(
         # egress-disabled pool. Reusing a known identifier returned a retained
         # file seeded through the same session by a separate principal.
         "microsoft.app/sessionpools/executions/action",
+        # An exact DataAction, with no resource read or file-metadata action,
+        # downloaded a byte-exact file retained under another caller's known
+        # session identifier. A fresh no-role principal received HTTP 403.
+        "microsoft.app/sessionpools/files/content/read",
         # Independently assigned exact DataActions reached an existing ACA
         # sandbox. Direct-process execution exposed its environment; shell
         # execution read both its retained file and environment canaries.
