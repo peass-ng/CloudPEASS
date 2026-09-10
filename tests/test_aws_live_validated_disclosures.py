@@ -505,6 +505,16 @@ def test_live_validated_service_catalog_launch_role_escalation_requires_pair():
             "aws-privilege-escalation/aws-service-catalog-privesc/README.md"
         )
 
+    output_action = "servicecatalog:GetProvisionedProductOutputs"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+    assert (output_action,) in high
+    assert classify_permission(
+        "aws", output_action, unknown_default="medium"
+    ) == "high"
+    assert live_validated_disclosure_documentation[output_action] == (
+        "aws-privilege-escalation/aws-service-catalog-privesc/README.md"
+    )
+
 
 def test_live_validated_image_builder_wildcard_component_escalation_requires_pair():
     combination = (

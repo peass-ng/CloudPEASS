@@ -286,6 +286,7 @@ high_exact:
   - gameliftstreams:GetStreamSession
   - gameliftstreams:GetStreamUrl
   - gameliftstreams:ListStreamUrls
+  - gamelift:GetComputeAuthToken
   - globalaccelerator:UpdateEndpointGroup
   - execute-api:Invoke
   - glue:GetConnection
@@ -415,6 +416,7 @@ high_exact:
 ## Evidence-backed corrections for stale upstream/cache entries. These take
 ## precedence over critical_exact and low_exact during classification.
 high_override_exact:
+  - servicecatalog:GetProvisionedProductOutputs
   - account:GetContactInformation
   - amplify:GetApp
   - amplify:GetArtifactUrl

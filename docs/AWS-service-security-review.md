@@ -154,6 +154,18 @@ source, access to a non-shared product associated with its portfolio, and a laun
 role can perform the template's actions. The pair is therefore recorded as a conditional critical
 combination while each permission remains medium in isolation.
 
+A 2026-09-10 known-ID test also confirmed that
+`servicecatalog:GetProvisionedProductOutputs` is independently High. An administrator provisioned
+a product whose CloudFormation output held a randomized private canary. A user with only that one
+action on `Resource: *` recovered the exact output while an empty-permission user was denied.
+Outputs frequently carry generated passwords, API keys, endpoints, resource identifiers, and
+bootstrap values, and the getter accepts a provisioned-product ID or name without any list action.
+When enumeration is denied, recover those identifiers from CloudFormation/deployment state, IaC,
+CI output, console URLs, runbooks, tickets, application configuration, shell history, or
+CloudTrail/SIEM copies. The provisioned product terminated successfully; its stack-created SSM
+marker, product, artifact, portfolio associations, portfolio, template object/bucket, both users,
+access keys, and policy were deleted, and exact inventories were empty.
+
 ### Amazon EC2 Image Builder (`imagebuilder`) — 2026-09-08
 
 Live validation confirmed a version-reference escalation. A benign recipe stored
