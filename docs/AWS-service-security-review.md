@@ -719,6 +719,27 @@ the validated Critical result. Both access entries and clusters were deleted and
 then their roles, users, every access key, policies, generated ENIs/security groups, and exact local
 kubeconfig files were removed. All exact-prefix inventories returned empty.
 
+### Amazon AppStream (`appstream`) — image-builder role takeover, 2026-09-10
+
+`appstream:CreateImageBuilderStreamingURL` alone was validated as a direct takeover of a running
+image builder and its attached IAM role. A disposable RHEL builder had a role restricted to one
+Secrets Manager canary. A user with only that exact AppStream action minted a bearer URL, and a
+clean browser with no AWS credentials entered the builder's `Administrator` desktop. An empty
+user was denied the same request.
+
+From the streamed terminal, Python's default credential provider returned a live `ASIA` access key,
+a 40-character secret, a 1340-character session token, and a one-way fingerprint of the secret.
+This proved execution-role credential access without `DescribeImageBuilders`, `StartImageBuilder`,
+`iam:PassRole`, direct IAM-role access, or any additional AppStream permission. The target must be
+running and its builder name known; when listing is denied, names can still appear in console URLs,
+image pipelines, source/IaC, deployment output, browser and shell history, tickets, logs,
+CloudTrail/SIEM copies, screenshots, and support bundles.
+
+After the proof, the builder was stopped to `STOPPED` and deleted. Its test secret, role and inline
+policy, both IAM users and all access keys, temporary AppStream service role, isolated browser
+profile, and screenshots were removed. Exact AppStream, Secrets Manager, and IAM inventories
+returned empty.
+
 ### AWS CodeBuild (`codebuild`) — running-sandbox command injection, 2026-09-10
 
 `codebuild:StartCommandExecution` alone was validated as a direct takeover of a running CodeBuild
