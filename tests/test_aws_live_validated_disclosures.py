@@ -13,6 +13,9 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "airflow-serverless:GetWorkflowRun",
     "account:GetContactInformation",
     "amplify:GetApp",
+    "amplify:GetBranch",
+    "amplify:ListApps",
+    "amplify:ListBranches",
     "amplify:GetArtifactUrl",
     "amplify:GetJob",
     "apigateway:GET",
@@ -36,6 +39,8 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "cloudfront:GetDistribution",
     "cloudfront:GetDistributionConfig",
     "cloudfront:GetFunction",
+    "cloudfront-keyvaluestore:GetKey",
+    "cloudfront-keyvaluestore:ListKeys",
     "cloudfront:ListDistributions",
     "cloudtrail:LookupEvents",
     "ce:GetCostAndUsage",
@@ -120,6 +125,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "mediapackagev2:PutChannelPolicy",
     "mediapackagev2:PutOriginEndpointPolicy",
     "mediapackage:DescribeChannel",
+    "mediapackage:ListChannels",
     "notifications:GetManagedNotificationEvent",
     "notifications:ListManagedNotificationEvents",
     "mq:CreateUser",
@@ -1110,6 +1116,7 @@ def test_live_validated_lightsail_credential_and_bucket_takeovers():
 def test_live_validated_mediapackage_ingest_credential_takeovers():
     actions = (
         "mediapackage:DescribeChannel",
+        "mediapackage:ListChannels",
         "mediapackage:RotateChannelCredentials",
         "mediapackage:RotateIngestEndpointCredentials",
     )

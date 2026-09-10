@@ -192,6 +192,9 @@ high_exact:
   - airflow-serverless:GetWorkflowRun
   - account:GetContactInformation
   - amplify:GetApp
+  - amplify:GetBranch
+  - amplify:ListApps
+  - amplify:ListBranches
   - amplify:GetArtifactUrl
   - amplify:GetJob
   - apigateway:GET
@@ -217,6 +220,8 @@ high_exact:
   - cloudfront:GetDistribution
   - cloudfront:GetDistributionConfig
   - cloudfront:GetFunction
+  - cloudfront-keyvaluestore:GetKey
+  - cloudfront-keyvaluestore:ListKeys
   - cloudfront:ListDistributions
   - cloudwatch:GetDashboard
   - cloudtrail:LookupEvents
@@ -327,6 +332,7 @@ high_exact:
   - mq:UpdateUser
   - memorydb:UpdateUser
   - mediapackage:DescribeChannel
+  - mediapackage:ListChannels
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
   - neptune-db:GetStreamRecords
@@ -421,6 +427,9 @@ high_override_exact:
   - servicecatalog:GetProvisionedProductOutputs
   - account:GetContactInformation
   - amplify:GetApp
+  - amplify:GetBranch
+  - amplify:ListApps
+  - amplify:ListBranches
   - amplify:GetArtifactUrl
   - amplify:GetJob
   - apigateway:GET
@@ -446,6 +455,8 @@ high_override_exact:
   - cloudfront:GetDistribution
   - cloudfront:GetDistributionConfig
   - cloudfront:GetFunction
+  - cloudfront-keyvaluestore:GetKey
+  - cloudfront-keyvaluestore:ListKeys
   - cloudfront:ListDistributions
   - cloudtrail:LookupEvents
   - ce:GetCostAndUsage
@@ -552,6 +563,7 @@ high_override_exact:
   - medical-imaging:GetImageFrame
   - medical-imaging:GetImageSetMetadata
   - mediapackage:DescribeChannel
+  - mediapackage:ListChannels
   - mediapackage:RotateChannelCredentials
   - mediapackage:RotateIngestEndpointCredentials
   - neptune-db:GetStreamRecords
