@@ -242,6 +242,8 @@ high_exact:
   - codecommit:GitPull
   - codepipeline:PollForJobs
   - codepipeline:GetJobDetails
+  - codepipeline:GetPipeline
+  - codepipeline:GetPipelineExecution
   - chime:GetChannelMessage
   - chime:ListChannelMessages
   - connect:BatchDescribeDataTableValue
@@ -473,6 +475,8 @@ high_override_exact:
   - codecommit:GetFile
   - codepipeline:PollForJobs
   - codepipeline:GetJobDetails
+  - codepipeline:GetPipeline
+  - codepipeline:GetPipelineExecution
   - chime:GetChannelMessage
   - chime:ListChannelMessages
   - connect:BatchDescribeDataTableValue
