@@ -393,6 +393,8 @@ high_exact:
   - s3express:CreateSession
   - sagemaker:DescribeModel
   - sagemaker:DescribeTrainingJob
+  - sagemaker:DescribeAppImageConfig
+  - sagemaker:ListAppImageConfigs
   - scheduler:GetSchedule
   - servicediscovery:RegisterInstance
   - ses:GetSuppressedDestination
@@ -600,6 +602,8 @@ high_override_exact:
   - s3express:CreateSession
   - sagemaker:DescribeModel
   - sagemaker:DescribeTrainingJob
+  - sagemaker:DescribeAppImageConfig
+  - sagemaker:ListAppImageConfigs
   - scheduler:GetSchedule
   - servicediscovery:RegisterInstance
   - ses:GetSuppressedDestination

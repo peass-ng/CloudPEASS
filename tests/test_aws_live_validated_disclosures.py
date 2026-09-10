@@ -47,6 +47,8 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "cloudfront:ListDistributions",
     "cloudtrail:LookupEvents",
     "devicefarm:GetProject",
+    "sagemaker:DescribeAppImageConfig",
+    "sagemaker:ListAppImageConfigs",
     "ce:GetCostAndUsage",
     "budgets:ViewBudget",
     "aws-portal:ViewBilling",
