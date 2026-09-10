@@ -366,6 +366,9 @@ sensitive_combinations = [
     ["Microsoft.EventGrid/systemTopics/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/domains/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/domains/topics/eventSubscriptions/getFullUrl/action"],
+    # Exact receive-only DataAction recovered the full seeded CloudEvent and
+    # its delivery lock token while ARM namespace read remained denied.
+    ["Microsoft.EventGrid/events/receive/action"],
     ["Microsoft.ContainerRegistry/registries/runs/listLogSasUrl/action"],
     ["Microsoft.Compute/disks/beginGetAccess/action"],
     ["Microsoft.Compute/snapshots/beginGetAccess/action"],

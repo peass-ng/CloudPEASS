@@ -550,6 +550,9 @@ _AZURE_HIGH_EXACT = frozenset(
         "microsoft.eventgrid/systemtopics/eventsubscriptions/getfullurl/action",
         "microsoft.eventgrid/domains/eventsubscriptions/getfullurl/action",
         "microsoft.eventgrid/domains/topics/eventsubscriptions/getfullurl/action",
+        # Exact receive-only DataAction recovered a seeded CloudEvent and its
+        # queue-delivery lock token without namespace management read.
+        "microsoft.eventgrid/events/receive/action",
         "microsoft.containerregistry/registries/runs/listlogsasurl/action",
         # Live validation recovered stored signed callback URLs or literal
         # credentials and used each one against the protected canary. These

@@ -498,6 +498,21 @@ def test_logic_workflow_access_key_list_is_a_high_singleton():
     assert not categories["critical"]
 
 
+def test_event_grid_receive_is_a_high_singleton():
+    permission = "Microsoft.EventGrid/events/receive/action"
+    assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert categories["high"] == [permission]
+    assert not categories["critical"]
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",

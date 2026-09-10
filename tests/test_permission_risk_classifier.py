@@ -226,6 +226,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Logic/workflows/runs/actions/read": "high",
             "Microsoft.Logic/workflows/runs/actions/requestHistories/read": "high",
             "Microsoft.Logic/workflows/accessKeys/list/action": "high",
+            "Microsoft.EventGrid/events/receive/action": "high",
             "Microsoft.DataFactory/factories/pipelines/createRun/action": "high",
             "Microsoft.ContainerRegistry/registries/taskruns/write": "high",
             "Microsoft.ContainerRegistry/registries/scheduleRun/action": "high",
