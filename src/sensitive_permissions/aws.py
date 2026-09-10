@@ -81,7 +81,13 @@ very_sensitive_combinations = [
     ["ecr-public:SetRepositoryPolicy"],
     ["ecr:PutRegistryPolicy"],
 
-    ["ecs:RegisterTaskDefinition"],
+    ["ecs:RegisterTaskDefinition", "ecs:UpdateService"],
+    ["ecs:RegisterTaskDefinition", "ecs:CreateService"],
+    [
+        "ecs:RegisterTaskDefinition",
+        "ecs:CreateTaskSet",
+        "ecs:UpdateServicePrimaryTaskSet",
+    ],
     ["ecs:ExecuteCommand"],
 
     ["events:PutTargets", "events:PutEvents"],
@@ -480,8 +486,7 @@ sensitive_combinations = [
 
     ["chime:CreateApiKey"],
 
-    ["codebuild:CreateProject"],
-    ["codebuild:UpdateProject"],
+    ["codebuild:UpdateProject", "codebuild:StartBuild"],
 
     ["s3:GetObject"],
     ["s3:PutObject"],
@@ -515,6 +520,12 @@ sensitive_combinations = [
     ["dynamodb:RestoreTableFromBackup"],
     ["dynamodb:PutItem"],
     ["dynamodb:UpdateItem"],
+    [
+        "dynamodb:UpdateTable",
+        "dynamodb:DescribeStream",
+        "dynamodb:GetShardIterator",
+        "dynamodb:GetRecords",
+    ],
 
     ["athena:GetQueryResults", "s3:GetObject"],
 
@@ -540,8 +551,6 @@ sensitive_combinations = [
     ["elasticfilesystem:ClientMount", "elasticfilesystem:ClientWrite"],
     ["elasticfilesystem:ClientMount", "elasticfilesystem:CreateAccessPoint"],
 
-    ["elasticbeanstalk:CreateApplication", "elasticbeanstalk:CreateEnvironment", "elasticbeanstalk:CreateApplicationVersion", "elasticbeanstalk:UpdateEnvironment"],
-    ["elasticbeanstalk:CreateApplicationVersion", "elasticbeanstalk:UpdateEnvironment", "cloudformation:GetTemplate", "cloudformation:DescribeStackResources", "cloudformation:DescribeStackResource", "autoscaling:DescribeAutoScalingGroups", "autoscaling:SuspendProcesses"],
     ["elasticbeanstalk:DescribeConfigurationSettings", "s3:CreateBucket", "s3:GetBucketLocation", "s3:GetObject", "s3:ListBucket"],
 
     ["scheduler:CreateSchedule", "scheduler:UpdateSchedule"],
@@ -560,11 +569,15 @@ sensitive_combinations = [
     ["lambda:CreateEventSourceMapping"],
 
     ["rds:AddRoleToDBCluster"],
-    ["rds:CreateDBInstance"],
     ["rds:AddRoleToDBInstance"],
     ["rds:RestoreDBInstanceFromDBSnapshot"],
     ["rds:DownloadDBLogFilePortion"],
-    ["rds:StartExportTask"],
+    [
+        "rds:StartExportTask",
+        "iam:PassRole",
+        "kms:CreateGrant",
+        "kms:DescribeKey",
+    ],
 
     ["redshift:ModifyCluster"],
 
@@ -808,6 +821,10 @@ live_validated_disclosure_documentation = {
     "dynamodb:Query": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
     "dynamodb:Scan": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
     "dynamodb:TransactGetItems": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
+    "dynamodb:UpdateTable": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
+    "dynamodb:DescribeStream": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
+    "dynamodb:GetShardIterator": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
+    "dynamodb:GetRecords": "aws-post-exploitation/aws-dynamodb-post-exploitation/README.md",
     "docdb-elastic:UpdateCluster": "aws-services/aws-documentdb-enum/README.md",
     "deadline:AssumeQueueRoleForRead": "aws-services/aws-deadline-cloud-enum.md",
     "deadline:AssumeQueueRoleForUser": "aws-services/aws-deadline-cloud-enum.md",

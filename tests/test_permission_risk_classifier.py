@@ -1275,6 +1275,54 @@ def test_elastic_beanstalk_configuration_secret_requires_s3_dependencies():
     ) == "low"
 
 
+def test_live_validated_ecs_and_rds_actions_require_complete_attack_chains():
+    ecs_chains = (
+        ["ecs:RegisterTaskDefinition", "ecs:UpdateService"],
+        ["ecs:RegisterTaskDefinition", "ecs:CreateService"],
+        [
+            "ecs:RegisterTaskDefinition",
+            "ecs:CreateTaskSet",
+            "ecs:UpdateServicePrimaryTaskSet",
+        ],
+    )
+    for chain in ecs_chains:
+        assert chain in very_sensitive_combinations
+
+    # Registering a revision did not deploy it to the live-tested service.
+    assert ["ecs:RegisterTaskDefinition"] not in very_sensitive_combinations
+    assert ["ecs:RegisterTaskDefinition"] not in sensitive_combinations
+
+    export_chain = [
+        "rds:StartExportTask",
+        "iam:PassRole",
+        "kms:CreateGrant",
+        "kms:DescribeKey",
+    ]
+    assert export_chain in sensitive_combinations
+    # Live controls failed first on PassRole and then on KMS access.
+    assert ["rds:StartExportTask"] not in very_sensitive_combinations
+    assert ["rds:StartExportTask"] not in sensitive_combinations
+    assert ["rds:CreateDBInstance"] not in sensitive_combinations
+
+    dynamodb_stream_chain = [
+        "dynamodb:UpdateTable",
+        "dynamodb:DescribeStream",
+        "dynamodb:GetShardIterator",
+        "dynamodb:GetRecords",
+    ]
+    assert dynamodb_stream_chain in sensitive_combinations
+
+    assert ["codebuild:UpdateProject", "codebuild:StartBuild"] in sensitive_combinations
+    assert ["codebuild:UpdateProject"] not in sensitive_combinations
+
+    # Creating a CodeBuild project did not pass or execute the selected role
+    # by itself. PassRole and a build-start action completed the live chain.
+    assert ["codebuild:CreateProject"] not in very_sensitive_combinations
+    assert ["codebuild:CreateProject"] not in sensitive_combinations
+    assert ["codebuild:StartBuild"] in very_sensitive_combinations
+    assert ["iam:PassRole"] in very_sensitive_combinations
+
+
 def test_workspaces_control_plane_reads_remain_low_without_data_evidence():
     for permission in (
         "workspaces:DescribeWorkspaceSnapshots",
