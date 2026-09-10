@@ -813,6 +813,16 @@ def test_live_validated_redshift_single_action_database_credentials():
         )
 
 
+def test_live_validated_cognito_client_secret_injection_is_critical():
+    action = "cognito-idp:AddUserPoolClientSecret"
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    assert (action,) in critical
+    assert classify_permission("aws", action, unknown_default="medium") == "critical"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-privilege-escalation/aws-cognito-privesc/README.md"
+    )
+
+
 def test_live_validated_rds_password_takeover_and_iam_database_access():
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
     high = {tuple(candidate) for candidate in sensitive_combinations}

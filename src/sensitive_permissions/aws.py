@@ -39,6 +39,7 @@ very_sensitive_combinations = [
     ],
 
     ["cognito-identity:UpdateIdentityPool"],
+    ["cognito-idp:AddUserPoolClientSecret"],
     ["cognito-idp:AdminAddUserToGroup"],
     ["cognito-idp:AdminConfirmSignUp"],
     ["cognito-idp:AdminCreateUser"],
@@ -726,6 +727,7 @@ live_validated_disclosure_documentation = {
     "connect:GetFederationToken": "aws-services/aws-connect-enum.md",
     "cognito-identity:UpdateIdentityPool": "aws-services/aws-cognito-enum/cognito-identity-pools.md",
     "cognito-idp:AdminGetUser": "aws-services/aws-cognito-enum/cognito-user-pools.md",
+    "cognito-idp:AddUserPoolClientSecret": "aws-privilege-escalation/aws-cognito-privesc/README.md",
     "cognito-idp:DescribeUserPoolClient": "aws-services/aws-cognito-enum/cognito-user-pools.md",
     "cognito-idp:DescribeIdentityProvider": "aws-services/aws-cognito-enum/cognito-user-pools.md",
     "cognito-idp:ListUsers": "aws-services/aws-cognito-enum/cognito-user-pools.md",

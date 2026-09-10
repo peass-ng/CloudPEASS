@@ -25,6 +25,7 @@ critical_exact:
   - backup:PutBackupVaultAccessPolicy
   - codebuild:StartCommandExecution
   - codeartifact:GetAuthorizationToken
+  - cognito-idp:AddUserPoolClientSecret
   - cognito-identity:UpdateIdentityPool
   - docdb-elastic:UpdateCluster
   - dsql:PutClusterPolicy
