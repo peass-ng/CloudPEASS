@@ -52,6 +52,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "codecommit:GetFile",
     "codecommit:GitPull",
     "codepipeline:PollForJobs",
+    "codepipeline:GetJobDetails",
     "chime:GetChannelMessage",
     "chime:ListChannelMessages",
     "connect:BatchDescribeDataTableValue",

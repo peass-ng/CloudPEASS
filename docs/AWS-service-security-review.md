@@ -2067,6 +2067,23 @@ The event was deleted with its audit history, followed by the event type, variab
 two IAM roles/policies, and local test harness. A final `GetEvent` returned `Event not found` and
 exact prefixed inventories were empty.
 
+### AWS CodePipeline known-job artifact credentials (`codepipeline`) — 2026-09-10
+
+A disposable custom action received one private source artifact. An IAM user holding only
+`codepipeline:GetJobDetails` on `Resource: *`, given the administrator-observed pending job ID,
+received the job's temporary access key, secret key, session token, and exact input S3 location.
+Those credentials successfully read the 179-byte private artifact. An empty-permission user was
+denied the identical request. This is independently High artifact access, alongside the already
+validated `PollForJobs` path; it does not require the target user to poll, list, or describe the
+pipeline or custom action.
+
+When enumeration is denied, recover job IDs from custom-worker state, action logs, local queues,
+CI output, application traces, browser storage, or CloudTrail/SIEM copies. Existing worker caches
+and downloaded artifacts are permissionless fallbacks for the same content. The job was failed for
+cleanup, its execution abandoned, and the pipeline and custom action deleted. The service role,
+both IAM users and access keys, inline policies, both versioned S3 buckets, every object/version,
+and local test harness were removed; exact pipeline, bucket, role, and user inventories are empty.
+
 ### Amazon GameLift Servers (`gamelift`) — 2026-09-09
 
 A disposable Amazon Linux 2023 managed EC2 fleet installed a private file on one c5.large compute.
