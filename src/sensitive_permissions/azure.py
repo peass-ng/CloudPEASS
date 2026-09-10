@@ -115,15 +115,6 @@ very_sensitive_combinations = [
     ["Microsoft.DBforPostgreSQL/flexibleServers/write", "Microsoft.DBforPostgreSQL/flexibleServers/backups/read"],
     ["Microsoft.DBforPostgreSQL/flexibleServers/administrators/write"],
 
-    ["Microsoft.ServiceBus/namespaces/authorizationrules/listKeys/action"],
-    ["Microsoft.ServiceBus/namespaces/authorizationrules/regenerateKeys/action"],
-    ["Microsoft.ServiceBus/namespaces/*/authorizationRules/ListKeys/action"],
-    ["Microsoft.ServiceBus/namespaces/*/authorizationRules/regenerateKeys/action"],
-    ["Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action"],
-    ["Microsoft.ServiceBus/namespaces/queues/authorizationRules/regenerateKeys/action"],
-    ["Microsoft.ServiceBus/namespaces/topics/authorizationRules/listKeys/action"],
-    ["Microsoft.ServiceBus/namespaces/topics/authorizationRules/regenerateKeys/action"],
-
     ["Microsoft.Web/staticSites/listSecrets/action"],
 
     ["Microsoft.MachineLearningServices/workspaces/listKeys/action"],
@@ -161,10 +152,6 @@ very_sensitive_combinations = [
     ["Microsoft.CognitiveServices/accounts/regenerateKey/action"],
     ["Microsoft.DataFactory/datafactories/gateways/listauthkeys/action"],
     ["Microsoft.DataFactory/factories/integrationruntimes/listauthkeys/action"],
-    ["Microsoft.EventHub/namespaces/authorizationRules/listkeys/action"],
-    ["Microsoft.EventHub/namespaces/authorizationRules/regenerateKeys/action"],
-    ["Microsoft.EventHub/namespaces/eventhubs/authorizationRules/listkeys/action"],
-    ["Microsoft.EventHub/namespaces/eventhubs/authorizationRules/regenerateKeys/action"],
     ["Microsoft.EventHub/namespaces/disasterRecoveryConfigs/authorizationRules/listkeys/action"],
     ["Microsoft.ServiceBus/namespaces/disasterRecoveryConfigs/authorizationRules/listkeys/action"],
     ["Microsoft.FluidRelay/fluidRelayServers/listKeys/action"],
@@ -179,6 +166,9 @@ very_sensitive_combinations = [
     ["Microsoft.Search/searchServices/regenerateAdminKey/action"],
     ["Microsoft.Storage/storageAccounts/listAccountSas/action"],
     ["Microsoft.Storage/storageAccounts/listServiceSas/action"],
+    # Live exact-role validation on an HNS account: runAsSuperUser alone
+    # changed POSIX permissions and read the protected blob canary.
+    ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/runAsSuperUser/action"],
     ["Microsoft.NotificationHubs/Namespaces/authorizationRules/listkeys/action"],
     ["Microsoft.NotificationHubs/Namespaces/authorizationRules/regenerateKeys/action"],
     ["Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/listkeys/action"],
@@ -265,6 +255,10 @@ sensitive_combinations = [
     # response was the newly active API_JWT_SECRET, and an HS256 JWT signed
     # with it authenticated to the bot's management-scenarios endpoint.
     ["Microsoft.HealthBot/healthBots/Admin/Secrets/GenerateApiKey/Action"],
+    # Live validated on an F0 Healthcare Agent with the exact singleton
+    # DataAction and no ARM read. The export returned a CSV containing both
+    # sides of a seeded synthetic patient-like Direct Line conversation.
+    ["Microsoft.HealthBot/healthBots/Admin/ConversationLogs/Export/Action"],
     # Live validated on a compute instance explicitly assigned to the caller:
     # workspace read plus application access opened a Jupyter terminal and
     # executed a canary while computes/read remained denied. The action alone
@@ -397,6 +391,39 @@ sensitive_combinations = [
     # signature and invalidated the prior primary-signed callback.
     ["Microsoft.Logic/workflows/accessKeys/list/action"],
     ["Microsoft.DataFactory/factories/pipelines/createRun/action"],
+    # Live exact-role validation recovered a plaintext secret-like pipeline
+    # parameter from a known completed run. Parameters declared SecureString
+    # remained redacted in this representation.
+    ["Microsoft.DataFactory/factories/pipelineruns/read"],
+    # Querying historical runs requires both the action that starts the query
+    # and the separately enforced result-read operation. The exact pair
+    # recovered the same plaintext parameter without factory or pipeline read.
+    [
+        "Microsoft.DataFactory/factories/querypipelineruns/action",
+        "Microsoft.DataFactory/factories/querypipelineruns/read",
+    ],
+    # Live exact DataAction tests recovered plaintext command lines,
+    # environment values, and SAS-like metadata from inert jobs and schedules.
+    # The two resource families remained independently scoped.
+    ["Microsoft.Batch/batchAccounts/jobs/read"],
+    ["Microsoft.Batch/batchAccounts/jobSchedules/read"],
+    # Live minimum-role validation against a stopped Stream Analytics job:
+    # Sample/action started collection but its Location URL returned 403 until
+    # the separately enforced OperationResults/read permission was present.
+    # The exact pair returned a signed download URL containing the private
+    # Blob-input canary; each role was scoped to one input and a sibling input
+    # remained denied.
+    [
+        "Microsoft.StreamAnalytics/streamingjobs/inputs/Sample/action",
+        "Microsoft.StreamAnalytics/streamingjobs/inputs/OperationResults/read",
+    ],
+    # Live minimum-role validation: the action passed ARM alone but Databricks
+    # bootstrap stayed 403. Adding only workspace read placed the user in the
+    # workspace admins group and enabled the admin-only SCIM user list.
+    [
+        "Microsoft.Databricks/workspaces/assignWorkspaceAdmin/action",
+        "Microsoft.Databricks/workspaces/read",
+    ],
     ["Microsoft.EventGrid/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/topics/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/systemTopics/eventSubscriptions/getFullUrl/action"],
@@ -405,12 +432,86 @@ sensitive_combinations = [
     # Exact receive-only DataAction recovered the full seeded CloudEvent and
     # its delivery lock token while ARM namespace read remained denied.
     ["Microsoft.EventGrid/events/receive/action"],
+    # Exact send-only DataAction published two CloudEvents to a namespace
+    # topic without ARM namespace/topic read. A queue subscriber recovered
+    # both canaries; the same valid principal was denied on a sibling topic.
+    ["Microsoft.EventGrid/events/send/action"],
+    # Exact topic-space roles were sufficient without ARM resource read. An
+    # HTTP-to-MQTT publisher delivered the exact canary to an Entra-authenticated
+    # MQTT v5 subscriber; both principals were denied on a sibling topic space.
+    ["Microsoft.EventGrid/topicSpaces/publish/action"],
+    ["Microsoft.EventGrid/topicSpaces/subscribe/action"],
+    # The generic action returned static delivery attributes marked isSecret
+    # verbatim while ordinary resource GET redacted them as Hidden. The
+    # advertised topics/eventSubscriptions alias did not authorize this route.
+    ["Microsoft.EventGrid/eventSubscriptions/getDeliveryAttributes/action"],
+    # Exact IoT Hub roles proved device/module credential theft or creation,
+    # desired-state command injection, cloud-to-device delivery, direct method
+    # invocation, targeted job execution, and full registry export/import.
+    # Device keys also minted a configured Storage file-upload SAS.
+    ["Microsoft.Devices/IotHubs/devices/read"],
+    ["Microsoft.Devices/IotHubs/devices/write"],
+    ["Microsoft.Devices/IotHubs/twins/read"],
+    ["Microsoft.Devices/IotHubs/twins/write"],
+    ["Microsoft.Devices/IotHubs/cloudToDeviceMessages/send/action"],
+    ["Microsoft.Devices/IotHubs/directMethods/invoke/action"],
+    ["Microsoft.Devices/IotHubs/jobs/read"],
+    ["Microsoft.Devices/IotHubs/jobs/write"],
+    ["Microsoft.Devices/IotHubs/exportDevices/action"],
+    ["Microsoft.Devices/IotHubs/importDevices/action"],
+    # DPS attestation detail disclosed individual/group symmetric keys. The
+    # write actions created attacker-keyed enrollment paths. Every path
+    # provisioned a device into the linked hub and published a live canary.
+    ["Microsoft.Devices/provisioningServices/attestationmechanism/details/action"],
+    ["Microsoft.Devices/provisioningServices/enrollments/write"],
+    ["Microsoft.Devices/provisioningServices/enrollmentGroups/write"],
+    # Exact entity-scoped DataActions injected or recovered seeded messages;
+    # sibling entities and the opposite operation remained denied. Service
+    # Bus receive could also permanently complete the received message.
+    ["Microsoft.EventHub/namespaces/messages/receive/action"],
+    ["Microsoft.EventHub/namespaces/messages/send/action"],
+    ["Microsoft.ServiceBus/namespaces/messages/receive/action"],
+    ["Microsoft.ServiceBus/namespaces/messages/send/action"],
+    # Shared-access rules may be Listen-, Send-, or Manage-scoped, so their
+    # credentials are High but not inherently subscription/tenant takeover.
+    ["Microsoft.EventHub/namespaces/authorizationRules/listkeys/action"],
+    ["Microsoft.EventHub/namespaces/authorizationRules/regenerateKeys/action"],
+    ["Microsoft.EventHub/namespaces/eventhubs/authorizationRules/listkeys/action"],
+    ["Microsoft.EventHub/namespaces/eventhubs/authorizationRules/regenerateKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/authorizationrules/listKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/authorizationrules/regenerateKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/*/authorizationRules/ListKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/*/authorizationRules/regenerateKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/queues/authorizationRules/regenerateKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/topics/authorizationRules/listKeys/action"],
+    ["Microsoft.ServiceBus/namespaces/topics/authorizationRules/regenerateKeys/action"],
+    # Creating a rule does not return its generated key. These exact minimum
+    # pairs created Manage rules and exercised their scoped SAS credentials.
+    [
+        "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/write",
+        "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/listkeys/action",
+    ],
+    [
+        "Microsoft.ServiceBus/namespaces/queues/authorizationRules/write",
+        "Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action",
+    ],
     ["Microsoft.ContainerRegistry/registries/runs/listLogSasUrl/action"],
     ["Microsoft.Compute/disks/beginGetAccess/action"],
     ["Microsoft.Compute/snapshots/beginGetAccess/action"],
     ["Microsoft.Compute/restorePointCollections/restorePoints/diskRestorePoints/beginGetAccess/action"],
     ["Microsoft.DocumentDB/databaseAccounts/readonlykeys/action"],
     ["Microsoft.DocumentDB/databaseAccounts/readonlykeys/read"],
+    # Live exact-role validation recovered seeded secret-like graph data.
+    # Query did not need twin read, while twin and relationship reads each
+    # disclosed their own protected properties and remained instance-scoped.
+    ["Microsoft.DigitalTwins/query/action"],
+    ["Microsoft.DigitalTwins/digitaltwins/read"],
+    ["Microsoft.DigitalTwins/digitaltwins/relationships/read"],
+    # Live exact-role validation changed and reset the SGX trust policy on an
+    # unsigned Azure Attestation provider. Signed providers additionally
+    # require a trusted policy-signing key, so the impact is High, not Critical.
+    ["Microsoft.Attestation/attestationProviders/attestation/write"],
     # Live validated against an ACL-enabled Azure AI Search index. Ordinary
     # documents/read returned only the caller-authorized document, while the
     # exact pair plus x-ms-enable-elevated-read returned a document protected
@@ -442,6 +543,11 @@ sensitive_combinations = [
     ["Microsoft.OperationalInsights/workspaces/sharedKeys/read"],
     ["Microsoft.Communication/CommunicationServices/ListKeys/action"],
     ["Microsoft.Communication/CommunicationServices/RegenerateKey/action"],
+    # Live exact-role validation used only this singleton to create ACS
+    # identities and mint chat/VoIP tokens for a pre-existing identity. The
+    # resulting victim token created a thread and sent/read an attributed
+    # canary; no-role, Read-only, and sibling-resource controls were denied.
+    ["Microsoft.Communication/CommunicationServices/Write"],
     ["Microsoft.Relay/namespaces/authorizationRules/listkeys/action"],
     ["Microsoft.Relay/namespaces/authorizationRules/regenerateKeys/action"],
     ["Microsoft.Relay/namespaces/HybridConnections/authorizationRules/listkeys/action"],
@@ -452,6 +558,18 @@ sensitive_combinations = [
     ["Microsoft.SignalRService/SignalR/regeneratekey/action"],
     ["Microsoft.SignalRService/WebPubSub/listkeys/action"],
     ["Microsoft.SignalRService/WebPubSub/regeneratekey/action"],
+    # SignalR returned temporary signing material that established an
+    # arbitrary-user hub client. The send actions delivered exact canaries to
+    # known live connections on both real-time services.
+    ["Microsoft.SignalRService/SignalR/auth/accessKey/action"],
+    ["Microsoft.SignalRService/SignalR/clientConnection/send/action"],
+    ["Microsoft.SignalRService/WebPubSub/clientConnection/send/action"],
+    # Web PubSub token generation alone could not connect; adding only the
+    # handshake permission produced a usable resource-and-hub-bound JWT.
+    [
+        "Microsoft.SignalRService/WebPubSub/clientConnection/generateToken/action",
+        "Microsoft.SignalRService/WebPubSub/clientConnection/write",
+    ],
     ["Microsoft.Maps/accounts/listKeys/action"],
     ["Microsoft.Maps/accounts/regenerateKey/action"],
     ["Microsoft.Purview/accounts/listkeys/action"],
@@ -491,5 +609,37 @@ sensitive_combinations = [
     ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"],
     ["Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read"],
     ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/read"],
-    ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"]
+    ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"],
+    # Live minimum-role validation against an operational Azure Blob backup:
+    # restore/action passed the primary vault authorization check but Azure
+    # rejected the linked storage account until this exact read was granted at
+    # the account scope. The pair completed a point-in-time restore and
+    # recreated a deleted canary byte-for-byte. It does not itself grant Blob
+    # data reads, but it can roll back account contents and re-expose deleted
+    # data to workloads or principals that already consume the account.
+    [
+        "Microsoft.DataProtection/backupVaults/backupInstances/restore/action",
+        "Microsoft.Storage/storageAccounts/read",
+    ],
+    # API version 2025-07-05 added service-specific user delegation keys for
+    # Files, Queues, and Tables. In live tests all four actions minted keys, but
+    # every action-only SAS was denied; adding the exact service read produced
+    # the canary. Azure Files also enforces backup-semantics intent.
+    [
+        "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action",
+        "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+    ],
+    [
+        "Microsoft.Storage/storageAccounts/fileServices/generateUserDelegationKey/action",
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
+        "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action",
+    ],
+    [
+        "Microsoft.Storage/storageAccounts/queueServices/generateUserDelegationKey/action",
+        "Microsoft.Storage/storageAccounts/queueServices/queues/messages/read",
+    ],
+    [
+        "Microsoft.Storage/storageAccounts/tableServices/generateUserDelegationKey/action",
+        "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read",
+    ],
 ]

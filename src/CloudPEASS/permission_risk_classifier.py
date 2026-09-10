@@ -343,16 +343,6 @@ _AZURE_CRITICAL_EXACT = frozenset(
         # deleted its manifest without tokens/write.
         "microsoft.containerregistry/registries/generatecredentials/action",
         "microsoft.app/containerapps/listsecrets/action",
-        "microsoft.servicebus/namespaces/authorizationrules/listkeys/action",
-        "microsoft.servicebus/namespaces/authorizationrules/regeneratekeys/action",
-        "microsoft.servicebus/namespaces/queues/authorizationrules/listkeys/action",
-        "microsoft.servicebus/namespaces/queues/authorizationrules/regeneratekeys/action",
-        "microsoft.servicebus/namespaces/topics/authorizationrules/listkeys/action",
-        "microsoft.servicebus/namespaces/topics/authorizationrules/regeneratekeys/action",
-        "microsoft.eventhub/namespaces/authorizationrules/listkeys/action",
-        "microsoft.eventhub/namespaces/authorizationrules/regeneratekeys/action",
-        "microsoft.eventhub/namespaces/eventhubs/authorizationrules/listkeys/action",
-        "microsoft.eventhub/namespaces/eventhubs/authorizationrules/regeneratekeys/action",
         "microsoft.appconfiguration/configurationstores/regeneratekey/action",
         "microsoft.batch/batchaccounts/listkeys/action",
         "microsoft.batch/batchaccounts/regeneratekeys/action",
@@ -368,6 +358,11 @@ _AZURE_CRITICAL_EXACT = frozenset(
         "microsoft.web/sites/publishxml/action",
         "microsoft.storage/storageaccounts/listaccountsas/action",
         "microsoft.storage/storageaccounts/listservicesas/action",
+        # Live exact-DataAction validation on an HNS account changed a blob's
+        # POSIX permissions and then returned its protected canary without a
+        # separate blob-read grant. This is the Blob/DFS super-user primitive,
+        # not the narrower immutable-storage operation with a similar name.
+        "microsoft.storage/storageaccounts/blobservices/containers/blobs/runassuperuser/action",
         # The regenerated local-user password downloaded a protected blob over
         # SFTP with the user's existing container permissions.
         "microsoft.storage/storageaccounts/localusers/regeneratepassword/action",
@@ -411,6 +406,26 @@ _AZURE_HIGH_EXACT = frozenset(
         "microsoft.eventgrid/partnernamespaces/regeneratekey/action",
         "microsoft.eventgrid/topics/listkeys/action",
         "microsoft.eventgrid/topics/regeneratekey/action",
+        # A live exact-role GET of a known completed run recovered a plaintext
+        # secret-like parameter while a SecureString parameter stayed redacted.
+        "microsoft.datafactory/factories/pipelineruns/read",
+        # Live exact-role validation on an unsigned (AAD trust-model) Azure
+        # Attestation provider replaced a restrictive SGX policy and reset it
+        # to the Microsoft default policy. The principal had no policy-read or
+        # ARM provider-read access and was denied on a sibling provider. A
+        # signed/isolated provider still rejected an unsigned signer addition.
+        "microsoft.attestation/attestationproviders/attestation/write",
+        # Live exact singleton DataActions recovered arbitrary sensitive
+        # properties from an owned Digital Twins graph. Query did not require
+        # twin read; twin and relationship reads worked independently. Each
+        # principal was denied on the sibling Digital Twins instance.
+        "microsoft.digitaltwins/query/action",
+        "microsoft.digitaltwins/digitaltwins/read",
+        "microsoft.digitaltwins/digitaltwins/relationships/read",
+        # Exact Batch read DataActions disclosed job and job-schedule command
+        # lines, plaintext environment values, and SAS-like metadata.
+        "microsoft.batch/batchaccounts/jobs/read",
+        "microsoft.batch/batchaccounts/jobschedules/read",
         "microsoft.operationalinsights/workspaces/listkeys/action",
         "microsoft.operationalinsights/workspaces/regeneratesharedkey/action",
         "microsoft.operationalinsights/workspaces/sharedkeys/action",
@@ -421,6 +436,12 @@ _AZURE_HIGH_EXACT = frozenset(
         # because the operation name contains keys.
         "microsoft.communication/communicationservices/listkeys/action",
         "microsoft.communication/communicationservices/regeneratekey/action",
+        # An exact singleton role with only CommunicationServices/Write used
+        # Entra authentication to create ACS identities and mint chat/VoIP
+        # tokens for an existing identity. The victim token then created a
+        # thread and sent/read a victim-attributed canary. No ARM read or key
+        # permission was present, and sibling-resource controls were denied.
+        "microsoft.communication/communicationservices/write",
         "microsoft.relay/namespaces/authorizationrules/listkeys/action",
         "microsoft.relay/namespaces/authorizationrules/regeneratekeys/action",
         "microsoft.relay/namespaces/hybridconnections/authorizationrules/listkeys/action",
@@ -431,6 +452,24 @@ _AZURE_HIGH_EXACT = frozenset(
         "microsoft.signalrservice/signalr/regeneratekey/action",
         "microsoft.signalrservice/webpubsub/listkeys/action",
         "microsoft.signalrservice/webpubsub/regeneratekey/action",
+        # Exact-role tests recovered a usable temporary SignalR signing key
+        # or injected a canary into a known live client connection.
+        "microsoft.signalrservice/signalr/auth/accesskey/action",
+        "microsoft.signalrservice/signalr/clientconnection/send/action",
+        "microsoft.signalrservice/webpubsub/clientconnection/send/action",
+        # Event Hubs and Service Bus policies may be Send-, Listen-, or
+        # Manage-scoped. Their credentials have real data-plane impact but do
+        # not inherently compromise the Azure subscription or tenant.
+        "microsoft.servicebus/namespaces/authorizationrules/listkeys/action",
+        "microsoft.servicebus/namespaces/authorizationrules/regeneratekeys/action",
+        "microsoft.servicebus/namespaces/queues/authorizationrules/listkeys/action",
+        "microsoft.servicebus/namespaces/queues/authorizationrules/regeneratekeys/action",
+        "microsoft.servicebus/namespaces/topics/authorizationrules/listkeys/action",
+        "microsoft.servicebus/namespaces/topics/authorizationrules/regeneratekeys/action",
+        "microsoft.eventhub/namespaces/authorizationrules/listkeys/action",
+        "microsoft.eventhub/namespaces/authorizationrules/regeneratekeys/action",
+        "microsoft.eventhub/namespaces/eventhubs/authorizationrules/listkeys/action",
+        "microsoft.eventhub/namespaces/eventhubs/authorizationrules/regeneratekeys/action",
         # Exact-role live validation recovered an SRE Agent OAuth signing
         # private key and cleartext custom-header credentials from a connector.
         # Scope and downstream privileges depend on the target configuration.
@@ -562,6 +601,45 @@ _AZURE_HIGH_EXACT = frozenset(
         # Exact receive-only DataAction recovered a seeded CloudEvent and its
         # queue-delivery lock token without namespace management read.
         "microsoft.eventgrid/events/receive/action",
+        # Exact send-only DataAction published seeded CloudEvents without
+        # management read and remained constrained to the assigned topic.
+        "microsoft.eventgrid/events/send/action",
+        # Independently assigned MQTT topic-space DataActions injected and
+        # received an exact canary while sibling-topic and no-role controls
+        # were denied. Neither identity needed ARM resource read.
+        "microsoft.eventgrid/topicspaces/publish/action",
+        "microsoft.eventgrid/topicspaces/subscribe/action",
+        # Ordinary resource GET redacted static delivery attributes as Hidden;
+        # this generic action returned the same isSecret values verbatim. The
+        # topic-specific alias did not authorize the tested nested route.
+        "microsoft.eventgrid/eventsubscriptions/getdeliveryattributes/action",
+        # Exact singleton roles recovered or installed live device/module
+        # credentials, injected desired state and messages, invoked methods,
+        # scheduled a device method, read its stored payload, and exported or
+        # imported the complete identity registry. Recovered/selected device
+        # keys authenticated independently and could mint file-upload SAS.
+        "microsoft.devices/iothubs/devices/read",
+        "microsoft.devices/iothubs/devices/write",
+        "microsoft.devices/iothubs/twins/read",
+        "microsoft.devices/iothubs/twins/write",
+        "microsoft.devices/iothubs/cloudtodevicemessages/send/action",
+        "microsoft.devices/iothubs/directmethods/invoke/action",
+        "microsoft.devices/iothubs/jobs/read",
+        "microsoft.devices/iothubs/jobs/write",
+        "microsoft.devices/iothubs/exportdevices/action",
+        "microsoft.devices/iothubs/importdevices/action",
+        # Exact DPS attestation detail recovered live individual and group
+        # keys. Those keys, plus attacker-selected keys written through each
+        # enrollment family, provisioned devices and sent hub telemetry.
+        "microsoft.devices/provisioningservices/attestationmechanism/details/action",
+        "microsoft.devices/provisioningservices/enrollments/write",
+        "microsoft.devices/provisioningservices/enrollmentgroups/write",
+        # Entity-scoped exact roles proved message/event disclosure or
+        # injection while sibling entities and opposite operations were denied.
+        "microsoft.eventhub/namespaces/messages/receive/action",
+        "microsoft.eventhub/namespaces/messages/send/action",
+        "microsoft.servicebus/namespaces/messages/receive/action",
+        "microsoft.servicebus/namespaces/messages/send/action",
         "microsoft.containerregistry/registries/runs/listlogsasurl/action",
         # Live validation recovered stored signed callback URLs or literal
         # credentials and used each one against the protected canary. These
@@ -586,6 +664,10 @@ _AZURE_HIGH_EXACT = frozenset(
         # active ARM secret and signed a management JWT that changed the
         # scenarios request from 401 (wrong key) to 200.
         "microsoft.healthbot/healthbots/admin/secrets/generateapikey/action",
+        # An exact singleton role exported a CSV containing both the user's
+        # seeded patient-like utterance and the agent response. No-role,
+        # read-only, and cross-agent requests were denied.
+        "microsoft.healthbot/healthbots/admin/conversationlogs/export/action",
         "microsoft.notificationhubs/namespaces/notificationhubs/pnscredentials/action",
         "microsoft.apimanagement/service/policies/read",
         "microsoft.apimanagement/service/apis/policies/read",
@@ -685,6 +767,17 @@ _AZURE_HIGH_EXACT = frozenset(
 
 _AZURE_MEDIUM_EXACT = frozenset(
     {
+        # Exact policy read returned the complete configured trust policy but
+        # no signing key, protected workload data, or direct privilege path.
+        "microsoft.attestation/attestationproviders/attestation/read",
+        # Exact DPS reads returned enrollment metadata but intentionally
+        # omitted symmetric keys; the separate attestation detail action is
+        # the proven High credential path. Route tests only simulated matching
+        # and disclosed route metadata without changing message delivery.
+        "microsoft.devices/provisioningservices/enrollments/read",
+        "microsoft.devices/provisioningservices/enrollmentgroups/read",
+        "microsoft.devices/iothubs/routing/$testall/action",
+        "microsoft.devices/iothubs/routing/$testnew/action",
         # Creating an environment certificate does not bind it to a hostname,
         # alter a running app, or expose an existing private key by itself.
         "microsoft.app/connectedenvironments/certificates/write",
@@ -706,6 +799,31 @@ _AZURE_MEDIUM_EXACT = frozenset(
         "microsoft.storage/storageaccounts/blobservices/containers/blobs/permanentdelete/action",
         "microsoft.storage/storageaccounts/blobservices/containers/blobs/tags/read",
         "microsoft.storage/storageaccounts/blobservices/containers/blobs/tags/write",
+        # Exact-role controls showed that every service-specific delegation-key
+        # operation can mint a 32-byte signing key, but its SAS is still bounded
+        # by the issuing identity's matching data permissions. The three Files
+        # privilege aliases below likewise did not provide standalone REST data
+        # access in their exact roles.
+        "microsoft.storage/storageaccounts/blobservices/generateuserdelegationkey/action",
+        "microsoft.storage/storageaccounts/fileservices/generateuserdelegationkey/action",
+        "microsoft.storage/storageaccounts/queueservices/generateuserdelegationkey/action",
+        "microsoft.storage/storageaccounts/tableservices/generateuserdelegationkey/action",
+        "microsoft.storage/storageaccounts/blobservices/containers/blobs/immutablestorage/runassuperuser/action",
+        "microsoft.storage/storageaccounts/fileservices/runasbuiltinfileadministrator/action",
+        "microsoft.storage/storageaccounts/fileservices/fileshares/files/bypasspermissions/action",
+        # These exact HNS actions changed POSIX mode/ownership but did not
+        # authorize data access. Adding blobs/read supplied the disclosure and
+        # is already independently High, so the mutations stay Medium.
+        "microsoft.storage/storageaccounts/blobservices/containers/blobs/modifypermissions/action",
+        "microsoft.storage/storageaccounts/blobservices/containers/blobs/manageownership/action",
+        "microsoft.storage/storageaccounts/localusers/listkeys/action",
+        "microsoft.storage/storageaccounts/localusers/regeneratesharedkey/action",
+        # Live exact-role validation reached the Data Protection restore
+        # route, but Azure enforced storageAccounts/read on the linked source.
+        # Keep the singleton Medium; the exact pair is High because it can
+        # roll back an operationally protected account and recreate deleted
+        # blobs byte-for-byte.
+        "microsoft.dataprotection/backupvaults/backupinstances/restore/action",
         # APIM documents these as credential metadata operations: secret
         # values are intentionally not returned.
         "microsoft.apimanagement/service/modelproviders/listcredentials/action",

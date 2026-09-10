@@ -225,6 +225,12 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             ),
             "medium",
         )
+        self.assertEqual(
+            self.classify(
+                "Microsoft.Attestation/attestationProviders/attestation/read"
+            ),
+            "medium",
+        )
         tested_sensitive_data_credentials = {
             "Microsoft.Search/searchServices/createQueryKey/action": "high",
             "Microsoft.Search/searchServices/skillsets/write": "high",
@@ -233,6 +239,10 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Synapse/workspaces/sqlAdministrators/write": "critical",
             "Microsoft.DocumentDB/databaseAccounts/readonlykeys/action": "high",
             "Microsoft.DocumentDB/databaseAccounts/readonlykeys/read": "high",
+            "Microsoft.DigitalTwins/query/action": "high",
+            "Microsoft.DigitalTwins/digitaltwins/read": "high",
+            "Microsoft.DigitalTwins/digitaltwins/relationships/read": "high",
+            "Microsoft.Attestation/attestationProviders/attestation/write": "high",
             "Microsoft.Logic/workflows/triggers/listCallbackUrl/action": "high",
             "Microsoft.Logic/workflows/versions/triggers/listCallbackUrl/action": "high",
             "Microsoft.Logic/workflows/triggers/run/action": "high",
@@ -242,6 +252,30 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Logic/workflows/accessKeys/list/action": "high",
             "Microsoft.Logic/workflows/run/action": "high",
             "Microsoft.EventGrid/events/receive/action": "high",
+            "Microsoft.EventGrid/events/send/action": "high",
+            "Microsoft.EventGrid/topicSpaces/publish/action": "high",
+            "Microsoft.EventGrid/topicSpaces/subscribe/action": "high",
+            "Microsoft.EventGrid/eventSubscriptions/getDeliveryAttributes/action": "high",
+            "Microsoft.Devices/IotHubs/devices/read": "high",
+            "Microsoft.Devices/IotHubs/devices/write": "high",
+            "Microsoft.Devices/IotHubs/twins/read": "high",
+            "Microsoft.Devices/IotHubs/twins/write": "high",
+            "Microsoft.Devices/IotHubs/cloudToDeviceMessages/send/action": "high",
+            "Microsoft.Devices/IotHubs/directMethods/invoke/action": "high",
+            "Microsoft.Devices/IotHubs/jobs/read": "high",
+            "Microsoft.Devices/IotHubs/jobs/write": "high",
+            "Microsoft.Devices/IotHubs/exportDevices/action": "high",
+            "Microsoft.Devices/IotHubs/importDevices/action": "high",
+            "Microsoft.Devices/provisioningServices/attestationmechanism/details/action": "high",
+            "Microsoft.Devices/provisioningServices/enrollments/write": "high",
+            "Microsoft.Devices/provisioningServices/enrollmentGroups/write": "high",
+            "Microsoft.EventHub/namespaces/messages/receive/action": "high",
+            "Microsoft.EventHub/namespaces/messages/send/action": "high",
+            "Microsoft.ServiceBus/namespaces/messages/receive/action": "high",
+            "Microsoft.ServiceBus/namespaces/messages/send/action": "high",
+            "Microsoft.SignalRService/SignalR/auth/accessKey/action": "high",
+            "Microsoft.SignalRService/SignalR/clientConnection/send/action": "high",
+            "Microsoft.SignalRService/WebPubSub/clientConnection/send/action": "high",
             "Microsoft.DataFactory/factories/pipelines/createRun/action": "high",
             "Microsoft.ContainerRegistry/registries/taskruns/write": "high",
             "Microsoft.ContainerRegistry/registries/scheduleRun/action": "high",
@@ -275,6 +309,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.VideoIndexer/accounts/generateAccessToken/action": "high",
             "Microsoft.VideoIndexer/accounts/generateRestrictedViewerAccessToken/action": "high",
             "Microsoft.HealthBot/healthBots/Admin/Secrets/GenerateApiKey/Action": "high",
+            "Microsoft.HealthBot/healthBots/Admin/ConversationLogs/Export/Action": "high",
             "Microsoft.CognitiveServices/accounts/OpenAI/responses/read": "high",
             "Microsoft.CognitiveServices/accounts/AIServices/agents/read": "high",
             "Microsoft.CognitiveServices/accounts/SpeechServices/speechrest/transcriptions/files/read": "high",
@@ -354,16 +389,16 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.ContainerRegistry/registries/generateCredentials/action": "critical",
             "Microsoft.App/containerApps/listSecrets/action": "critical",
             "Microsoft.App/sessionPools/fetchMCPServerCredentials/action": "critical",
-            "Microsoft.ServiceBus/namespaces/authorizationRules/listKeys/action": "critical",
-            "Microsoft.ServiceBus/namespaces/authorizationRules/regenerateKeys/action": "critical",
-            "Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action": "critical",
-            "Microsoft.ServiceBus/namespaces/queues/authorizationRules/regenerateKeys/action": "critical",
-            "Microsoft.ServiceBus/namespaces/topics/authorizationRules/listKeys/action": "critical",
-            "Microsoft.ServiceBus/namespaces/topics/authorizationRules/regenerateKeys/action": "critical",
-            "Microsoft.EventHub/namespaces/authorizationRules/listKeys/action": "critical",
-            "Microsoft.EventHub/namespaces/authorizationRules/regenerateKeys/action": "critical",
-            "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/listKeys/action": "critical",
-            "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/regenerateKeys/action": "critical",
+            "Microsoft.ServiceBus/namespaces/authorizationRules/listKeys/action": "high",
+            "Microsoft.ServiceBus/namespaces/authorizationRules/regenerateKeys/action": "high",
+            "Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action": "high",
+            "Microsoft.ServiceBus/namespaces/queues/authorizationRules/regenerateKeys/action": "high",
+            "Microsoft.ServiceBus/namespaces/topics/authorizationRules/listKeys/action": "high",
+            "Microsoft.ServiceBus/namespaces/topics/authorizationRules/regenerateKeys/action": "high",
+            "Microsoft.EventHub/namespaces/authorizationRules/listKeys/action": "high",
+            "Microsoft.EventHub/namespaces/authorizationRules/regenerateKeys/action": "high",
+            "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/listKeys/action": "high",
+            "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/regenerateKeys/action": "high",
             "Microsoft.AppConfiguration/configurationStores/RegenerateKey/action": "critical",
             "Microsoft.Batch/batchAccounts/listkeys/action": "critical",
             "Microsoft.Batch/batchAccounts/regeneratekeys/action": "critical",
@@ -567,10 +602,50 @@ class AzureWildcardClassificationTest(unittest.TestCase):
         )
         self.assertEqual(
             self.classify(
+                "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/listkeys/action"
+            ),
+            "high",
+        )
+        self.assertEqual(
+            self.classify(
+                "Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action"
+            ),
+            "high",
+        )
+        # The role-definition wildcard is a real queue/topic family pattern.
+        # Keep the recent credential-scope downgrade consistent for wildcard
+        # input instead of letting the generic credential regex restore the
+        # old Critical result.
+        for permission in (
+            "Microsoft.ServiceBus/namespaces/*/authorizationRules/ListKeys/action",
+            "Microsoft.ServiceBus/namespaces/*/authorizationRules/regenerateKeys/action",
+        ):
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), "high")
+        self.assertEqual(
+            self.classify(
                 "Microsoft.Communication/CommunicationServices/ListKeys/action"
             ),
             "high",
         )
+        self.assertEqual(
+            self.classify(
+                "Microsoft.Communication/CommunicationServices/Write"
+            ),
+            "high",
+        )
+        self.assertEqual(
+            self.classify(
+                "Microsoft.DataFactory/factories/pipelineruns/read"
+            ),
+            "high",
+        )
+        for batch_read in (
+            "Microsoft.Batch/batchAccounts/jobs/read",
+            "Microsoft.Batch/batchAccounts/jobSchedules/read",
+        ):
+            with self.subTest(permission=batch_read):
+                self.assertEqual(self.classify(batch_read), "high")
         self.assertEqual(
             self.classify(
                 "Microsoft.Relay/namespaces/HybridConnections/authorizationRules/listkeys/action"
@@ -647,6 +722,19 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "medium",
         )
 
+    def test_healthbot_bounded_file_and_log_metadata_actions_keep_lower_tiers(
+        self,
+    ) -> None:
+        expected_risks = {
+            "Microsoft.HealthBot/healthBots/Admin/ConversationLogs/Read": "low",
+            "Microsoft.HealthBot/healthBots/Resources/Files/Read": "low",
+            "Microsoft.HealthBot/healthBots/Resources/Files/Write": "medium",
+            "Microsoft.HealthBot/healthBots/Resources/Files/Delete": "medium",
+        }
+        for permission, expected in expected_risks.items():
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), expected)
+
     def test_search_elevated_read_stays_medium_without_document_read(self) -> None:
         self.assertEqual(
             self.classify(
@@ -697,6 +785,12 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             ),
             "medium",
         )
+        self.assertEqual(
+            self.classify(
+                "Microsoft.Storage/storageAccounts/localusers/regenerateSharedKey/action"
+            ),
+            "medium",
+        )
         # ComputeRP accepted the route but rejected the operation because
         # restore-point SAS retrieval is unsupported; DiskRP beginGetAccess is
         # the separately permissioned, live-validated disclosure path.
@@ -706,8 +800,10 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             ),
             "medium",
         )
-        # Maps SAS is constrained by the attached UAMI's Maps data role, and
-        # Web PubSub rechecks clientConnection/write during the handshake.
+
+        # The live Maps SAS was usable and survived removal of the minting
+        # permission, but it remained constrained by the attached UAMI's Maps
+        # data role. Web PubSub rechecks clientConnection/write at handshake.
         self.assertEqual(
             self.classify("Microsoft.Maps/accounts/listSas/action"),
             "medium",
@@ -737,6 +833,62 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             ),
             "medium",
         )
+
+    def test_live_validated_storage_hns_and_delegation_boundaries(self) -> None:
+        from sensitive_permissions.azure import (
+            sensitive_combinations as azure_sensitive_combinations,
+        )
+
+        self.assertEqual(
+            self.classify(
+                "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/runAsSuperUser/action"
+            ),
+            "critical",
+        )
+        for permission in (
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/modifyPermissions/action",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/manageOwnership/action",
+        ):
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), "medium")
+
+        for permission in (
+            "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action",
+            "Microsoft.Storage/storageAccounts/fileServices/generateUserDelegationKey/action",
+            "Microsoft.Storage/storageAccounts/queueServices/generateUserDelegationKey/action",
+            "Microsoft.Storage/storageAccounts/tableServices/generateUserDelegationKey/action",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/immutableStorage/runAsSuperUser/action",
+            "Microsoft.Storage/storageAccounts/fileServices/runAsBuiltInFileAdministrator/action",
+            "Microsoft.Storage/storageAccounts/fileServices/fileShares/files/bypasspermissions/action",
+        ):
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), "medium")
+
+        expected_high_chains = (
+            (
+                "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action",
+                "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+            ),
+            (
+                "Microsoft.Storage/storageAccounts/fileServices/generateUserDelegationKey/action",
+                "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read",
+                "Microsoft.Storage/storageAccounts/fileServices/readFileBackupSemantics/action",
+            ),
+            (
+                "Microsoft.Storage/storageAccounts/queueServices/generateUserDelegationKey/action",
+                "Microsoft.Storage/storageAccounts/queueServices/queues/messages/read",
+            ),
+            (
+                "Microsoft.Storage/storageAccounts/tableServices/generateUserDelegationKey/action",
+                "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read",
+            ),
+        )
+        configured = {
+            tuple(candidate) for candidate in azure_sensitive_combinations
+        }
+        for chain in expected_high_chains:
+            with self.subTest(chain=chain):
+                self.assertIn(chain, configured)
 
     def test_graph_scopes_and_unresolved_entra_evidence_are_classified(self) -> None:
         self.assertEqual(self.classify("openid"), "low")

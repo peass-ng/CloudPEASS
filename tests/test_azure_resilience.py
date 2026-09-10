@@ -384,6 +384,35 @@ def test_search_skillset_write_is_a_validated_high_singleton():
     assert not categories["critical"]
 
 
+def test_dataprotection_blob_restore_requires_linked_storage_read():
+    restore = "Microsoft.DataProtection/backupVaults/backupInstances/restore/action"
+    storage_read = "Microsoft.Storage/storageAccounts/read"
+    combination = [restore, storage_read]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+
+    # Live Azure validation returned LinkedAuthorizationFailed for the exact
+    # restore action alone and named storageAccounts/read as the missing
+    # linked-scope permission. Preserve that distinction in the UI.
+    restore_only = peas.analyze_group({restore}, [])["permissions_cat"]
+    assert restore_only["medium"] == [restore]
+    assert not restore_only["high"]
+
+    storage_only = peas.analyze_group({storage_read}, [])["permissions_cat"]
+    assert storage_only["low"] == [storage_read]
+    assert not storage_only["high"]
+
+    combined = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(combined["high"]) == set(combination)
+    assert not combined["critical"]
+
+
 def test_synapse_admin_writes_are_validated_critical_singletons():
     permissions = {
         "Microsoft.Synapse/workspaces/administrators/write",
@@ -511,6 +540,244 @@ def test_event_grid_receive_is_a_high_singleton():
     categories = peas.analyze_group({permission}, [])["permissions_cat"]
     assert categories["high"] == [permission]
     assert not categories["critical"]
+
+
+def test_event_grid_send_is_a_high_singleton():
+    permission = "Microsoft.EventGrid/events/send/action"
+    assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert categories["high"] == [permission]
+    assert not categories["critical"]
+
+
+def test_live_event_grid_mqtt_and_delivery_attributes_are_high():
+    permissions = (
+        "Microsoft.EventGrid/topicSpaces/publish/action",
+        "Microsoft.EventGrid/topicSpaces/subscribe/action",
+        "Microsoft.EventGrid/eventSubscriptions/getDeliveryAttributes/action",
+    )
+    for permission in permissions:
+        assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    for permission in permissions:
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert categories["high"] == [permission]
+        assert not categories["critical"]
+
+    # Azure's topic-scoped REST route checked the generic action. The exact
+    # advertised topic-specific alias remained denied throughout the bounded
+    # propagation window, so it must not be promoted from its default risk.
+    unsupported_alias = (
+        "Microsoft.EventGrid/topics/eventSubscriptions/getDeliveryAttributes/action"
+    )
+    categories = peas.analyze_group({unsupported_alias}, [])["permissions_cat"]
+    assert categories["medium"] == [unsupported_alias]
+    assert not categories["high"]
+    assert not categories["critical"]
+
+
+def test_live_iot_hub_and_dps_attacks_are_high_with_bounded_metadata_reads():
+    high_permissions = (
+        "Microsoft.Devices/IotHubs/devices/read",
+        "Microsoft.Devices/IotHubs/devices/write",
+        "Microsoft.Devices/IotHubs/twins/read",
+        "Microsoft.Devices/IotHubs/twins/write",
+        "Microsoft.Devices/IotHubs/cloudToDeviceMessages/send/action",
+        "Microsoft.Devices/IotHubs/directMethods/invoke/action",
+        "Microsoft.Devices/IotHubs/jobs/read",
+        "Microsoft.Devices/IotHubs/jobs/write",
+        "Microsoft.Devices/IotHubs/exportDevices/action",
+        "Microsoft.Devices/IotHubs/importDevices/action",
+        "Microsoft.Devices/provisioningServices/attestationmechanism/details/action",
+        "Microsoft.Devices/provisioningServices/enrollments/write",
+        "Microsoft.Devices/provisioningServices/enrollmentGroups/write",
+    )
+    for permission in high_permissions:
+        assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    for permission in high_permissions:
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert categories["high"] == [permission]
+        assert not categories["critical"]
+
+    medium_permissions = (
+        "Microsoft.Devices/provisioningServices/enrollments/read",
+        "Microsoft.Devices/provisioningServices/enrollmentGroups/read",
+        "Microsoft.Devices/IotHubs/routing/$testall/action",
+        "Microsoft.Devices/IotHubs/routing/$testnew/action",
+    )
+    for permission in medium_permissions:
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert categories["medium"] == [permission]
+        assert not categories["high"]
+        assert not categories["critical"]
+
+
+def test_live_messaging_data_actions_and_policy_pairs_are_high():
+    singleton_permissions = (
+        "Microsoft.EventHub/namespaces/messages/receive/action",
+        "Microsoft.EventHub/namespaces/messages/send/action",
+        "Microsoft.ServiceBus/namespaces/messages/receive/action",
+        "Microsoft.ServiceBus/namespaces/messages/send/action",
+        "Microsoft.SignalRService/SignalR/auth/accessKey/action",
+        "Microsoft.SignalRService/SignalR/clientConnection/send/action",
+        "Microsoft.SignalRService/WebPubSub/clientConnection/send/action",
+    )
+    minimum_pairs = (
+        [
+            "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/write",
+            "Microsoft.EventHub/namespaces/eventhubs/authorizationRules/listkeys/action",
+        ],
+        [
+            "Microsoft.ServiceBus/namespaces/queues/authorizationRules/write",
+            "Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action",
+        ],
+        [
+            "Microsoft.SignalRService/WebPubSub/clientConnection/generateToken/action",
+            "Microsoft.SignalRService/WebPubSub/clientConnection/write",
+        ],
+    )
+    for permission in singleton_permissions:
+        assert [permission] in sensitive_combinations
+    for pair in minimum_pairs:
+        assert pair in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    for permission in singleton_permissions:
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert categories["high"] == [permission]
+        assert not categories["critical"]
+
+    for pair in minimum_pairs:
+        categories = peas.analyze_group(set(pair), [])["permissions_cat"]
+        assert set(categories["high"]) == set(pair)
+        assert not categories["critical"]
+
+
+def test_data_factory_run_history_disclosure_is_high():
+    singleton = "Microsoft.DataFactory/factories/pipelineruns/read"
+    query_pair = [
+        "Microsoft.DataFactory/factories/querypipelineruns/action",
+        "Microsoft.DataFactory/factories/querypipelineruns/read",
+    ]
+    assert [singleton] in sensitive_combinations
+    assert query_pair in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    singleton_categories = peas.analyze_group({singleton}, [])["permissions_cat"]
+    assert singleton_categories["high"] == [singleton]
+    assert not singleton_categories["critical"]
+
+    pair_categories = peas.analyze_group(set(query_pair), [])["permissions_cat"]
+    assert set(pair_categories["high"]) == set(query_pair)
+    assert not pair_categories["critical"]
+
+    # The action alone stayed denied, so it must not be promoted as a
+    # standalone High permission.
+    action_only = {query_pair[0]}
+    action_categories = peas.analyze_group(action_only, [])["permissions_cat"]
+    assert action_categories["medium"] == [query_pair[0]]
+    assert not action_categories["high"]
+
+
+def test_batch_job_configuration_reads_are_high_singletons():
+    permissions = (
+        "Microsoft.Batch/batchAccounts/jobs/read",
+        "Microsoft.Batch/batchAccounts/jobSchedules/read",
+    )
+    for permission in permissions:
+        assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    for permission in permissions:
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert categories["high"] == [permission]
+        assert not categories["critical"]
+
+
+def test_databricks_workspace_admin_bootstrap_requires_read_pair():
+    combination = [
+        "Microsoft.Databricks/workspaces/assignWorkspaceAdmin/action",
+        "Microsoft.Databricks/workspaces/read",
+    ]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(categories["high"]) == set(combination)
+    assert not categories["critical"]
+
+    action_only = {combination[0]}
+    categories = peas.analyze_group(action_only, [])["permissions_cat"]
+    assert categories["medium"] == [combination[0]]
+    assert not categories["high"]
+
+
+def test_stream_analytics_input_sample_requires_result_read_pair():
+    combination = [
+        "Microsoft.StreamAnalytics/streamingjobs/inputs/Sample/action",
+        "Microsoft.StreamAnalytics/streamingjobs/inputs/OperationResults/read",
+    ]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group(set(combination), [])["permissions_cat"]
+    assert set(categories["high"]) == set(combination)
+    assert not categories["critical"]
+
+    # Starting the sample did not authorize its result URL, while the result
+    # reader has no operation identifier to poll without the action response.
+    action_categories = peas.analyze_group({combination[0]}, [])["permissions_cat"]
+    assert action_categories["medium"] == [combination[0]]
+    assert not action_categories["high"]
+
+    result_categories = peas.analyze_group({combination[1]}, [])["permissions_cat"]
+    assert result_categories["low"] == [combination[1]]
+    assert not result_categories["high"]
 
 
 def test_environment_secret_expansion_requires_all_three_permissions():
