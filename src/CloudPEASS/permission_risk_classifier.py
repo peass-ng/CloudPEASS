@@ -525,9 +525,11 @@ _AZURE_HIGH_EXACT = frozenset(
         "microsoft.logic/workflows/versions/triggers/listcallbackurl/action",
         "microsoft.logic/workflows/triggers/run/action",
         "microsoft.logic/workflows/triggers/histories/resubmit/action",
-        # Exact action-history read returned signed input/output links. The
-        # unauthenticated output-link request disclosed the seeded run value;
-        # a no-role principal was denied the ARM action request.
+        # Exact action-history read returned signed input/output links. It also
+        # independently authorized listExpressionTraces and disclosed plain
+        # expression/subexpression values; Secure Inputs blocked the trace.
+        # The separately advertised listExpressionTraces/action stayed denied
+        # when granted alone. A no-role principal was denied both routes.
         "microsoft.logic/workflows/runs/actions/read",
         # Exact Webhook-action history read exposed custom request/response
         # header canaries and a signed callback URI that replayed without the

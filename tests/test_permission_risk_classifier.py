@@ -199,6 +199,12 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             ),
             "medium",
         )
+        self.assertEqual(
+            self.classify(
+                "Microsoft.Logic/workflows/runs/actions/listExpressionTraces/action"
+            ),
+            "medium",
+        )
         tested_sensitive_data_credentials = {
             "Microsoft.Search/searchServices/createQueryKey/action": "high",
             "Microsoft.Search/searchServices/skillsets/write": "high",

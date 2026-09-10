@@ -346,6 +346,11 @@ sensitive_combinations = [
     ["Microsoft.Logic/workflows/versions/triggers/listCallbackUrl/action"],
     ["Microsoft.Logic/workflows/triggers/run/action"],
     ["Microsoft.Logic/workflows/triggers/histories/resubmit/action"],
+    # Besides signed input/output links, an exact singleton live test showed
+    # that this read action authorizes listExpressionTraces and returns plain
+    # evaluated expressions. Secure Inputs made that trace return
+    # ContentSecured. The separately advertised listExpressionTraces/action
+    # did not authorize the route by itself and therefore stays Medium.
     ["Microsoft.Logic/workflows/runs/actions/read"],
     # Live exact-role Webhook test disclosed custom request/response headers
     # and a signed callback URI that was independently replayable.

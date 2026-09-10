@@ -466,6 +466,23 @@ def test_logic_webhook_request_history_read_is_a_high_singleton():
     assert not categories["critical"]
 
 
+def test_logic_expression_trace_action_is_not_promoted_without_validated_read():
+    permission = "Microsoft.Logic/workflows/runs/actions/listExpressionTraces/action"
+    assert [permission] not in sensitive_combinations
+    assert [permission] not in very_sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert categories["medium"] == [permission]
+    assert not categories["high"]
+    assert not categories["critical"]
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",
