@@ -304,6 +304,7 @@ high_exact:
   - execute-api:Invoke
   - glue:GetConnection
   - glue:GetJob
+  - glue:GetJobs
   - glue:GetStatement
   - glue:GetWorkflowRunProperties
   - geo:GetDevicePosition
@@ -530,6 +531,7 @@ high_override_exact:
   - execute-api:Invoke
   - glue:GetConnection
   - glue:GetJob
+  - glue:GetJobs
   - glue:GetStatement
   - glue:GetWorkflowRunProperties
   - geo:GetDevicePosition

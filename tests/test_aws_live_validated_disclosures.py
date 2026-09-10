@@ -107,6 +107,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "glue:GetConnection",
     "glue:GetJob",
     "glue:GetStatement",
+    "glue:GetJobs",
     "glue:GetWorkflowRunProperties",
     "geo:GetDevicePosition",
     "geo:GetDevicePositionHistory",
