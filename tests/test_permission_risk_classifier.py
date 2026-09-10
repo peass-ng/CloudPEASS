@@ -887,6 +887,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
 
     def test_live_validated_high_impact_paths_have_evidence(self) -> None:
         expected = {
+            "athena:CreatePresignedNotebookUrl": "critical",
             "backup:DeleteRecoveryPoint": "high",
             "backup:PutBackupVaultAccessPolicy": "critical",
             "iot:OpenTunnel": "critical",
@@ -1162,6 +1163,24 @@ def test_live_validated_data_plane_disclosures_and_dependencies():
     ebs_chain = ["ebs:ListSnapshotBlocks", "ebs:GetSnapshotBlock"]
     assert ebs_chain in very_sensitive_combinations
     assert ebs_chain not in sensitive_combinations
+
+
+def test_live_validated_amplify_studio_token_dependencies():
+    assert [
+        "amplify:GetApp",
+        "amplifybackend:CreateToken",
+    ] in sensitive_combinations
+    assert [
+        "amplify:GetApp",
+        "amplifybackend:GetToken",
+    ] in sensitive_combinations
+    # Live controls proved neither token action succeeds in isolation. GetToken
+    # additionally needs a still-live, externally recovered SessionId.
+    assert ["amplifybackend:CreateToken"] not in sensitive_combinations
+    assert ["amplifybackend:GetToken"] not in sensitive_combinations
+    assert classify_permission(
+        "aws", "amplifybackend:GetToken", unknown_default="medium"
+    ) == "low"
 
 
 def test_second_live_validated_data_disclosure_batch_is_high():

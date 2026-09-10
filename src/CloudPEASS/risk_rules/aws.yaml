@@ -17,6 +17,7 @@ provider: aws
 critical_exact:
   - acm:ExportCertificate
   - aps:PutResourcePolicy
+  - athena:CreatePresignedNotebookUrl
   - backup:PutBackupVaultAccessPolicy
   - codeartifact:GetAuthorizationToken
   - cognito-identity:UpdateIdentityPool

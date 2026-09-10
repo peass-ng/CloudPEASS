@@ -4,6 +4,7 @@ very_sensitive_combinations = [
     ["[*]"],
     ["acm:ExportCertificate"],
     ["aps:PutResourcePolicy"],
+    ["athena:CreatePresignedNotebookUrl"],
     ["iam:PassRole"],
 
     ["backup:PutBackupVaultAccessPolicy"],
@@ -190,6 +191,8 @@ sensitive_combinations = [
     ["mq:CreateUser"],
     ["mq:UpdateUser"],
     ["account:GetContactInformation"],
+    ["amplify:GetApp", "amplifybackend:CreateToken"],
+    ["amplify:GetApp", "amplifybackend:GetToken"],
     ["amplify:GetApp"],
     ["amplify:GetArtifactUrl"],
     ["amplify:GetJob"],
@@ -561,6 +564,7 @@ sensitive_combinations = [
 # evidence. Keep this deliberately narrow: documentation-only candidates do
 # not belong here.
 tested_risk_documentation = {
+    "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "backup:DeleteRecoveryPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "backup:PutBackupVaultAccessPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "iot:OpenTunnel": "aws-services/aws-iot-core-enum.md",
@@ -609,6 +613,7 @@ live_validated_disclosure_documentation = {
     "apigateway:GET": "aws-services/aws-api-gateway-enum.md",
     "apigateway:PATCH": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
     "athena:GetQueryExecution": "aws-services/aws-s3-athena-and-glacier-enum.md",
+    "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "appstream:CreateStreamingURL": "aws-services/aws-workspaces-enum.md",
     "appconfig:GetHostedConfigurationVersion": "aws-services/aws-appconfig-enum.md",
     "appconfig:StartConfigurationSession": "aws-services/aws-appconfig-enum.md",

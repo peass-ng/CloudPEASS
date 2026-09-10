@@ -900,6 +900,46 @@ were not consumed; policy-generation behavior therefore remains blocked behind a
 synthetic trail/role and pass-role validation rather than being inferred safe. These rows are
 recorded as prerequisite blockers, not negative security conclusions.
 
+### AWS Amplify Admin (`amplifybackend`) — 2026-09-10
+
+A disposable Amplify app and Gen 1 backend enabled the previously blocked Studio-token tests.
+An IAM principal restricted to exactly `amplify:GetApp` and `amplifybackend:CreateToken` received
+a 36-character one-time challenge and 36-character session ID with an approximately two-minute
+expiry. `CreateToken` alone and `CreateToken` plus `amplify:GetBackendEnvironment` both returned
+the deliberately opaque `Invalid appId` response, while an empty-permission control was denied.
+Inspection of the deployed Amplify Studio client confirmed that its login URL consumes `appId`,
+`backendEnvironmentName`, `code`, and `sessionId`, then submits the challenge through Cognito's
+custom-auth flow as the fixed `aws-amplify-admin` user. The pair is therefore a High application-
+administration credential path, rather than a harmless token-metadata read.
+
+A second exact-action principal holding `amplify:GetApp` and `amplifybackend:GetToken` recovered
+the same challenge for an administrator-seeded token when supplied with its exact live session ID.
+This path is conditional credential recovery rather than enumeration. CloudTrail records the app
+ID but redacts both `sessionId` and `challengeCode` as `***`; permissionless session-ID fallbacks
+include Studio URLs and browser history/devtools, copied commands, support captures, proxy telemetry,
+and application logs. App IDs remain recoverable from public Amplify hostnames and frontend/build
+configuration without `ListApps`. All disposable apps, backends, tokens, IAM users, access keys, and
+policies used by the validation were removed and the exact app inventory returned empty.
+
+### Amazon Athena (`athena`) — presigned notebook takeover, 2026-09-10
+
+A disposable PySpark workgroup, notebook, running notebook session, S3 output bucket, execution
+role, and Secrets Manager canary were used to test `CreatePresignedNotebookUrl`. An IAM user holding
+exactly that action on `Resource: *` minted a URL containing the notebook `authToken`; an otherwise
+identical empty-permission user was denied. The bearer URL returned HTTP 200 and opened the real
+Jupyter notebook in a headless browser with no AWS credentials. The browser submitted arbitrary
+Python calculations, and the service executed them under the existing notebook execution role.
+The URL-minting user required neither `StartCalculationExecution` nor `iam:PassRole`.
+
+This path requires a known, live notebook-session ID and is Critical when the session's execution
+role can reach privileged APIs or sensitive data. A normal programmatic Spark session is not enough:
+the API returned `Invalid Request` until a notebook-backed session was created. `ListSessions` is
+only a discovery convenience; session IDs appear in notebook URLs, browser history/devtools,
+screenshots and support artifacts, CLI output, shell history, application/orchestration logs, and
+CloudTrail/SIEM copies. The generated URL is a roughly ten-minute credential. Every synthetic
+session, calculation, notebook/workgroup resource, object, bucket, secret, role policy, IAM user,
+and access key was removed after the test.
+
 ### Amazon Managed Service for Prometheus (`aps`) — 2026-09-09
 
 `aps:PutResourcePolicy` alone was validated as a workspace-policy self-grant. A disposable AMP
