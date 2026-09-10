@@ -58,6 +58,8 @@ very_sensitive_combinations = [
 
     ["entityresolution:PutPolicy"],
 
+    ["glue:RunStatement"],
+
     ["ec2:ModifyInstanceAttribute"],
     ["eks:CreateAccessEntry", "eks:AssociateAccessPolicy"],
     ["eks-auth:AssumeRoleForPodIdentity"],
@@ -565,6 +567,7 @@ sensitive_combinations = [
 # not belong here.
 tested_risk_documentation = {
     "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
+    "glue:RunStatement": "aws-privilege-escalation/aws-glue-privesc/README.md",
     "backup:DeleteRecoveryPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "backup:PutBackupVaultAccessPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "iot:OpenTunnel": "aws-services/aws-iot-core-enum.md",
@@ -647,6 +650,7 @@ live_validated_disclosure_documentation = {
     "cloudfront:GetDistributionConfig": "aws-services/aws-cloudfront-enum.md",
     "cloudfront:GetFunction": "aws-services/aws-cloudfront-enum.md",
     "cloudfront:ListDistributions": "aws-services/aws-cloudfront-enum.md",
+    "glue:RunStatement": "aws-privilege-escalation/aws-glue-privesc/README.md",
     "cloudwatch:GetDashboard": "aws-services/aws-security-and-detection-services/aws-cloudwatch-enum.md",
     "cloudtrail:LookupEvents": "aws-services/aws-security-and-detection-services/aws-cloudtrail-enum.md",
     "ce:GetCostAndUsage": "aws-services/aws-security-and-detection-services/aws-cost-explorer-enum.md",

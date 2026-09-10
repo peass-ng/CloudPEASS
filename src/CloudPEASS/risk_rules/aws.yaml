@@ -43,6 +43,7 @@ critical_exact:
   - gameliftstreams:CreateStreamSessionAdminShell
   - grafana:CreateWorkspaceApiKey
   - grafana:CreateWorkspaceServiceAccountToken
+  - glue:RunStatement
   - iam:CreateAccessKey
   - iam:PassRole
   - iot:OpenTunnel

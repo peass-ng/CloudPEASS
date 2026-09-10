@@ -888,6 +888,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
     def test_live_validated_high_impact_paths_have_evidence(self) -> None:
         expected = {
             "athena:CreatePresignedNotebookUrl": "critical",
+            "glue:RunStatement": "critical",
             "backup:DeleteRecoveryPoint": "high",
             "backup:PutBackupVaultAccessPolicy": "critical",
             "iot:OpenTunnel": "critical",

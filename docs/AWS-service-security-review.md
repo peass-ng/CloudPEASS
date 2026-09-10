@@ -940,6 +940,21 @@ CloudTrail/SIEM copies. The generated URL is a roughly ten-minute credential. Ev
 session, calculation, notebook/workgroup resource, object, bucket, secret, role policy, IAM user,
 and access key was removed after the test.
 
+### AWS Glue (`glue`) — interactive-session role takeover, 2026-09-10
+
+A disposable Glue 4.0 interactive session used an execution role restricted to reading one
+Secrets Manager canary. An IAM user holding exactly `glue:RunStatement` on `Resource: *` submitted
+inline Python to the ready session; the statement reached `AVAILABLE` and returned the exact
+canary. An empty-permission control was denied. The candidate had no `CreateSession`, `GetSession`,
+direct Secrets Manager permission, or `iam:PassRole`, so `RunStatement` is a standalone
+Critical role-takeover primitive when it reaches a session backed by a privileged execution role.
+
+`ListSessions` is only a discovery convenience. Session IDs can appear in notebook and console
+URLs, local notebook metadata, browser artifacts, CLI output, shell history, CloudWatch and
+application/orchestration logs, screenshots and support bundles, and CloudTrail/SIEM copies. The
+session, statement, secret, execution role and inline policy, both IAM users, and both access keys
+were deleted; exact Glue, Secrets Manager, and IAM lookups confirmed the test resources absent.
+
 ### Amazon Managed Service for Prometheus (`aps`) — 2026-09-09
 
 `aps:PutResourcePolicy` alone was validated as a workspace-policy self-grant. A disposable AMP
