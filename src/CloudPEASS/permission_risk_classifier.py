@@ -536,6 +536,11 @@ _AZURE_HIGH_EXACT = frozenset(
         # reader's Entra token. Ordinary Http actions reject this route, and
         # the exact principal remained denied on the action GET endpoint.
         "microsoft.logic/workflows/runs/actions/requesthistories/read",
+        # Exact singleton validation against the legacy accessKeys child API
+        # returned the workflow's two active signing secrets without workflow
+        # read or callback-URL permissions. Rotating the returned primary key
+        # changed the generated signature and invalidated the old callback.
+        "microsoft.logic/workflows/accesskeys/list/action",
         "microsoft.datafactory/factories/pipelines/createrun/action",
         # getFullUrl returned signed Logic App callback URLs that were usable
         # without the caller's Entra token. ACR run-log SAS URLs similarly

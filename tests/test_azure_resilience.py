@@ -483,6 +483,21 @@ def test_logic_expression_trace_action_is_not_promoted_without_validated_read():
     assert not categories["critical"]
 
 
+def test_logic_workflow_access_key_list_is_a_high_singleton():
+    permission = "Microsoft.Logic/workflows/accessKeys/list/action"
+    assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert categories["high"] == [permission]
+    assert not categories["critical"]
+
+
 def test_environment_secret_expansion_requires_all_three_permissions():
     combination = [
         "Microsoft.MachineLearningServices/workspaces/environments/read",

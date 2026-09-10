@@ -355,6 +355,11 @@ sensitive_combinations = [
     # Live exact-role Webhook test disclosed custom request/response headers
     # and a signed callback URI that was independently replayable.
     ["Microsoft.Logic/workflows/runs/actions/requestHistories/read"],
+    # Exact singleton access to the legacy child API returned both active
+    # 43-character workflow signing secrets without workflow read or callback
+    # URL permissions. Controlled rotations changed the matching platform SAS
+    # signature and invalidated the prior primary-signed callback.
+    ["Microsoft.Logic/workflows/accessKeys/list/action"],
     ["Microsoft.DataFactory/factories/pipelines/createRun/action"],
     ["Microsoft.EventGrid/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/topics/eventSubscriptions/getFullUrl/action"],
