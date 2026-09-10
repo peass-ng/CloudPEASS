@@ -361,7 +361,9 @@ high_exact:
   - route53:ChangeResourceRecordSets
   - route53domains:GetDomainDetail
   - route53domains:RetrieveDomainAuthCode
+  - route53globalresolver:GetAccessToken
   - rum:GetAppMonitorData
+  - route53globalresolver:GetAccessToken
   - sdb:GetAttributes
   - sdb:Select
   - s3:GetDataAccess

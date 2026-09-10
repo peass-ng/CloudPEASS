@@ -163,6 +163,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "rum:GetAppMonitorData",
     "route53domains:GetDomainDetail",
     "route53domains:RetrieveDomainAuthCode",
+    "route53globalresolver:GetAccessToken",
     "sdb:GetAttributes",
     "sdb:Select",
     "ses:GetSuppressedDestination",
@@ -723,6 +724,18 @@ def test_live_validated_route53_domain_registration_disclosure():
         assert live_validated_disclosure_documentation[action] == (
             "aws-privilege-escalation/aws-route53-domains-privesc/README.md"
         )
+
+
+def test_live_validated_route53_global_resolver_token_disclosure():
+    action = "route53globalresolver:GetAccessToken"
+    assert [action] in sensitive_combinations
+    assert classify_permission("aws", action, unknown_default="medium") == "high"
+    assert tested_risk_documentation[action] == (
+        "aws-services/aws-route53-global-resolver-enum.md"
+    )
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-route53-global-resolver-enum.md"
+    )
 
 
 def test_live_validated_acm_private_key_export():
