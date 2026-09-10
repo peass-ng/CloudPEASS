@@ -20,6 +20,7 @@ critical_exact:
   - appstream:CreateAppBlockBuilderStreamingURL
   - appstream:CreateImageBuilderStreamingURL
   - athena:CreatePresignedNotebookUrl
+  - athena:GetSessionEndpoint
   - athena:StartCalculationExecution
   - backup:PutBackupVaultAccessPolicy
   - codebuild:StartCommandExecution

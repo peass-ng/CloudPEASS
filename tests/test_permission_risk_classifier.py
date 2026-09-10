@@ -896,6 +896,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "airflow-serverless:GetWorkflow": "high",
             "airflow-serverless:GetWorkflowRun": "high",
             "athena:CreatePresignedNotebookUrl": "critical",
+            "athena:GetSessionEndpoint": "critical",
             "athena:StartCalculationExecution": "critical",
             "codebuild:StartCommandExecution": "critical",
             "glue:RunStatement": "critical",

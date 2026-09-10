@@ -249,6 +249,15 @@ def test_live_validated_iot_rotate_tunnel_access_token():
     assert live_validated_disclosure_documentation[action] == document
 
 
+def test_live_validated_athena_spark_connect_session_takeover():
+    action = "athena:GetSessionEndpoint"
+    document = "aws-services/aws-s3-athena-and-glacier-enum.md"
+    assert [action] in very_sensitive_combinations
+    assert classify_permission("aws", action, unknown_default="medium") == "critical"
+    assert tested_risk_documentation[action] == document
+    assert live_validated_disclosure_documentation[action] == document
+
+
 def test_live_validated_disclosures_have_service_specific_evidence():
     for action in LIVE_VALIDATED_HIGH_ACTIONS:
         document = live_validated_disclosure_documentation[action]

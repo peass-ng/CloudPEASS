@@ -7,6 +7,7 @@ very_sensitive_combinations = [
     ["appstream:CreateAppBlockBuilderStreamingURL"],
     ["appstream:CreateImageBuilderStreamingURL"],
     ["athena:CreatePresignedNotebookUrl"],
+    ["athena:GetSessionEndpoint"],
     ["athena:StartCalculationExecution"],
     ["iam:PassRole"],
 
@@ -586,6 +587,7 @@ tested_risk_documentation = {
     "appstream:CreateAppBlockBuilderStreamingURL": "aws-services/aws-workspaces-enum.md",
     "appstream:CreateImageBuilderStreamingURL": "aws-services/aws-workspaces-enum.md",
     "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
+    "athena:GetSessionEndpoint": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:StartCalculationExecution": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "glue:RunStatement": "aws-privilege-escalation/aws-glue-privesc/README.md",
     "backup:DeleteRecoveryPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
@@ -649,6 +651,7 @@ live_validated_disclosure_documentation = {
     "apigateway:PATCH": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
     "athena:GetQueryExecution": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
+    "athena:GetSessionEndpoint": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:StartCalculationExecution": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "appstream:CreateStreamingURL": "aws-services/aws-workspaces-enum.md",
     "appconfig:GetHostedConfigurationVersion": "aws-services/aws-appconfig-enum.md",
