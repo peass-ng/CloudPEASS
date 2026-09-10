@@ -1851,18 +1851,12 @@ def _azure_classify_non_wildcard(permission: str, rules: AzureRules) -> Optional
             return "critical"
         if "/rbac.authorization.k8s.io/" in lower:
             return "high"
-        if is_write and any(
-            marker in lower for marker in ("/secrets/", "/keys/", "/certificates/")
-        ):
-            return "high"
-        if is_action and (
-            ("/secrets/" in lower and any(word in lower for word in ("/peek/", "/setsecret/")))
-            or (
-                any(marker in lower for marker in ("/keys/", "/certificates/"))
-                and any(word in lower for word in ("/create/", "/import/", "/release/"))
-            )
-        ):
-            return "high"
+        # Merely writing an object whose resource type contains secret, key,
+        # or certificate is not evidence that the caller can read a secret,
+        # make a workload consume attacker material, or use the key. Providers
+        # use those nouns for metadata and configuration children too. Proven
+        # poisoning, disclosure, and cryptographic-use paths belong in the
+        # exact sets above; unknown noun-shaped writes/actions stay Medium.
         return "medium"
 
     return None

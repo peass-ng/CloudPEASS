@@ -129,9 +129,9 @@ class AzureWildcardClassificationTest(unittest.TestCase):
 
     def test_wildcards_keep_maximum_risk_from_likely_child_verbs(self) -> None:
         self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/read"), "low")
-        self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/write"), "high")
+        self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/write"), "medium")
         self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/*"), "critical")
-        self.assertEqual(self.classify("Microsoft.KeyVault/vaults/certificates/*"), "high")
+        self.assertEqual(self.classify("Microsoft.KeyVault/vaults/certificates/*"), "medium")
         self.assertEqual(
             self.classify(
                 "Microsoft.ManagedIdentity/userAssignedIdentities/associatedResources/*"
@@ -831,7 +831,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read": "high",
             "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/permanentDelete/action": "medium",
             "Microsoft.KeyVault/vaults/secrets/recover/action": "medium",
-            "Microsoft.KeyVault/vaults/secrets/setSecret/action": "high",
+            "Microsoft.KeyVault/vaults/secrets/setSecret/action": "medium",
             "Microsoft.Automation/automationAccounts/certificates/getCount/action": "medium",
             "Microsoft.Devices/iotHubs/certificates/generateVerificationCode/action": "medium",
             "Microsoft.ManagedIdentity/userAssignedIdentities/listAssociatedResources/action": "medium",
