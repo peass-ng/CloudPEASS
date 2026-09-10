@@ -1393,6 +1393,17 @@ def test_live_validated_agentcore_api_key_disclosure_requires_full_chain():
     )
 
 
+def test_live_validated_wickr_retention_bot_challenge_is_critical():
+    action = "wickr:CreateDataRetentionBotChallenge"
+    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    assert (action,) in critical
+    assert classify_permission("aws", action, unknown_default="medium") == "critical"
+    assert tested_risk_documentation[action] == "aws-services/aws-wickr-enum.md"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-services/aws-wickr-enum.md"
+    )
+
+
 def test_live_validated_s3_vectors_plaintext_disclosure_paths():
     combinations = {tuple(candidate) for candidate in sensitive_combinations}
     assert ("s3vectors:GetVectors",) in combinations

@@ -903,6 +903,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "backup:PutBackupVaultAccessPolicy": "critical",
             "iot:OpenTunnel": "critical",
             "iot:RotateTunnelAccessToken": "critical",
+            "wickr:CreateDataRetentionBotChallenge": "critical",
             "iot:Publish": "high",
             "iot:StartCommandExecution": "high",
             "iotjobsdata:StartNextPendingJobExecution": "high",

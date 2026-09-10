@@ -52,6 +52,7 @@ critical_exact:
   - iam:PassRole
   - iot:OpenTunnel
   - iot:RotateTunnelAccessToken
+  - wickr:CreateDataRetentionBotChallenge
   - kms:CreateGrant
   - kms:Decrypt
   - kms:PutKeyPolicy
