@@ -202,6 +202,7 @@ high_exact:
   - athena:GetQueryExecution
   - appconfig:GetHostedConfigurationVersion
   - appsync:GraphQL
+  - appsync:GetGraphqlApiEnvironmentVariables
   - appsync:ListApiKeys
   - appstream:CreateStreamingURL
   - apprunner:DescribeService
@@ -244,6 +245,7 @@ high_exact:
   - codepipeline:GetJobDetails
   - codepipeline:GetPipeline
   - codepipeline:GetPipelineExecution
+  - codepipeline:ListActionExecutions
   - chime:GetChannelMessage
   - chime:ListChannelMessages
   - connect:BatchDescribeDataTableValue
@@ -261,6 +263,7 @@ high_exact:
   - dax:Query
   - dax:Scan
   - devicefarm:GetRemoteAccessSession
+  - devicefarm:GetProject
   - devicefarm:ListArtifacts
   - dynamodb:BatchGetItem
   - dynamodb:GetItem
@@ -443,6 +446,7 @@ high_override_exact:
   - athena:GetQueryExecution
   - appconfig:GetHostedConfigurationVersion
   - appsync:GraphQL
+  - appsync:GetGraphqlApiEnvironmentVariables
   - appsync:ListApiKeys
   - appstream:CreateStreamingURL
   - apprunner:DescribeService
@@ -477,6 +481,7 @@ high_override_exact:
   - codepipeline:GetJobDetails
   - codepipeline:GetPipeline
   - codepipeline:GetPipelineExecution
+  - codepipeline:ListActionExecutions
   - chime:GetChannelMessage
   - chime:ListChannelMessages
   - connect:BatchDescribeDataTableValue
@@ -494,6 +499,7 @@ high_override_exact:
   - dax:Query
   - dax:Scan
   - devicefarm:GetRemoteAccessSession
+  - devicefarm:GetProject
   - devicefarm:ListArtifacts
   - dynamodb:BatchGetItem
   - dynamodb:GetItem

@@ -25,6 +25,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "apprunner:DescribeService",
     "appconfig:GetHostedConfigurationVersion",
     "appsync:GraphQL",
+    "appsync:GetGraphqlApiEnvironmentVariables",
     "appsync:ListApiKeys",
     "autoscaling:DescribeLaunchConfigurations",
     "batch:DescribeJobDefinitions",
@@ -45,6 +46,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "cloudfront-keyvaluestore:ListKeys",
     "cloudfront:ListDistributions",
     "cloudtrail:LookupEvents",
+    "devicefarm:GetProject",
     "ce:GetCostAndUsage",
     "budgets:ViewBudget",
     "aws-portal:ViewBilling",
@@ -62,6 +64,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "codepipeline:GetJobDetails",
     "codepipeline:GetPipeline",
     "codepipeline:GetPipelineExecution",
+    "codepipeline:ListActionExecutions",
     "chime:GetChannelMessage",
     "chime:ListChannelMessages",
     "connect:BatchDescribeDataTableValue",
@@ -1212,6 +1215,7 @@ def test_live_validated_dax_inherited_table_access():
 def test_live_validated_device_farm_session_and_artifact_disclosures():
     actions = (
         "devicefarm:GetRemoteAccessSession",
+        "devicefarm:GetProject",
         "devicefarm:ListArtifacts",
     )
     high = {tuple(candidate) for candidate in sensitive_combinations}
