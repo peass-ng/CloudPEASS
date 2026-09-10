@@ -169,6 +169,8 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "sdb:Select",
     "ses:GetSuppressedDestination",
     "ses:GetEmailTemplate",
+    "ses:GetArchiveMessage",
+    "ses:GetArchiveMessageContent",
     "ses:ListSuppressedDestinations",
     "sns:ListSubscriptions",
     "sns:ListSubscriptionsByTopic",
@@ -182,6 +184,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "states:GetExecutionHistory",
     "storagegateway:DescribeChapCredentials",
     "sts:GetFederationToken",
+    "sts:GetWebIdentityToken",
     "tax:GetTaxRegistration",
     "tax:ListTaxRegistrations",
     "textract:GetDocumentAnalysis",
@@ -799,6 +802,7 @@ def test_live_validated_redshift_single_action_database_credentials():
     for action in (
         "redshift:GetClusterCredentials",
         "redshift:GetClusterCredentialsWithIAM",
+        "redshift-serverless:GetCredentials",
     ):
         assert (action,) in critical
         assert classify_permission(
@@ -1401,6 +1405,25 @@ def test_live_validated_agentcore_api_key_disclosure_requires_full_chain():
     combination = (
         "bedrock-agentcore:GetWorkloadAccessTokenForUserId",
         "bedrock-agentcore:GetResourceApiKey",
+        "secretsmanager:GetSecretValue",
+    )
+    combinations = {tuple(candidate) for candidate in very_sensitive_combinations}
+    assert combination in combinations
+    assert live_validated_disclosure_documentation[combination[0]] == (
+        "aws-services/aws-bedrock-enum.md"
+    )
+    assert live_validated_disclosure_documentation[combination[1]] == (
+        "aws-services/aws-bedrock-enum.md"
+    )
+    assert live_validated_disclosure_documentation[combination[2]] == (
+        "aws-services/aws-secrets-manager-enum.md"
+    )
+
+
+def test_live_validated_agentcore_oauth_disclosure_requires_full_chain():
+    combination = (
+        "bedrock-agentcore:GetWorkloadAccessTokenForUserId",
+        "bedrock-agentcore:GetResourceOauth2Token",
         "secretsmanager:GetSecretValue",
     )
     combinations = {tuple(candidate) for candidate in very_sensitive_combinations}

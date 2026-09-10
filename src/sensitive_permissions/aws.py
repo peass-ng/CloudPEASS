@@ -147,6 +147,7 @@ very_sensitive_combinations = [
 
     ["redshift:GetClusterCredentials"],
     ["redshift:GetClusterCredentialsWithIAM"],
+    ["redshift-serverless:GetCredentials"],
 
     ["route53:CreateHostedZone", "route53:ChangeResourceRecordSets", "acm-pca:IssueCertificate",  "acm-pca:GetCertificate"],
 
@@ -192,6 +193,11 @@ very_sensitive_combinations = [
     [
         "bedrock-agentcore:GetWorkloadAccessTokenForUserId",
         "bedrock-agentcore:GetResourceApiKey",
+        "secretsmanager:GetSecretValue",
+    ],
+    [
+        "bedrock-agentcore:GetWorkloadAccessTokenForUserId",
+        "bedrock-agentcore:GetResourceOauth2Token",
         "secretsmanager:GetSecretValue",
     ],
 ]
@@ -406,6 +412,8 @@ sensitive_combinations = [
     ["signer:StartSigningJob"],
     ["ses:GetSuppressedDestination"],
     ["ses:GetEmailTemplate"],
+    ["ses:GetArchiveMessage"],
+    ["ses:GetArchiveMessageContent"],
     ["ses:ListSuppressedDestinations"],
     ["sns:ListSubscriptions"],
     ["sns:ListSubscriptionsByTopic"],
@@ -423,6 +431,7 @@ sensitive_combinations = [
     ["states:GetExecutionHistory"],
     ["storagegateway:DescribeChapCredentials"],
     ["sts:GetFederationToken"],
+    ["sts:GetWebIdentityToken"],
     ["tax:GetTaxRegistration"],
     ["tax:ListTaxRegistrations"],
     ["textract:GetDocumentAnalysis"],
@@ -676,6 +685,7 @@ live_validated_disclosure_documentation = {
     "bedrock:Retrieve": "aws-services/aws-bedrock-enum.md",
     "bedrock-agentcore:GetWorkloadAccessTokenForUserId": "aws-services/aws-bedrock-enum.md",
     "bedrock-agentcore:GetResourceApiKey": "aws-services/aws-bedrock-enum.md",
+    "bedrock-agentcore:GetResourceOauth2Token": "aws-services/aws-bedrock-enum.md",
     "b2bi:GetProfile": "aws-services/aws-b2b-data-interchange-enum.md",
     "b2bi:GetTransformer": "aws-services/aws-b2b-data-interchange-enum.md",
     "cloudformation:DescribeStacks": "aws-services/aws-cloudformation-and-codestar-enum.md",
@@ -904,6 +914,8 @@ live_validated_disclosure_documentation = {
     "secretsmanager:GetSecretValue": "aws-services/aws-secrets-manager-enum.md",
     "ses:GetSuppressedDestination": "aws-services/aws-ses-enum.md",
     "ses:GetEmailTemplate": "aws-services/aws-ses-enum.md",
+    "ses:GetArchiveMessage": "aws-services/aws-ses-enum.md",
+    "ses:GetArchiveMessageContent": "aws-services/aws-ses-enum.md",
     "ses:ListSuppressedDestinations": "aws-services/aws-ses-enum.md",
     "signer:StartSigningJob": "aws-privilege-escalation/aws-lambda-privesc/README.md",
     "sns:ListSubscriptions": "aws-services/aws-sns-enum.md",
@@ -926,6 +938,7 @@ live_validated_disclosure_documentation = {
     "rds-db:connect": "aws-privilege-escalation/aws-rds-privesc/README.md",
     "redshift:GetClusterCredentials": "aws-privilege-escalation/aws-redshift-privesc/README.md",
     "redshift:GetClusterCredentialsWithIAM": "aws-privilege-escalation/aws-redshift-privesc/README.md",
+    "redshift-serverless:GetCredentials": "aws-privilege-escalation/aws-redshift-privesc/README.md",
     "ssm:GetDocument": "aws-services/aws-ec2-ebs-elb-ssm-vpc-and-vpn-enum/README.md",
     "ssm:GetOpsItem": "aws-services/aws-ec2-ebs-elb-ssm-vpc-and-vpn-enum/README.md",
     "ssm:StartAutomationExecution": "aws-privilege-escalation/aws-ssm-privesc/README.md",
@@ -936,6 +949,7 @@ live_validated_disclosure_documentation = {
     "states:GetExecutionHistory": "aws-post-exploitation/aws-stepfunctions-post-exploitation/README.md",
     "storagegateway:DescribeChapCredentials": "aws-services/aws-storage-gateway-enum.md",
     "sts:GetFederationToken": "aws-privilege-escalation/aws-sts-privesc/README.md",
+    "sts:GetWebIdentityToken": "aws-privilege-escalation/aws-sts-privesc/README.md",
     "tax:GetTaxRegistration": "aws-services/aws-tax-settings-enum.md",
     "tax:ListTaxRegistrations": "aws-services/aws-tax-settings-enum.md",
     "transcribe:GetTranscriptionJob": "aws-services/aws-transcribe-enum.md",

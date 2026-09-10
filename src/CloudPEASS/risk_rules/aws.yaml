@@ -67,6 +67,7 @@ critical_exact:
   - rds:ModifyDBInstance
   - redshift:GetClusterCredentials
   - redshift:GetClusterCredentialsWithIAM
+  - redshift-serverless:GetCredentials
   - rolesanywhere:UpdateTrustAnchor
   - s3:PutBucketPolicy
   - s3:PutAccessPointPolicy
@@ -377,6 +378,8 @@ high_exact:
   - servicediscovery:RegisterInstance
   - ses:GetSuppressedDestination
   - ses:GetEmailTemplate
+  - ses:GetArchiveMessage
+  - ses:GetArchiveMessageContent
   - ses:ListSuppressedDestinations
   - secretsmanager:PutSecretValue
   - secretsmanager:UpdateSecret
@@ -393,6 +396,7 @@ high_exact:
   - states:GetExecutionHistory
   - storagegateway:DescribeChapCredentials
   - sts:GetFederationToken
+  - sts:GetWebIdentityToken
   - tax:GetTaxRegistration
   - tax:ListTaxRegistrations
   - textract:GetDocumentAnalysis
@@ -562,6 +566,8 @@ high_override_exact:
   - servicediscovery:RegisterInstance
   - ses:GetSuppressedDestination
   - ses:GetEmailTemplate
+  - ses:GetArchiveMessage
+  - ses:GetArchiveMessageContent
   - ses:ListSuppressedDestinations
   - sns:ListSubscriptions
   - sns:ListSubscriptionsByTopic
@@ -579,6 +585,7 @@ high_override_exact:
   - logs:GetLogRecord
   - logs:GetQueryResults
   - sts:GetFederationToken
+  - sts:GetWebIdentityToken
   - sts:GetServiceBearerToken
   - tax:GetTaxRegistration
   - wisdom:GetContent
