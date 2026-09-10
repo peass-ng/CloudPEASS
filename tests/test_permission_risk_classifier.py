@@ -915,6 +915,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
         expected = {
             "appstream:CreateAppBlockBuilderStreamingURL": "critical",
             "appstream:CreateImageBuilderStreamingURL": "critical",
+            "apprunner:DescribeService": "high",
             "airflow-serverless:GetTaskInstance": "high",
             "airflow-serverless:GetWorkflow": "high",
             "airflow-serverless:GetWorkflowRun": "high",
@@ -965,6 +966,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "textract:GetDocumentTextDetection": "high",
             "textract:GetExpenseAnalysis": "high",
             "vpc-lattice-svcs:Invoke": "high",
+            "wafv2:GetSampledRequests": "high",
         }
         self.assertEqual(set(tested_risk_documentation), set(expected))
         for permission, level in expected.items():

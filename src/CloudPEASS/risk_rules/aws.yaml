@@ -204,10 +204,12 @@ high_exact:
   - appsync:GraphQL
   - appsync:ListApiKeys
   - appstream:CreateStreamingURL
+  - apprunner:DescribeService
   - cassandra:Select
   - autoscaling:DescribeLaunchConfigurations
   - backup:DeleteRecoveryPoint
   - batch:DescribeJobDefinitions
+  - batch:DescribeJobs
   - bedrock:Retrieve
   - bedrock-agentcore:GetWorkloadAccessTokenForUserId
   - b2bi:GetProfile
@@ -297,6 +299,7 @@ high_exact:
   - execute-api:Invoke
   - glue:GetConnection
   - glue:GetJob
+  - glue:GetStatement
   - glue:GetWorkflowRunProperties
   - geo:GetDevicePosition
   - geo:GetDevicePositionHistory
@@ -418,6 +421,7 @@ high_exact:
   - translate:GetParallelData
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
+  - wafv2:GetSampledRequests
   - wickr:GetOidcInfo
   - wisdom:GetContent
 
@@ -439,10 +443,12 @@ high_override_exact:
   - appsync:GraphQL
   - appsync:ListApiKeys
   - appstream:CreateStreamingURL
+  - apprunner:DescribeService
   - cassandra:Select
   - autoscaling:DescribeLaunchConfigurations
   - backup:DeleteRecoveryPoint
   - batch:DescribeJobDefinitions
+  - batch:DescribeJobs
   - bedrock:Retrieve
   - bedrock-agentcore:GetWorkloadAccessTokenForUserId
   - b2bi:GetProfile
@@ -509,6 +515,7 @@ high_override_exact:
   - execute-api:Invoke
   - glue:GetConnection
   - glue:GetJob
+  - glue:GetStatement
   - glue:GetWorkflowRunProperties
   - geo:GetDevicePosition
   - geo:GetDevicePositionHistory
@@ -619,6 +626,7 @@ high_override_exact:
   - translate:GetParallelData
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
+  - wafv2:GetSampledRequests
   - wickr:GetOidcInfo
 
 ## =====================
