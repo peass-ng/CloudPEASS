@@ -178,6 +178,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "states:DescribeExecution",
     "states:GetActivityTask",
     "states:GetExecutionHistory",
+    "storagegateway:DescribeChapCredentials",
     "sts:GetFederationToken",
     "tax:GetTaxRegistration",
     "tax:ListTaxRegistrations",

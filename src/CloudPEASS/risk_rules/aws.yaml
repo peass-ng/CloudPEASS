@@ -386,6 +386,7 @@ high_exact:
   - states:DescribeExecution
   - states:GetActivityTask
   - states:GetExecutionHistory
+  - storagegateway:DescribeChapCredentials
   - sts:GetFederationToken
   - tax:GetTaxRegistration
   - tax:ListTaxRegistrations
@@ -566,6 +567,7 @@ high_override_exact:
   - states:DescribeExecution
   - states:GetActivityTask
   - states:GetExecutionHistory
+  - storagegateway:DescribeChapCredentials
   - sts:GetDelegatedAccessToken
   - logs:FilterLogEvents
   - logs:GetLogRecord
