@@ -132,6 +132,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "ivschat:CreateChatToken",
     "kinesis:GetRecords",
     "kinesisanalytics:DescribeApplication",
+    "kinesisanalytics:CreateApplicationPresignedUrl",
     "kinesisvideo:GetClip",
     "kinesisvideo:GetDASHStreamingSessionURL",
     "kinesisvideo:GetHLSStreamingSessionURL",

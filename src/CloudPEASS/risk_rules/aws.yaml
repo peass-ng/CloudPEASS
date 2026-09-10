@@ -334,6 +334,7 @@ high_exact:
   - ivschat:CreateChatToken
   - kinesis:GetRecords
   - kinesisanalytics:DescribeApplication
+  - kinesisanalytics:CreateApplicationPresignedUrl
   - kinesisvideo:GetClip
   - kinesisvideo:GetDASHStreamingSessionURL
   - kinesisvideo:GetHLSStreamingSessionURL
@@ -521,6 +522,7 @@ high_override_exact:
   - ivschat:CreateChatToken
   - kinesis:GetRecords
   - kinesisanalytics:DescribeApplication
+  - kinesisanalytics:CreateApplicationPresignedUrl
   - kinesisvideo:GetClip
   - kinesisvideo:GetDASHStreamingSessionURL
   - kinesisvideo:GetHLSStreamingSessionURL
