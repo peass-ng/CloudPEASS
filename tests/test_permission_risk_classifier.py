@@ -483,6 +483,12 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.App/connectedEnvironments/certificates/write",
             "Microsoft.App/managedEnvironments/certificates/write",
             "Microsoft.App/sandboxGroups/secrets/write",
+            "Microsoft.ApiManagement/service/certificates/write",
+            "Microsoft.Automation/automationAccounts/certificates/write",
+            "Microsoft.Cdn/profiles/secrets/write",
+            "Microsoft.Sql/managedInstances/keys/write",
+            "Microsoft.KeyVault/vaults/keys/import/action",
+            "Microsoft.KeyVault/vaults/certificates/release/action",
         ):
             with self.subTest(permission=permission):
                 self.assertEqual(self.classify(permission), "medium")
