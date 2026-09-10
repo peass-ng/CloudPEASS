@@ -17,6 +17,7 @@ provider: aws
 critical_exact:
   - acm:ExportCertificate
   - aps:PutResourcePolicy
+  - appstream:CreateAppBlockBuilderStreamingURL
   - appstream:CreateImageBuilderStreamingURL
   - athena:CreatePresignedNotebookUrl
   - athena:StartCalculationExecution

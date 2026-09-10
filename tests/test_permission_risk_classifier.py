@@ -888,6 +888,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
 
     def test_live_validated_high_impact_paths_have_evidence(self) -> None:
         expected = {
+            "appstream:CreateAppBlockBuilderStreamingURL": "critical",
             "appstream:CreateImageBuilderStreamingURL": "critical",
             "airflow-serverless:GetTaskInstance": "high",
             "airflow-serverless:GetWorkflow": "high",

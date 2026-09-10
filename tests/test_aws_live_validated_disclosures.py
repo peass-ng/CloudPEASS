@@ -226,6 +226,15 @@ def test_live_validated_appstream_image_builder_role_takeover():
     assert live_validated_disclosure_documentation[action] == document
 
 
+def test_live_validated_appstream_app_block_builder_role_takeover():
+    action = "appstream:CreateAppBlockBuilderStreamingURL"
+    document = "aws-services/aws-workspaces-enum.md"
+    assert [action] in very_sensitive_combinations
+    assert classify_permission("aws", action, unknown_default="medium") == "critical"
+    assert tested_risk_documentation[action] == document
+    assert live_validated_disclosure_documentation[action] == document
+
+
 def test_live_validated_disclosures_have_service_specific_evidence():
     for action in LIVE_VALIDATED_HIGH_ACTIONS:
         document = live_validated_disclosure_documentation[action]
