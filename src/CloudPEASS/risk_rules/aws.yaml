@@ -315,6 +315,7 @@ high_exact:
   - healthlake:SearchWithPost
   - imagebuilder:GetComponent
   - iot:GetThingShadow
+  - iot:GetJobDocument
   - iot:Publish
   - iot:StartCommandExecution
   - iotjobsdata:DescribeJobExecution
@@ -540,6 +541,7 @@ high_override_exact:
   - healthlake:SearchWithPost
   - imagebuilder:GetComponent
   - iot:GetThingShadow
+  - iot:GetJobDocument
   - iot:Publish
   - iot:StartCommandExecution
   - iotjobsdata:DescribeJobExecution

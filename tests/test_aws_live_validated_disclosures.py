@@ -141,6 +141,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "mq:CreateUser",
     "mq:UpdateUser",
     "iotwireless:GetWirelessDevice",
+    "iot:GetJobDocument",
     "iotsitewise:BatchGetAssetPropertyAggregates",
     "iotsitewise:BatchGetAssetPropertyValue",
     "iotsitewise:BatchGetAssetPropertyValueHistory",
