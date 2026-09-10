@@ -253,10 +253,12 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.App/agents/listSecrets/action": "high",
             "Microsoft.App/agents/dataconnectors/listSecrets/action": "high",
             "Microsoft.App/containerApps/revisions/activate/action": "high",
-            "Microsoft.App/containerApps/revisions/restart/action": "high",
-            "Microsoft.App/containerApps/start/action": "high",
-            "Microsoft.ContainerInstance/containerGroups/restart/action": "high",
-            "Microsoft.ContainerInstance/containerGroups/start/action": "high",
+            # Live tests proved lifecycle/startup replay but no protected-data
+            # or privilege impact from these unchanged long-running specs.
+            "Microsoft.App/containerApps/revisions/restart/action": "medium",
+            "Microsoft.App/containerApps/start/action": "medium",
+            "Microsoft.ContainerInstance/containerGroups/restart/action": "medium",
+            "Microsoft.ContainerInstance/containerGroups/start/action": "medium",
             "Microsoft.Automation/automationAccounts/jobs/streams/read": "high",
             "Microsoft.Automation/automationAccounts/variables/read": "high",
             "Microsoft.Web/sites/triggeredwebjobs/run/action": "high",

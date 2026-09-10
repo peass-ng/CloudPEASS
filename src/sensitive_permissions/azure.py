@@ -331,21 +331,12 @@ sensitive_combinations = [
     # returned cleartext custom-header API credentials hidden by ordinary GET.
     ["Microsoft.App/agents/listSecrets/action"],
     ["Microsoft.App/agents/dataconnectors/listSecrets/action"],
-    # Live validated independently with exact singleton roles. Activating an
-    # inactive retained revision made its known endpoint execute and return
-    # the seeded canary; restarting it reran startup and changed the canary's
-    # process timestamp; starting a stopped app restored the same endpoint.
-    # These execute only pre-existing configuration, so they are conditional
-    # High techniques rather than arbitrary-code Critical primitives.
+    # Live validated with an exact singleton role: activating an inactive
+    # retained revision made its previously unavailable endpoint execute and
+    # return the seeded canary. The retained revision's code, identity, secret
+    # references, and network context determine impact, so this is High rather
+    # than an arbitrary-code Critical primitive.
     ["Microsoft.App/containerApps/revisions/activate/action"],
-    ["Microsoft.App/containerApps/revisions/restart/action"],
-    ["Microsoft.App/containerApps/start/action"],
-    # Exact singleton roles restarted a running ACI group and started it after
-    # an owner stop. In both cases the unchanged container startup command ran
-    # and its public endpoint served the canary. Existing code/identity scope
-    # the impact, so these are conditional High execution primitives.
-    ["Microsoft.ContainerInstance/containerGroups/restart/action"],
-    ["Microsoft.ContainerInstance/containerGroups/start/action"],
     ["Microsoft.App/containerApps/getAuthToken/action"],
     ["Microsoft.App/jobs/write"],
     ["Microsoft.Web/staticSites/createInvitation/action"],
