@@ -442,6 +442,12 @@ _AZURE_HIGH_EXACT = frozenset(
         # Encrypted Automation variable values remained hidden.
         "microsoft.automation/automationaccounts/jobs/streams/read",
         "microsoft.automation/automationaccounts/variables/read",
+        # Exact-role validation started existing triggered and continuous
+        # WebJobs and their logs contained the expected canaries. Final impact
+        # depends on target code and any identity attached to App Service.
+        "microsoft.web/sites/triggeredwebjobs/run/action",
+        "microsoft.web/sites/slots/triggeredwebjobs/run/action",
+        "microsoft.web/sites/continuouswebjobs/start/action",
         # Exact-role live validation minted a scoped AML endpoint bearer token
         # and used it to invoke a deployed scoring service. Impact depends on
         # the model behind the selected endpoint, so keep this High.
@@ -541,6 +547,10 @@ _AZURE_HIGH_EXACT = frozenset(
         # read or callback-URL permissions. Rotating the returned primary key
         # changed the generated signature and invalidated the old callback.
         "microsoft.logic/workflows/accesskeys/list/action",
+        # The legacy 2015-02-01-preview route remains live: an exact-role test
+        # started a privileged existing workflow and produced its blob side
+        # effect. Newer versions return ApiDeprecated for the same route.
+        "microsoft.logic/workflows/run/action",
         "microsoft.datafactory/factories/pipelines/createrun/action",
         # getFullUrl returned signed Logic App callback URLs that were usable
         # without the caller's Entra token. ACR run-log SAS URLs similarly
@@ -662,6 +672,11 @@ _AZURE_HIGH_EXACT = frozenset(
         # execution read both its retained file and environment canaries.
         "microsoft.app/sandboxgroups/sandboxes/executecommand/action",
         "microsoft.app/sandboxgroups/sandboxes/executeshellcommand/action",
+        # Exact-role live validation recovered a victim-owned sandbox file.
+        "microsoft.app/sandboxgroups/sandboxes/files/read",
+        # Exact-role live validation recovered all key/value pairs from an ACA
+        # Sandbox group secret. secrets/read remained metadata-only.
+        "microsoft.app/sandboxgroups/secrets/peek/action",
     }
 )
 

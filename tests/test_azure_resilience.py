@@ -672,6 +672,96 @@ def test_azure_multi_permission_attacks_are_not_critical_when_incomplete():
     assert not categories["critical"]
 
 
+def test_automation_webhook_execution_requires_supported_wildcard_and_runbook_read():
+    webhook_wildcard = "Microsoft.Automation/automationAccounts/webhooks/*"
+    runbook_read = "Microsoft.Automation/automationAccounts/runbooks/read"
+    combination = [webhook_wildcard, runbook_read]
+    assert combination in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    wildcard_only = peas.analyze_group({webhook_wildcard}, [])["permissions_cat"]
+    read_only = peas.analyze_group({runbook_read}, [])["permissions_cat"]
+    complete = peas.analyze_group(set(combination), [])["permissions_cat"]
+
+    assert webhook_wildcard not in wildcard_only["high"]
+    assert runbook_read not in read_only["high"]
+    assert set(combination).issubset(complete["high"])
+
+
+def test_webjob_execution_actions_are_validated_high_singletons():
+    permissions = (
+        "Microsoft.Web/sites/triggeredwebjobs/run/action",
+        "Microsoft.Web/sites/slots/triggeredwebjobs/run/action",
+        "Microsoft.Web/sites/continuouswebjobs/start/action",
+    )
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    for permission in permissions:
+        assert [permission] in sensitive_combinations
+        categories = peas.analyze_group({permission}, [])["permissions_cat"]
+        assert permission in categories["high"]
+        assert permission not in categories["critical"]
+
+
+def test_sandbox_secret_peek_is_high_but_metadata_read_is_not():
+    peek = "Microsoft.App/sandboxGroups/secrets/peek/action"
+    metadata_read = "Microsoft.App/sandboxGroups/secrets/read"
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+
+    assert [peek] in sensitive_combinations
+    peek_categories = peas.analyze_group({peek}, [])["permissions_cat"]
+    read_categories = peas.analyze_group({metadata_read}, [])["permissions_cat"]
+    assert peek in peek_categories["high"]
+    assert peek not in peek_categories["critical"]
+    assert metadata_read not in read_categories["high"]
+    assert metadata_read not in read_categories["critical"]
+
+
+def test_sandbox_file_read_is_a_validated_high_singleton():
+    permission = "Microsoft.App/sandboxGroups/sandboxes/files/read"
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+
+    assert [permission] in sensitive_combinations
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert permission in categories["high"]
+    assert permission not in categories["critical"]
+
+
+def test_legacy_logic_workflow_run_is_a_validated_high_singleton():
+    permission = "Microsoft.Logic/workflows/run/action"
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+
+    assert [permission] in sensitive_combinations
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert permission in categories["high"]
+    assert permission not in categories["critical"]
+
+
 def test_data_factory_identity_theft_requires_pipeline_write_and_run():
     peas = CloudPEASS(
         very_sensitive_combinations,

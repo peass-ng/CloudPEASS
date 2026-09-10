@@ -230,6 +230,15 @@ sensitive_combinations = [
     # secret-like value while correctly keeping the encrypted value hidden.
     ["Microsoft.Automation/automationAccounts/jobs/streams/read"],
     ["Microsoft.Automation/automationAccounts/variables/read"],
+    # Live validated against a published canary runbook. Azure checks the
+    # undocumented webhooks/action operation when minting the one-time URI,
+    # but rejects that exact operation in custom roles. The supported
+    # webhooks/* wildcard plus runbooks/read generated the URI, created the
+    # webhook, and let an anonymous POST execute the selected runbook.
+    [
+        "Microsoft.Automation/automationAccounts/webhooks/*",
+        "Microsoft.Automation/automationAccounts/runbooks/read",
+    ],
     # Live validated with an exact role: the action minted an AML endpoint
     # bearer token that invoked a deployed scoring service after an
     # unauthenticated request was rejected.
@@ -310,6 +319,13 @@ sensitive_combinations = [
     # victim environment, and the shell action returned victim file/env data.
     ["Microsoft.App/sandboxGroups/sandboxes/executeCommand/action"],
     ["Microsoft.App/sandboxGroups/sandboxes/executeShellCommand/action"],
+    # Live exact-DataAction validation recovered a victim-owned file from an
+    # existing sandbox without ARM read or sandbox-list permissions.
+    ["Microsoft.App/sandboxGroups/sandboxes/files/read"],
+    # Live exact-DataAction validation returned every cleartext value in a
+    # victim ACA Sandbox secret. The separate secrets/read action returned
+    # metadata only and is intentionally not promoted with it.
+    ["Microsoft.App/sandboxGroups/secrets/peek/action"],
     # Live validated with exact roles. Agent listSecrets returned the
     # platform-generated OAuth private key, while connector listSecrets
     # returned cleartext custom-header API credentials hidden by ordinary GET.
@@ -323,6 +339,12 @@ sensitive_combinations = [
     ["Microsoft.Web/sites/functions/listkeys/action"],
     ["Microsoft.Web/sites/slots/functions/listkeys/action"],
     ["Microsoft.Web/sites/functions/listsecrets/action"],
+    # Live exact-role validation started pre-existing triggered and continuous
+    # WebJobs; their execution logs contained the expected canaries. Existing
+    # job code and the App Service identity determine impact, so these are High.
+    ["Microsoft.Web/sites/triggeredwebjobs/run/action"],
+    ["Microsoft.Web/sites/slots/triggeredwebjobs/run/action"],
+    ["Microsoft.Web/sites/continuouswebjobs/start/action"],
     ["Microsoft.Web/sites/host/functionKeys/write"],
     ["Microsoft.Web/sites/slots/host/functionKeys/write"],
     # Live validated independently against production and a deployment slot:
@@ -345,6 +367,10 @@ sensitive_combinations = [
     ["Microsoft.Logic/workflows/triggers/listCallbackUrl/action"],
     ["Microsoft.Logic/workflows/versions/triggers/listCallbackUrl/action"],
     ["Microsoft.Logic/workflows/triggers/run/action"],
+    # Live exact-role validation against the still-supported legacy route
+    # started an existing managed-identity workflow and wrote a private blob.
+    # Modern API versions reject only this route as deprecated.
+    ["Microsoft.Logic/workflows/run/action"],
     ["Microsoft.Logic/workflows/triggers/histories/resubmit/action"],
     # Besides signed input/output links, an exact singleton live test showed
     # that this read action authorizes listExpressionTraces and returns plain

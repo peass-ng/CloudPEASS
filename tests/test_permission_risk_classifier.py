@@ -226,6 +226,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Logic/workflows/runs/actions/read": "high",
             "Microsoft.Logic/workflows/runs/actions/requestHistories/read": "high",
             "Microsoft.Logic/workflows/accessKeys/list/action": "high",
+            "Microsoft.Logic/workflows/run/action": "high",
             "Microsoft.EventGrid/events/receive/action": "high",
             "Microsoft.DataFactory/factories/pipelines/createRun/action": "high",
             "Microsoft.ContainerRegistry/registries/taskruns/write": "high",
@@ -233,12 +234,15 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.App/sessionPools/executions/action": "high",
             "Microsoft.App/sandboxGroups/sandboxes/executeCommand/action": "high",
             "Microsoft.App/sandboxGroups/sandboxes/executeShellCommand/action": "high",
+            "Microsoft.App/sandboxGroups/sandboxes/files/read": "high",
+            "Microsoft.App/sandboxGroups/secrets/peek/action": "high",
             "Microsoft.App/agents/listSecrets/action": "high",
             "Microsoft.App/agents/dataconnectors/listSecrets/action": "high",
             "Microsoft.Automation/automationAccounts/jobs/streams/read": "high",
             "Microsoft.Automation/automationAccounts/variables/read": "high",
             "Microsoft.Web/sites/triggeredwebjobs/run/action": "high",
             "Microsoft.Web/sites/slots/triggeredwebjobs/run/action": "high",
+            "Microsoft.Web/sites/continuouswebjobs/start/action": "high",
             "Microsoft.MachineLearningServices/workspaces/onlineEndpoints/token/action": "high",
             "Microsoft.MachineLearningServices/workspaces/serverlessEndpoints/listKeys/action": "high",
             "Microsoft.InferenceService/inferenceAccounts/listKeys/action": "high",
@@ -465,7 +469,6 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.App/connectedEnvironments/certificates/write",
             "Microsoft.App/managedEnvironments/certificates/write",
             "Microsoft.App/sandboxGroups/secrets/write",
-            "Microsoft.App/sandboxGroups/secrets/peek/action",
         ):
             with self.subTest(permission=permission):
                 self.assertEqual(self.classify(permission), "medium")
