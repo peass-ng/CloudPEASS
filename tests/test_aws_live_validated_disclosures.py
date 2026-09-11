@@ -946,11 +946,13 @@ def test_live_validated_marketplace_agreement_disclosures_are_independent():
 
 def test_live_validated_ecr_public_repository_policy_self_grant():
     action = "ecr-public:SetRepositoryPolicy"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
     critical = {tuple(candidate) for candidate in very_sensitive_combinations}
-    assert (action,) in critical
+    assert (action,) in high
+    assert (action,) not in critical
     assert classify_permission(
         "aws", action, unknown_default="medium"
-    ) == "critical"
+    ) == "high"
     assert live_validated_disclosure_documentation[action] == (
         "aws-privilege-escalation/aws-ecr-privesc/README.md"
     )
@@ -1098,6 +1100,19 @@ def test_live_validated_synthetics_dry_run_role_reuse_requires_full_chain():
 
 def test_live_validated_transfer_ssh_key_injection():
     action = "transfer:ImportSshPublicKey"
+    high = {tuple(candidate) for candidate in sensitive_combinations}
+
+    assert (action,) in high
+    assert classify_permission(
+        "aws", action, unknown_default="medium"
+    ) == "high"
+    assert live_validated_disclosure_documentation[action] == (
+        "aws-privilege-escalation/aws-transfer-family-privesc/README.md"
+    )
+
+
+def test_live_validated_transfer_start_file_transfer():
+    action = "transfer:StartFileTransfer"
     high = {tuple(candidate) for candidate in sensitive_combinations}
 
     assert (action,) in high

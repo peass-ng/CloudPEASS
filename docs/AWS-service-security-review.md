@@ -139,6 +139,32 @@ entitlement can be created. Enabling a new organization-wide identity system sol
 `account-access:CreateEntitlement` would expand the test beyond a safely isolated fixture, so the
 service is recorded as `blocked`, with no security claim and no infrastructure created.
 
+### Amazon EC2 Auto Scaling (`autoscaling`) desired-capacity activation — 2026-09-11
+
+`autoscaling:SetDesiredCapacity` alone on one exact UUID-bearing group ARN was live validated as a
+conditional High stored-role trigger. The group began with min/desired zero and max one. A candidate
+denied Auto Scaling reads/update/termination, EC2 reads/template mutation/RunInstances, protected
+and evidence S3, IAM read, and PassRole set desired capacity to one. Auto Scaling launched an
+instance from the unchanged numeric launch-template version and fixed instance profile. Its fixed
+boot workload copied the exact protected canary and recorded the instance ID and assumed
+instance-role identity.
+
+The API has no role parameter and did not re-check PassRole; it reused the existing group, launch
+template/profile, and pre-existing Auto Scaling service-linked role. The launch-template object,
+user-data hash, group configuration apart from expected capacity/instances, and instance-profile
+membership were unchanged. Exploitation needs a known group name and UUID-bearing ARN, max capacity
+above the current desired value, valid capacity/network/AMI, an existing profile, and boot or service
+behavior with useful privileged effects. The caller cannot change any of those with this permission
+alone, and an already-satisfied desired count may produce no new boot. IaC/state, scaling alarms,
+deployment/operations config, CI logs, CloudTrail/SIEM, console URLs, errors, runbooks, support
+bundles, and history are no-read identifier fallbacks.
+
+An empty role and fresh post-revocation session were denied. Cleanup scaled to zero and waited for
+the instance/root volume to disappear before deleting the group, template, profile, network, every
+S3 version/bucket, lab roles/policies, and local artifacts. Exact and all-region/global audits found
+no group, template, instance/volume, VPC resource, IAM lab resource, bucket, tag, or local residue;
+the unrelated pre-existing Auto Scaling service-linked role was never modified.
+
 ### AWS Service Catalog (`servicecatalog`) — 2026-09-08
 
 Live validation confirmed that `servicecatalog:CreateProvisioningArtifact` plus
@@ -197,6 +223,48 @@ groups, proof objects and bucket, test roles, and instance profile were deleted.
 returned no active Image Builder, IAM, S3, CloudWatch Logs, EC2, EBS, AMI, or snapshot resources.
 The account's Image Builder service-linked role dates from 2020 and was deliberately left untouched.
 
+### AWS CloudFormation (`cloudformation`) change-set execution — 2026-09-11
+
+`cloudformation:ExecuteChangeSet` alone was live validated as a conditional High stored-service-role
+primitive. An administrator created a stack with a stored CloudFormation role and staged an
+`AVAILABLE` update that added exact-object S3 read to the restricted candidate role. The candidate
+was initially denied that object, CloudFormation stack/change-set reads and listing, change-set
+creation, stack update, direct IAM mutation, and PassRole. Its minimal working policy allowed
+`ExecuteChangeSet` on the exact **stack ARN**, restricted with
+`cloudformation:ChangeSetName`; using the change-set ARN as `Resource` was denied. Supplying the
+known full change-set ARN required neither `StackName` nor a read permission.
+
+CloudTrail showed the candidate executing the change set, then the stack's original service role
+performing `iam:PutRolePolicy`. A fresh candidate session read the exact protected canary without a
+PassRole check. Execute alone cannot alter the stored template; an already available change set,
+authorization on its stack, and a service role able to apply its contents are prerequisites. This
+is High for the proven data grant and potentially Critical only when the staged content itself
+causes account takeover. Stack policies and hooks still apply. Full ARNs can be recovered from
+pipeline/deployment configuration, IaC output, logs, shell history, notifications, tickets, and
+CloudTrail/SIEM. Revoking execute denied a fresh retry; a reverse change set removed the S3 grant
+and a new read failed. The stack, roles/policies, bucket/version, logs, tags, and local artifacts
+were deleted across all enabled regions. AWS retains only non-live `DELETE_COMPLETE` stack and
+`EXECUTE_COMPLETE` change-set history that its APIs do not permit users to delete.
+
+`cloudformation:SignalResource` was independently validated as a conditional High continuation
+primitive. An administrator created a stack under a stored service role whose named
+`AWS::CloudFormation::WaitCondition` blocked a fixed custom resource. The candidate held only
+`SignalResource` on the exact stack ARN. It was denied stack reads and mutation, direct Lambda
+invocation, protected/evidence S3 access, IAM, and PassRole. An empty role was denied; a call naming
+the wrong logical resource returned `ValidationException`; the exact logical ID and an
+attacker-chosen unique ID were accepted. CloudFormation recorded the success signal, completed the
+wait condition, invoked the unchanged custom-resource provider through the stored stack role, and
+the provider reached `CREATE_COMPLETE` under its fixed role.
+
+The action cannot change the template, service role, or downstream code. Useful impact therefore
+requires a known in-progress stack, a signal-waiting logical resource, enough remaining timeout,
+and a pre-existing sensitive continuation. Stack names/ARNs and logical IDs have IaC/state,
+deployment output, CI logs, console URLs, notifications, tickets, support bundles, and
+CloudTrail/SIEM as no-read fallbacks. A fresh session after policy removal was denied. The stack,
+custom provider and logs, every bucket version/bucket, roles/policies, and local artifacts were
+deleted; direct live inventories were empty. CloudFormation retains only immutable
+`DELETE_COMPLETE` stack-event history.
+
 ### AWS CodeDeploy (`codedeploy`) — 2026-09-08
 
 Live validation confirmed that a controlled S3 revision plus `codedeploy:CreateDeployment` can
@@ -221,7 +289,7 @@ security group deleted, and all test IAM, instance-profile, S3, and local bundle
 Authoritative inventories returned no active prefix-matching resource; the Resource Groups Tagging
 API temporarily retained tombstones for the terminated instance and deleted volume.
 
-### AWS Systems Manager (`ssm`) — 2026-09-08
+### AWS Systems Manager (`ssm`) — 2026-09-11
 
 Live validation confirmed that `ssm:StartAutomationExecution` alone can invoke an
 administrator-authored Automation runbook with a constant privileged `assumeRole`. The test role
@@ -241,6 +309,24 @@ entry points and may change infrastructure or expose role-only output. A useful 
 required parameter values remain prerequisites. Both completed executions became immutable history;
 the document and two test roles were deleted, and exact checks returned no active Automation, IAM,
 or tagged fixture.
+
+`ssm:StartAssociationsOnce` was separately validated as a conditional High stored-workload
+trigger. An administrator created an `AWS-RunShellScript` State Manager association on one
+disposable managed EC2 node. Its fixed commands first checked an independently controlled gate,
+then used the node's existing instance role to read a protected canary and write proof. The initial
+creation execution saw the closed gate and produced no proof. A candidate holding only
+`StartAssociationsOnce` on the exact
+`arn:aws:ssm:REGION:ACCOUNT:association/ASSOCIATION_ID` was denied association reads and
+`SendCommand`; an empty role was also denied.
+
+After the controller opened the fixed gate, that exact action ran the unchanged association on the
+unchanged target. The proof contained the canary and the assumed node-role session ARN. The action
+cannot change commands or targets, so useful impact requires a known association whose stored
+workload and managed-node identity already have a security-relevant effect. Association IDs can
+come from IaC/state, deployment output, State Manager history, console URLs, notifications,
+runbooks, logs, or CloudTrail/SIEM. A fresh session after policy removal was denied. The association
+was deleted, the instance terminated, and its profile, roles/policies, every bucket object/version,
+and bucket removed; exact active-resource inventories were empty.
 
 ### AWS Signer (`signer`) — 2026-09-08
 
@@ -286,9 +372,65 @@ authorized `events.amazonaws.com` through its own resource policy. This pair is 
 critical because a controllable bus/rule, a useful target, and a matching target resource policy
 are prerequisites. Each EventBridge action remains medium alone.
 
+Separately, `events:PutRule` alone on one exact rule ARN was live validated as a conditional High
+stored-target trigger. An administrator created a disabled scheduled rule with an unchanged Lambda
+target and a matching Lambda resource-policy statement. A candidate denied EventBridge reads,
+`PutTargets`, `PutEvents`, Lambda access, protected-data access, IAM, and PassRole supplied the known
+rule name and enabled its schedule with `PutRule`. The existing target was preserved and the next
+scheduled event made the fixed Lambda copy a protected canary plus its execution-role identity.
+An empty role and a fresh post-revocation session were denied.
+
+This does not attach a new target or bypass destination authorization. It requires a known disabled
+rule with a useful existing target, the target's resource policy or service integration already
+allowing that rule, and an event pattern or schedule that will fire. `PutRule` replaces omitted rule
+attributes with null values, so a blind update can also disrupt the description, event pattern, or
+role setting. IaC/state, deployment configuration, CI/operator logs, CloudTrail/SIEM, console URLs,
+errors, support bundles, and shell/browser history are no-read fallbacks for the rule name and
+configuration.
+
+`events:PutPermission` alone on one exact custom event bus was also live validated as a conditional
+High policy self-grant. A candidate initially denied `PutEvents` installed a direct IAM-user bus
+policy that granted itself only `events:PutEvents`, constrained to an exact source and detail type.
+The matching event then succeeded without an identity-based PutEvents allow and invoked the
+unchanged rule target; its fixed Lambda copied the protected canary and role identity. A mismatched
+source remained denied, a second bus proved exact Resource scoping, and removing only the bus-policy
+statement restored PutEvents denial while the identity PutPermission allow still existed.
+
+The raw policy operation was tested on a policy-empty disposable bus and may replace the complete
+policy, so blind use can remove legitimate principals. A hostile holder can choose broader
+principals and conditions, but resource policies cannot override explicit denies, permissions
+boundaries, or SCPs. Useful impact still requires an existing matching rule/target and destination
+authorization. The candidate lacked EventBridge reads, rule/target writes, Lambda/data/IAM access,
+and PassRole. Empty and fresh-revoked controls denied. The exact statement, targets/rules, both
+buses, Lambda permission/function/logs, every S3 version/bucket, IAM users/keys/roles/policies, and
+local artifacts were removed; global and all-region inventories were empty.
+
+`events:StartReplay` was independently validated as a conditional High stored-event trigger. An
+administrator created a custom bus/archive, wrote one event before attaching an unchanged rule and
+preauthorized Lambda target, and waited AWS's documented ten-minute archive-ingestion interval.
+The candidate held only StartReplay on the exact archive, named replay, and source event-bus ARNs;
+one- and two-resource policies were denied in turn, matching the three resource types in AWS's
+authorization reference. It was also denied archive reads, PutEvents, rule/target mutation, direct
+Lambda invocation, data access, IAM, and PassRole. An empty role was denied and no proof existed.
+
+The exact replay completed, re-emitted the stored event with its replay metadata, and matched the
+unchanged rule. The fixed Lambda used its stored role to copy the protected canary and role
+identity. This cannot manufacture or edit an archived event, change a target, or bypass destination
+authorization, so impact requires a known archive/bus, replay name, suitable retained event and
+time window, and useful fixed consumer. AWS warns that recent events can take ten minutes to reach
+an archive and that `EventCount` can lag by 24 hours, so a zero count is not a safe readiness
+signal. A fresh revoked session was denied. The archive, rule/target, bus, Lambda permission and
+function/logs, roles/policies, and every S3 object version/bucket were deleted; exact active
+inventories were empty. EventBridge retains only the completed replay records for 90 days and
+provides no delete API for that terminal history.
+
 All three rules and targets, the custom bus, function, bucket and object versions, four IAM roles,
 inline policies, and Lambda resource-policy statements were deleted. Exact prefix checks returned
 no active EventBridge, Lambda, S3, or IAM fixture.
+
+The separate schedule fixture was also removed in dependency order: rule target, rule, Lambda
+permission/function/logs, every S3 object version and bucket, and IAM roles/policies. Global and all
+enabled-region prefix inventories were empty.
 
 ### IAM Roles Anywhere (`rolesanywhere`) — 2026-09-08
 
@@ -326,7 +468,7 @@ remain separate cases.
 The pipe, all three queues, execution role and policy, both disposable IAM users, and both access
 keys were deleted. Exact prefix queries returned no remaining Pipes, SQS, or IAM resources.
 
-### Amazon SageMaker (`sagemaker`) — 2026-09-08
+### Amazon SageMaker (`sagemaker`) — 2026-09-11
 
 Live validation confirmed that `sagemaker:UpdateNotebookInstanceLifecycleConfig` alone can persist
 attacker-controlled shell code into a lifecycle configuration already attached to a notebook. The
@@ -350,6 +492,35 @@ The notebook was stopped and deleted, followed by its lifecycle configuration, p
 bucket and object, execution role and policy, two disposable IAM users, and both access keys.
 Exact prefix inventories returned no remaining SageMaker notebook, lifecycle configuration, S3
 bucket, IAM user, or IAM role.
+
+`sagemaker:RetryPipelineExecution` was independently validated as a conditional High stored-role
+replay. A fixed Lambda pipeline step initially failed on an absent synthetic gate. The
+exact-execution retry role was denied pipeline/execution list, describe, start, and update; Lambda
+invoke/update; protected/evidence S3 and gate writes; IAM read; and PassRole. After an independent
+gate-only role opened the dependency, the candidate retried the same execution ARN. The pipeline's
+unchanged role completed the downstream step, which wrote the exact protected canary, Lambda-role
+identity, and the original execution-specific parameter override instead of the pipeline default.
+The retry request cannot replace role, definition, or parameters, so High impact requires a
+retryable execution whose fixed failed path becomes satisfiable and performs a useful sensitive
+action. Execution ARNs have orchestrator, CI/deployment, event, IaC/notebook, console/history, log,
+support, and CloudTrail/SIEM fallbacks. Empty and fresh revoked controls failed. Pipeline/execution,
+functions/logs, all S3 versions/buckets, and seven roles/policies were deleted; exact inventories
+were empty.
+
+A separate ECR-to-SageMaker Processing test validated a conditional High mutable-tag supply-chain
+path. A restricted publisher with only `ecr:BatchGetImage` and `ecr:PutImage` on one repository was
+denied SageMaker job creation, output reads, IAM, and PassRole, but moved an existing `:mutable`
+manifest from a harmless V1 digest to V2. A separate launcher repeated the same stable
+`CreateProcessingJob` fields—tag URI, fixed role, resources, and runtime—and the new job produced
+the exact V2 output. A concurrent job pinned to the original digest still produced V1. Processing
+jobs are immutable one-shot resources, so this is neither immediate execution nor stored-job
+replay: a later trusted launcher still needs `CreateProcessingJob` and `iam:PassRole`. Repository,
+tag, and consumer fallbacks include notebooks, pipeline/Step Functions definitions, IaC/state,
+CI/CD configuration and logs, SDK caches, error messages, and CloudTrail/SIEM. Digest pinning and
+ECR immutable tags prevent this tag-drift path. The repository/images, output bucket and every
+version, roles/policies, exact logs, local Docker images, credentials, and test artifacts were
+removed; the 18-region/global audit was empty. Only three immutable `Completed` Processing history
+records remain because SageMaker exposes no delete API for Processing jobs.
 
 ### Amazon API Gateway Management (`apigateway`) — 2026-09-08
 
@@ -472,6 +643,23 @@ and the inline policy were deleted; exact SQS and IAM prefix inventories returne
 
 ### Amazon SNS (`sns`) — 2026-09-08
 
+`sns:Subscribe` alone on one exact existing topic was separately live validated as a conditional
+High stored-target trigger. The candidate blindly attached a known fixed Lambda endpoint and the
+Lambda protocol auto-confirmed the subscription. Subscription alone produced no evidence; a later
+publish by an independent producer invoked unchanged code, which copied the exact protected canary
+and recorded the topic, message ID, and function-role identity. The candidate was denied topic and
+subscription reads, Publish, Lambda access, protected/evidence S3, IAM, Unsubscribe, and PassRole.
+
+Destination authorization remained mandatory. Without a Lambda resource-policy statement allowing
+`sns.amazonaws.com` from the exact topic ARN and account, SNS still created and auto-confirmed the
+Lambda subscription but a separate publish never invoked the function. The positive path worked
+only after the exact grant. Do not generalize Lambda auto-confirmation to email or HTTP(S), which can
+remain pending until endpoint confirmation. The proof was same-account and same-region; cross-account
+behavior was not claimed. Topic/function ARNs have application config, IaC/state, CI/operator logs,
+CloudTrail/SIEM, console URLs, errors, support bundles, and shell/browser history fallbacks.
+Subscriptions, topics, Lambda permission/function/logs, every S3 object version/bucket, IAM
+users/keys/roles/policies, and local artifacts were deleted; global and all-region audits were empty.
+
 Live validation confirmed that `sns:SetTopicAttributes` alone can replace a topic policy and grant
 the same-account caller subscription access. A restricted IAM user's identity policy allowed only
 `SetTopicAttributes` on one topic plus receive access to a synthetic destination queue. Its
@@ -523,6 +711,18 @@ the zone ID and record name. A separate no-permission user was denied the same U
 changed the existing record to `192.0.2.99`; after Route 53 reported the change synchronized, a
 direct query to the zone's public authoritative name server returned `192.0.2.99`.
 
+A separate cross-service fixture proved conditional sensitive-data impact. The candidate held the
+same action on one hosted zone, further restricted by normalized exact record name, type `A`, and
+action `UPSERT`; it was denied Route 53 reads, other-name changes, Lambda invoke/update, protected
+and evidence S3 reads, IAM read, and PassRole. After the exact A record changed, both authoritative
+and recursive DNS resolved the replacement address. A separate administrator invoked the unchanged
+Lambda consumer, whose fixed HTTP request caused the replacement collector to receive the exact
+protected canary and Lambda assumed-role identity. The candidate remained denied that evidence.
+This is conditional High only when a later privileged consumer resolves the mutable name and sends
+sensitive material or trusts responses without an independent authenticated channel. Proper
+hostname-validated TLS prevents the demonstrated interception unless the attacker also has a valid
+certificate. Empty and fresh-after-propagation revoked controls failed; the record was restored.
+
 The permission is High in isolation because control of an existing record can redirect application
 or email traffic and can satisfy some DNS-based ownership checks; the final impact depends on what
 the name serves and on transport authentication. The already-recorded multi-permission private-DNS
@@ -567,6 +767,23 @@ The action cannot create or register a target by itself, so High impact requires
 rule, compatible pre-existing target group, and sensitive traffic. The ALB/listener/rule, target
 groups, Lambdas/logs, versioned bucket, SG/ENIs, roles/policies, ZIPs, and local fixture were deleted;
 exact-prefix inventories were empty.
+
+### Amazon Cognito User Pools (`cognito-idp`) — 2026-09-11
+
+An isolated confidential-client lab validated `cognito-idp:UpdateUserPoolClient` as a direct
+client-secret disclosure. A role holding only that action on `Resource: "*"` was denied
+`DescribeUserPoolClient`; an empty role was denied the same syntactically valid update. The
+candidate's minimal update response nevertheless contained a nonempty `ClientSecret`. Its hash
+matched both the original creation secret and a later administrator-only describe result, proving
+that it was the existing live credential rather than a placeholder or newly unrelated value.
+
+This is High when the client's enabled authentication/OAuth flows and scopes make the credential
+useful; the update action can separately weaken client settings. Update requests can reset omitted
+properties to defaults, so defenders should treat even a read-motivated call as a configuration
+change. Pool/client IDs and names have no-list fallbacks in frontend/mobile configuration, OAuth
+URLs, JWT claims, source/IaC, deployment output, browser history, logs, errors, screenshots, and
+CloudTrail/SIEM. Permission was removed and a fresh session denied. The client/pool and both
+roles/policies were deleted; exact IAM, Cognito, and tagging inventories were empty.
 
 ### Amazon Cognito Identity (`cognito-identity`) — 2026-09-08
 
@@ -757,6 +974,29 @@ the validated Critical result. Both access entries and clusters were deleted and
 then their roles, users, every access key, policies, generated ENIs/security groups, and exact local
 kubeconfig files were removed. All exact-prefix inventories returned empty.
 
+`eks:AssociateIdentityProviderConfig` alone was separately validated as a conditional Critical
+authentication-to-authorization pivot. A control-plane-only cluster had a pre-existing
+ClusterRoleBinding from a synthetic non-system group to `cluster-admin`. A public token from an
+attacker-controlled Cognito OIDC issuer returned Kubernetes HTTP 401 before association. The
+exact-cluster candidate, denied EKS reads and access-entry operations, Kubernetes API access,
+IAM/PassRole, and with no access entry before or after, associated that issuer with an email
+username claim, prefixed group claim, and required `token_use=id`. The same token then read the
+byte-exact protected Secret, reported the matching group, received an allowed cluster-scoped RBAC
+self-review, and created a harmless cluster-scoped role.
+
+Association supplies authentication but does not invent Kubernetes authorization. Critical impact
+requires a reachable API endpoint, an attacker-controlled or obtainable valid token, unrestricted
+issuer/client selection, and an existing privileged RBAC binding matching an asserted group (or an
+overly broad binding for authenticated users). Known cluster/endpoint/CA values have kubeconfig,
+IaC/state, deployment/CI output, application configuration, console URL, logs/errors, browser/shell
+history, support bundle, and CloudTrail/SIEM fallbacks. Restrict or explicitly deny the action,
+condition allowed `eks:issuerUrl` and `eks:clientId`, and audit RBAC subjects. Fresh revoked
+association was denied. After disassociation the token returned 401 and the IdP was absent. The
+cluster, OIDC/Cognito issuer, protected objects, roles/policies, VPC/subnets/routes/IGW/security
+groups/ENIs, and local artifacts were removed; all 18 enabled regions were clean. The Resource
+Tagging API retained a stale deleted-pool tombstone, while the owning Cognito API directly returned
+`ResourceNotFound`.
+
 ### Amazon AppStream (`appstream`) — image-builder role takeover, 2026-09-10
 
 `appstream:CreateImageBuilderStreamingURL` alone was validated as a direct takeover of a running
@@ -778,7 +1018,7 @@ policy, both IAM users and all access keys, temporary AppStream service role, is
 profile, and screenshots were removed. Exact AppStream, Secrets Manager, and IAM inventories
 returned empty.
 
-### AWS CodeBuild (`codebuild`) — running-sandbox command injection, 2026-09-10
+### AWS CodeBuild (`codebuild`) — sandbox execution and build replay, 2026-09-11
 
 `codebuild:StartCommandExecution` alone was validated as a direct takeover of a running CodeBuild
 sandbox's execution role. An administrator created the project and started a disposable sandbox
@@ -801,6 +1041,19 @@ and user lookups returned absent. CodeBuild retains the terminal sandbox record 
 inventory and exposes no delete-sandbox operation; the retained record is stopped and cannot run
 commands.
 
+`codebuild:RetryBuild` was independently validated as a conditional High stored-role replay. An
+administrator completed a fixed build whose service role copied one protected S3 canary, then
+removed the baseline output. A role holding only `RetryBuild` on the exact project was denied
+`StartBuild`, `BatchGetBuilds`, source read, evidence listing, IAM read, and PassRole, but retried
+the known completed build ID. The new build succeeded under the unchanged service role and
+recreated the exact canary. It does not accept arbitrary buildspec or environment overrides, so it
+is not arbitrary code execution by itself; impact depends on whether replaying the stored build
+causes a useful sensitive read or privileged side effect. IDs have no-list fallbacks in CI/console
+URLs, CloudWatch streams, EventBridge notifications, deployment output, worker state, source/IaC,
+browser/shell history, logs, screenshots, support bundles, and CloudTrail/SIEM. Empty and fresh
+revoked controls failed. Project, all S3 versions/buckets, log group, roles, and policies were
+deleted; only immutable completed-build history remained.
+
 ### CodeConnections and agent-channel prerequisite review — 2026-09-08
 
 `codeconnections:UseConnection` is a permissions-only authorization gate used by integrated
@@ -822,6 +1075,31 @@ SageMaker geospatial was reachable only in `us-west-2` during the regional check
 Earth Observation jobs; `eu-west-1` returned a service/authorization-resolution error. Testing job
 reads or exports requires a synthetic source collection, job, and execution role, so that prefix is
 also retained as blocked rather than inferred safe.
+
+### Amazon S3 (`s3`) bucket-notification wiring — 2026-09-11
+
+`s3:PutBucketNotification` alone on one exact bucket was live validated as a conditional High
+cross-service wiring primitive. The candidate, denied notification reads, source object/list access,
+Lambda access, protected/evidence access, IAM, and PassRole, blindly installed a known
+`inputs/*.trigger` Lambda notification. Configuration caused no execution. A later object written by
+an independent producer invoked the unchanged function, whose fixed role copied the exact protected
+canary and recorded its assumed-role ARN.
+
+The destination prerequisite was proved in both directions. Without a Lambda resource-policy grant
+for `s3.amazonaws.com` conditioned on the exact bucket ARN and account, S3 rejected the complete
+configuration atomically with `InvalidArgument` and left notifications empty. After that grant, the
+same candidate request succeeded; after revocation, it failed again. Therefore this permission alone
+cannot authorize an attacker-controlled Lambda. It is High only when a useful destination is already
+authorized for the source bucket and ordinary independent producers will later create matching
+objects. The API replaces the whole notification document, so blind use can disrupt existing routes;
+delivery is asynchronous and at least once.
+
+No configuration read is required when the bucket, destination ARN, event type, prefix, and suffix
+are known. IaC/state, deployment configuration, application code, CI output, CloudTrail/SIEM,
+console URLs, errors, support bundles, and shell history are permissionless identifier fallbacks.
+Cleanup restored the empty notification first and deleted all versions in both buckets, the Lambda
+permission/function/logs, IAM users/keys/roles/policies, code, and local evidence. Global S3/IAM and
+all-enabled-region Lambda, logs, and tagging prefix audits were empty.
 
 ### Amazon S3 Object Lambda (`s3-object-lambda`) — 2026-09-08
 
@@ -881,7 +1159,34 @@ returned temporary credentials were never printed or persisted, and the only res
 read was deleted during cleanup. Exact-prefix cluster, role, user, and bucket inventories returned
 empty.
 
-### AWS Config (`config`) — 2026-09-08
+### AWS Config (`config`) — 2026-09-11
+
+An isolated 2026-09-11 follow-up validated `config:PutDeliveryChannel` as a conditional High
+future-inventory disclosure. A role holding exactly that action on `Resource: *` replaced the
+recorder's protected S3 destination with a lab capture bucket and added a capture SNS topic. It was
+denied delivery-channel enumeration, EC2 source reads, S3 list/get/put, SNS publish, SQS receive,
+and had no `iam:PassRole` grant. A later independent tag update was delivered through the new topic
+as a complete Config configuration item containing the canary security group's description, rules,
+VPC relationship, ARN, account, and tags. The original snapshot independently demonstrated that
+the S3 side contains the same full configuration-item class; the replacement bucket passed Config's
+service-principal writability check and was configured for hourly snapshots. An empty role and a
+fresh session after policy removal were denied. Known channel names can be recovered without Config
+read access from IaC, deployment scripts/output, runbooks, shell/browser history, or CloudTrail/SIEM;
+`default` is conventional. The channel, recorder, canary, buckets and all versions, topic, queue,
+subscription, roles, policies, and local data were deleted, and exact-prefix inventories were empty.
+
+`config:StartConfigRulesEvaluation` was independently validated as a conditional High fixed-code
+trigger. A custom periodic rule referenced an unchanged Lambda evaluator whose stored role could
+read one protected canary and write one proof object. A candidate holding only the evaluation action
+on the exact Config-rule ARN was denied Config reads and mutation, direct Lambda invocation,
+protected/evidence data access, IAM, and PassRole. An empty role failed and no proof existed before
+the test. Once an administrator armed the fixed evaluator gate, the candidate forced evaluation;
+the Lambda role wrote the exact canary and its own assumed-role ARN. This cannot replace the rule
+source or evaluator code, so impact requires a known custom rule with useful fixed behavior and an
+evaluation state that permits a manual run. IaC/state, compliance notifications, console URLs,
+rule output, logs, and CloudTrail/SIEM are identifier fallbacks. A fresh session after revocation
+was denied. The rule, recorder, delivery channel, evaluator/logs, roles/policies, every S3
+object/version, and bucket were deleted; exact Config, Lambda, IAM, and S3 inventories were empty.
 
 The Q03 remediation hypothesis did not produce an independent escalation. A complete disposable
 recorder and delivery channel evaluated a synthetic IAM user as `NON_COMPLIANT`; a custom SSM
@@ -1041,7 +1346,7 @@ and application logs. App IDs remain recoverable from public Amplify hostnames a
 configuration without `ListApps`. All disposable apps, backends, tokens, IAM users, access keys, and
 policies used by the validation were removed and the exact app inventory returned empty.
 
-### Amazon Athena (`athena`) — Spark-session takeovers, 2026-09-10
+### Amazon Athena (`athena`) — Spark-session takeovers and stored-query poisoning, 2026-09-11
 
 A disposable PySpark workgroup, notebook, running notebook session, S3 output bucket, execution
 role, and Secrets Manager canary were used to test `CreatePresignedNotebookUrl`. An IAM user holding
@@ -1067,7 +1372,42 @@ CloudTrail/SIEM copies. The generated URL is a roughly ten-minute credential. Ev
 session, calculation, notebook/workgroup resource, object, bucket, secret, role policy, IAM user,
 and access key was removed after the test.
 
-### AWS Glue (`glue`) — interactive-session role takeover, 2026-09-10
+An independent exact-action lab also validated `athena:UpdatePreparedStatement` as a conditional
+High stored-query attack. The statement first returned a benign marker. A role holding only that
+action on the disposable workgroup was denied statement read, query execution, Glue table read,
+protected S3 object access, and IAM role read, but replaced the stored SQL. A separate query role
+then executed the unchanged statement name and returned the unique canary from its protected Glue/S3
+table. This is not direct access by the updater: a victim or automation must execute the modified
+statement, and the resulting rows or side effects must be useful to the attacker. Statement/workgroup
+names remain recoverable from application SQL, repositories, IaC, notebook/BI configuration, console
+URLs, logs, screenshots, shell history, or CloudTrail/SIEM copies when listing is denied. The
+statement was restored, permission removed, and a fresh session denied; the workgroup, Glue objects,
+all S3 versions and buckets, roles, and policies were then deleted and exact absence checks passed.
+
+The same boundary was independently confirmed for `athena:UpdateNamedQuery`. The saved query first
+returned a benign marker. An exact-workgroup updater was denied `GetNamedQuery`, query execution,
+Glue/S3 source access, and IAM role read but replaced its SQL. A separate role fetched the unchanged
+named-query ID and submitted the poisoned SQL, returning a different protected canary. This is also
+conditional High: an application or user must trust and execute the saved query, and the output or
+side effect must be useful to the attacker. IDs, names, and workgroups remain discoverable without
+Athena list access from application/BI/notebook configuration, source/IaC, console URLs, deployment
+output, browser/shell history, logs, screenshots, and CloudTrail/SIEM copies. The query was restored,
+a fresh revoked session was denied, and the named query, workgroup, Glue objects, every S3 version
+and bucket, role, and policy was deleted; exact inventories were empty.
+
+`athena:UpdateNotebook` was then validated as a conditional High stored-code attack. An
+exact-workgroup role was denied notebook export/list, workgroup read, session start, protected and
+evidence S3 reads, and PassRole, but replaced a known inactive notebook. A separate victim exported
+the same stored cell, created a notebook-bound Spark session, and ran it under the workgroup
+execution role; the cell copied the unique protected canary to its evidence location and the hashes
+matched. Saving or opening the notebook did not execute it, a notebook UUID must be known, and an
+active notebook additionally requires its session ID. UUIDs, workgroups, and session IDs remain
+recoverable from notebook/console URLs, browser or shell history, source/IaC, application settings,
+deployment or SDK output, logs, screenshots, support bundles, and CloudTrail/SIEM copies. A fresh
+session was denied after permission removal; both sessions, calculations, notebook, workgroup, all
+S3 versions/buckets, roles, and policies were removed and exact inventories were empty.
+
+### AWS Glue (`glue`) — role takeover and Catalog redirection, 2026-09-11
 
 A disposable Glue 4.0 interactive session used an execution role restricted to reading one
 Secrets Manager canary. An IAM user holding exactly `glue:RunStatement` on `Resource: *` submitted
@@ -1092,6 +1432,224 @@ override code or job arguments, so this is High only when an existing job trusts
 controls a sensitive source, destination, query, API action, or artifact. All workflow resources,
 bucket versions, roles, policies, logs, and local artifacts were deleted, and exact-prefix audits in
 all 18 enabled Regions were empty.
+
+`glue:ResumeWorkflowRun` alone was separately validated as a conditional High stored-role replay.
+The original workflow run appeared `COMPLETED` even though its sole job node had failed on an absent
+synthetic gate. An independent gate-only principal created that dependency but was denied resume.
+The exact-workflow candidate, denied Glue get/list, workflow/job start or update, all S3 source,
+gate, and evidence access, IAM, and PassRole, supplied the known workflow name, original run ID, and
+failed node UniqueId. Glue created a resumed run linked through `PreviousRunId`; the fixed job and
+stored role then copied the byte-exact protected canary and role identity. Resume cannot replace
+the job, role, code, or arguments. The node must have an attempt in the earlier partially completed
+run, and an environmental or dependency change must make the fixed retry useful. IDs can be
+recovered from CloudTrail/SIEM, CI/operator logs, errors, shared configuration, runbooks, or support
+artifacts without Glue read access. Empty and fresh revoked controls failed. The trigger, job,
+workflow, every S3 version/bucket, five roles/policies, exact log streams, and local artifacts were
+removed; all enabled-region inventories were clean.
+
+`glue:UpdateTable` was independently validated as a conditional High Catalog-to-Athena
+exfiltration path. A fixed privileged `INSERT INTO sink_data SELECT ...` first wrote the protected
+canary only to the benign sink. An exact Catalog/database/table-scoped mutator, denied `GetTable`,
+Athena execution, source/capture access, and IAM role read, changed only the sink table's S3
+location. The next identical query wrote the protected bytes to the capture prefix, where a
+separate reader recovered them. The trusted writer must already be able to write the replacement
+location, and no data moves until a consumer uses the mutated metadata. Table/database names remain
+recoverable from SQL, notebooks, ETL/BI configuration, source/IaC, console URLs, browser/shell
+history, deployment output, logs, screenshots, and CloudTrail/SIEM copies when Glue reads are
+denied. The table was restored and fresh-session revocation verified; both tables, database,
+workgroup, all object versions/buckets, four roles, and policies were deleted and exact inventories
+were empty.
+
+`glue:BatchCreatePartition` alone was separately validated as conditional High read-side metadata
+poisoning. The candidate was scoped to the exact catalog, database, and table ARNs and supplied a
+valid new partition definition whose S3 location contained a pre-existing attacker marker. The API
+returned HTTP 200 with no per-entry errors. Metadata creation itself ran no query. A later
+independent full-table Athena query returned the injected marker and legitimate row together, while
+the candidate remained denied Glue reads, `UpdatePartition`, Athena, both source and result data,
+IAM, and PassRole. The table object/schema was byte-for-byte unchanged. This action genuinely
+authorized the batch-create endpoint; unlike `BatchUpdatePartition`, no differently named action
+was involved.
+
+Impact requires known catalog/database/table names, schema and partition keys, attacker-controlled
+content that the later consumer may read, and a query/job that selects the injected partition. It
+does not itself disclose data or trigger computation. SQL/notebooks, Glue/Athena job definitions,
+IaC/state, ETL/BI configuration, logs/errors, console/history, and CloudTrail/SIEM remain no-read
+discovery fallbacks. Empty and fresh-revoked controls denied. The injected partition, table,
+database, workgroup, every S3 version/bucket, roles/policies, and local harness were deleted; exact
+and all-region/global inventories were empty.
+
+The same sink-redirection boundary was validated at partition granularity with
+`glue:UpdatePartition`. An exact-action role denied Catalog reads, Athena execution,
+source/capture access, IAM read, and PassRole changed a known partition's location. The next
+unchanged privileged `INSERT INTO ... SELECT ...` wrote the protected canary to the separately
+readable prefix. Both direct `UpdatePartition` and the `BatchUpdatePartition` API worked with this
+permission. Counterintuitively, a role holding only the nominal `glue:BatchUpdatePartition` action
+was denied; CloudTrail confirmed that the successful batch request still used the batch endpoint.
+This is conditional High because a valid partition definition must be known, a writer must use it,
+and that writer must authorize the replacement location. The partition was restored, fresh-session
+revocation passed, and all Catalog, Athena, S3, and IAM lab resources were deleted with exact
+inventories empty.
+
+### Amazon ECS (`ecs`) and S3-hosted FireLens configuration — 2026-09-11
+
+An isolated ECS-on-EC2 lab validated exact-key `s3:PutObject` as a conditional High FireLens
+configuration-poisoning path. A baseline task sent its unique canary only to a benign CloudWatch
+Logs group. The restricted role was denied configuration read, bucket version listing, other-key
+writes, ECS/IAM reads, and both log groups, but replaced the exact unversioned S3 object referenced
+by the unchanged task definition. A separately launched task fetched the new object and sent its
+exact canary only to the capture stream. This requires ECS on EC2, an unversioned S3 FireLens custom
+configuration, a later task launch, and a destination usable by the resulting downstream
+configuration. Fresh credentials were denied after revocation. Tasks, container instances, EC2
+instances/storage, every object version/bucket, log groups, and roles/policies were removed; only
+normal stopped, terminated, inactive, or deletion-in-progress service history remained.
+
+A distinct Fargate 1.4.0 lab validated an S3 `environmentFiles` poison. Fixed application code used
+only `DEST_KEY` from an unversioned environment file. The baseline task wrote its canary and
+task-role identity to a benign key. An exact-key put-only role denied config/evidence reads, bucket
+listing, other-key writes, ECS/IAM/log access, and PassRole replaced the file; a separate launcher
+ran the unchanged task-definition revision, which wrote the exact canary and downstream identity
+to the substituted capture key. This is conditional High when fixed code trusts a
+security-relevant source, destination, plugin/config path, command argument, endpoint, tenant,
+feature gate, or credential reference. ECS on EC2 support requires agent 1.39.0 or later but was not
+separately launched. Empty and revoked controls failed, and all mutable cluster/task/ENI, S3
+version, log, and IAM resources were removed; only terminal service history remained.
+
+`ecs:UpdateService` alone on one exact service ARN was separately live validated as a conditional
+High stored-role activation. The Fargate service began at desired/running/pending zero. A candidate
+denied service/task-definition reads, RunTask, RegisterTaskDefinition, protected/evidence S3, IAM,
+and PassRole submitted only `desiredCount=1`. ECS retained the exact task-definition ARN and stored
+subnet/security-group/public-IP configuration, then launched the fixed task. It wrote the exact
+protected canary and assumed task-role ARN; the runtime image digest and canonical task-definition
+hash matched the administrator's baseline. The candidate could not read the evidence.
+
+This action is broader than scale, but the proven request changed only desired count and did not
+select a role, revision, or network. High impact requires a dormant known service with valid stored
+configuration and task code/role that performs a useful effect; an active service may produce no
+new execution. Changing task definition or roles can have different PassRole checks and was not
+needed or claimed. IaC/state, deployment config, CI/operator logs, service discovery/load balancer
+records, CloudTrail/SIEM, console URLs, errors, alarms, runbooks, support bundles, and history are
+no-read fallbacks. Empty and fresh-revoked controls denied. Cleanup returned desired count to zero,
+waited for the task/ENI to stop, and deleted service/cluster/network/logs, every S3 version/bucket,
+IAM users/keys/roles/policies, and local files. The task definition is an AWS
+`DELETE_IN_PROGRESS` tombstone and Resource Groups Tagging temporarily retained two deleted-resource
+mappings; direct owning APIs and 18-region active/inactive inventories were empty.
+
+### AWS Lambda (`lambda`) event-source redirection — 2026-09-11
+
+`lambda:CreateEventSourceMapping` alone was live validated as a separate conditional High
+stored-role trigger. A candidate with only this action created an enabled mapping between a known
+SQS queue and an unchanged function. A different send-only producer then submitted a unique message;
+the Lambda poller invoked the fixed code under its existing execution role, which copied the exact
+protected canary and recorded the message, queue ARN, and assumed-role identity. The candidate was
+denied Lambda get/list/update/delete/invoke actions, SQS send/read/attributes, protected/evidence S3,
+IAM read, and PassRole. Function code hash, revision, role, and modification time were unchanged.
+
+The IAM boundary is important: AWS denied a policy using the exact function ARN as `Resource`
+because the evaluated resource is an event-source-mapping wildcard. The supported minimum was
+`Resource: "*"` plus `ArnEquals` on `lambda:FunctionArn`. Lambda exposes no source-ARN condition key
+for this action, so even a function-conditioned grant can attach any technically supported source
+that the fixed function role can access. The function/source must be region-compatible, its role
+must already have source polling permissions (and KMS access when applicable), and a useful message
+must arrive. Known identifiers have the same permissionless fallbacks below. Empty, independent
+producer, and fresh revoked controls denied; mapping, function/logs, queue, every S3 version/bucket,
+roles/policies, and local artifacts were removed, with exact and all-region inventories empty.
+
+`lambda:UpdateEventSourceMapping` alone was live validated as a conditional High SQS redirection
+primitive. A mapping was disabled and pointed to a benign function while a protected canary waited
+in its queue. The exact-mapping role was denied mapping get/list, direct invocation, function
+configuration updates, SQS receive/attributes, evidence read, and PassRole, but changed
+`FunctionName` to a pre-existing sink and enabled the mapping. Lambda delivered the exact queued
+canary to that function. A target whose execution role lacked SQS polling access was rejected, so
+the replacement function and source authorization must already exist. UUID and target fallbacks
+include IaC/state, deployment/application configuration, console URLs, CLI/SDK output,
+browser/shell history, logs, screenshots, support bundles, and CloudTrail/SIEM. Empty and fresh
+revoked controls were denied; the mapping, functions, queue, S3 evidence, logs, and roles/policies
+were deleted and exact inventories were empty.
+
+`lambda:AddPermission` alone was also live validated as a conditional High exposure primitive on a
+pre-existing Function URL configured with `AuthType=NONE`. The exact-function candidate added the
+two public statements required by the Function URL authorization model: `lambda:InvokeFunctionUrl`
+conditioned on `lambda:FunctionUrlAuthType=NONE`, then `lambda:InvokeFunction` conditioned on
+`lambda:InvokedViaFunctionUrl=true`. The first statement alone still returned HTTP 403; after both,
+an unsigned request returned the exact protected canary and function-role identity, while direct
+`InvokeFunction` remained denied. This does not create a URL, reveal its non-derivable hostname,
+change code, or provide arbitrary role access: impact requires a known pre-existing URL whose fixed
+handler discloses data or performs a sensitive action. Empty and freshly revoked controls failed,
+and both statements, URL, function, S3 versions/bucket, logs, roles, policies, and local artifacts
+were removed; the 18-region/global audit was empty.
+
+Both `lambda:PutFunctionEventInvokeConfig` and `lambda:UpdateFunctionEventInvokeConfig` were
+independently live validated as conditional High asynchronous stored-role routing primitives on one
+exact immutable function-version ARN. Put created a previously absent config; Update returned
+`ResourceNotFoundException` while absent, then added only `OnSuccess` after an administrator created
+a baseline config, preserving its age/retry values. Each candidate was denied the other action,
+config reads, invoke, code/configuration mutation, S3, IAM, and PassRole. Configuration alone caused
+no execution. A later separate invoke-only principal asynchronously invoked the source; its
+unchanged execution role invoked the fixed destination Lambda, which wrote exact protected-canary,
+source-result, qualified-source, condition, and destination-role proof.
+
+The source role had a pre-existing exact `lambda:InvokeFunction` allow for the destination. The
+same-account destination needed no resource policy; cross-account use would additionally require
+one. High impact needs a known version/alias, later asynchronous invocation, the selected
+success/failure outcome, stored-role delivery permission, and useful fixed destination behavior.
+Put creates or replaces the config; Update cannot create it and preserves unspecified fields. The
+caller cannot trigger or mutate either function with these actions alone. IaC/state, async-source
+configuration, deployment/CI output, CloudTrail/SIEM, alarms, DLQ/destination settings, console URLs,
+logs/errors, support bundles, and history are no-read fallbacks. Empty and fresh-revoked controls
+denied. Config, all function versions/functions/logs, every S3 version/bucket, roles/policies, and
+local artifacts were deleted; exact and all-region/global audits were empty.
+
+### Amazon CloudWatch (`cloudwatch`) alarm-action trigger — 2026-09-11
+
+Existing live evidence confirms `cloudwatch:SetAlarmState` alone on one known metric alarm as a
+conditional High stored-action trigger. The candidate was denied alarm description, metric writes,
+direct Lambda invocation, and proof-bucket writes, but forced the alarm from `INSUFFICIENT_DATA` to
+`ALARM`. CloudWatch invoked its unchanged configured Lambda, which wrote a unique private marker
+under the fixed function execution role. An empty role was denied and produced no invocation.
+
+This action cannot replace the alarm action or function code. High impact therefore requires an
+existing alarm with enabled useful actions and a real state transition; without that prerequisite it
+only changes monitoring state. Alarm names/actions have IaC/state, CloudTrail/SIEM, deployment logs,
+dashboards, notifications, application/operations config, runbooks, support bundles, and history as
+permissionless discovery fallbacks. The alarm, Lambda, bucket contents/bucket, policies, roles, and
+local artifacts were deleted and exact inventories were empty.
+
+### Amazon CloudWatch Logs (`logs`) subscription wiring — 2026-09-11
+
+`logs:PutSubscriptionFilter` alone on one exact log-group ARN was live validated as a conditional
+High cross-service trigger. The candidate installed a known exact-message filter pointing at an
+unchanged Lambda and omitted `roleArn`. Configuration-only waiting produced no invocation. A later
+event from an independent log writer invoked the function, whose stored role copied the exact
+protected canary and recorded the source group, stream, event ID, and assumed-role identity. The
+candidate was denied log reads and `PutLogEvents`, Lambda invoke/update, protected/evidence S3, IAM,
+and PassRole; the function role, code hash, revision, modification time, and policy stayed unchanged.
+
+The Lambda policy was a strict prerequisite: before it allowed the regional Logs service principal
+from the exact group/account, AWS rejected `PutSubscriptionFilter` with an execution-permission
+error. Exact group scoping works without a trailing ARN wildcard. This Lambda path needs no
+`roleArn`; Kinesis/Firehose destinations can require a role and PassRole, while cross-account
+logical destinations require their own destination policy. Impact needs a known authorized
+destination, future matching records, and useful fixed code/role behavior. Group/destination names
+have agent config, IaC/state, deployment/SIEM configuration, Lambda settings, CloudTrail, CI output,
+logs/errors, runbooks, support bundles, and history fallbacks. Empty, independent-producer, and fresh
+revoked controls denied. Filter, groups/streams, Lambda permission/function, every S3 version/bucket,
+roles/policies, and local artifacts were removed; exact and all-region/global audits were empty.
+
+### AWS Step Functions (`states`) execution redrive — 2026-09-11
+
+`states:RedriveExecution` alone was validated as a conditional High stored-role replay. A Standard
+execution initially failed at a fixed Lambda task because a synthetic dependency was absent. The
+exact-execution candidate was denied execution describe/history/list and start, Lambda
+invoke/update, protected/evidence S3 access, IAM read, and PassRole. After an independent controller
+opened only the dependency, the candidate redrove the same execution. History showed
+`ExecutionFailed -> ExecutionRedriven -> LambdaFunctionSucceeded -> ExecutionSucceeded`, and the
+evidence contained the exact protected canary, original execution ARN, and downstream Lambda-role
+identity. This is constrained to an eligible redrivable execution, its original input/definition
+path, and fixed roles; it is not arbitrary workflow start or input control. Execution ARNs have
+workflow callback, application database, orchestration/deployment output, console URL,
+notification, source/IaC, history, log, screenshot, support, and CloudTrail/SIEM fallbacks. Empty
+and fresh revoked controls failed. Execution/state machine, Lambda/logs, every S3 version/bucket,
+and roles/policies were removed, and all-Region/global audits were empty.
 
 ### Amazon Managed Service for Prometheus (`aps`) — 2026-09-09
 
@@ -1219,6 +1777,79 @@ store in AWS's mandatory seven-day `PENDING_DELETION` state, so this integrity-i
 blocked by the same-session destruction requirement. None of these prerequisite checks created or
 changed infrastructure.
 
+### AWS Database Migration Service (`dms`) task start — 2026-09-11
+
+`dms:StartReplicationTask` alone on one exact classic task ARN was live validated as a conditional
+High stored-role data-transfer primitive. A ready S3-to-S3 full-load task connected a protected
+source to a fixed destination through its stored DMS endpoint role. The candidate had the start
+action plus separate read of the destination prefix, while task describe, endpoint modification,
+source access, target listing, IAM, and PassRole were denied. An empty role could not start it. The
+candidate's start reached full-load completion with one table and zero errors; DMS produced a
+34-byte output whose SHA-256 and byte content exactly matched the protected synthetic CSV canary.
+
+The action does not return migrated rows or change the task. High impact requires a known ready
+task whose fixed mappings, source, target, and stored role already form a useful data path, plus an
+independently observable destination. In the same-account proof, observation required explicit S3
+read; no cross-account sink was claimed. Generated task ARNs can be recovered without DMS reads
+from Terraform/CloudFormation state, CI/CD/operator logs, CloudTrail/SIEM, migration runbooks,
+shell history, console URLs, tickets, and support artifacts. An immediate session after policy
+deletion briefly retained access because of IAM eventual consistency; after propagation, new
+credentials were denied both start and output read. The task, endpoints, instance, subnet group,
+S3 gateway endpoint, both versioned buckets and every version, roles/policies, logs, and local files
+were deleted, and 18-region direct inventories were empty. The Resource Tagging API retained a
+stale deleted-endpoint ARN that the owning EC2 API directly reported absent.
+
+### Amazon ECR (`ecr`) repository-policy self-grant and EKS tag consumption — 2026-09-11
+
+`ecr:SetRepositoryPolicy` alone was live validated as a High private-image access primitive. A
+candidate restricted to that action on one exact repository was initially denied repository/image
+listing and description, policy read, `BatchGetImage`, `GetDownloadUrlForLayer`, upload initiation,
+`GetAuthorizationToken`, IAM read, and PassRole. It replaced the resource policy with a grant to its
+own role, then used a known repository and tag with raw signed `BatchGetImage` and
+`GetDownloadUrlForLayer` calls. The presigned layer download contained the exact protected canary.
+It also exercised the new write grant by publishing the existing manifest under a second tag with
+`PutImage`; this proves tag mutation, but not an untested downstream consumer or new-layer upload.
+
+This path needs a known repository plus tag or digest and no overriding SCP, permissions boundary,
+or explicit deny. Useful no-list fallbacks include deployment manifests, ECS task definitions,
+Kubernetes resources, CI configuration and logs, source/IaC/state, image references in application
+config or errors, local Docker/Podman caches, and CloudTrail/SIEM. `GetAuthorizationToken` is not
+required for the raw signed ECR API route. Consumer code execution additionally requires an
+available attacker-controlled manifest/layers and a workload that later follows the affected tag;
+that follow-on was not claimed by this test. Deleting the repository policy immediately restored
+the read denial, and revoking the identity policy denied a fresh policy change. The repository and
+both tags/images, local Docker image/auth material, roles, policies, and temporary files were
+deleted; exact checks and an 18-region/global audit were empty.
+
+The standalone `ecr:GetAuthorizationToken` and `ecr-public:GetAuthorizationToken` actions are
+Medium rather than Critical. The returned registry credential carries only the caller's existing
+ECR authorization: the denied and successful pull/push matrices still required the applicable
+repository data-plane actions. Complete private/public push sets are conditional High because a
+later mutable-tag consumer can execute attacker content, but they are not unconditional Critical
+without such a consumer and valuable workload context.
+
+A separate ECR-to-EKS matrix validated mutable-tag poisoning as conditional High. An ECR-only
+publisher moved `:mutable` from a harmless V1 digest to V2 without EKS API or Kubernetes access.
+On one V1-warmed EKS node, a new Pod with `imagePullPolicy: Always` resolved and ran V2, while a new
+`IfNotPresent` Pod reused cached V1. Existing Pods did not change. A digest-pinned Pod remained on
+V1 even with `Always`, and `IfNotPresent` on a newly provisioned empty node resolved and ran V2.
+Thus the tag write is not execution by itself: a later Pod creation/replacement/scale-out plus its
+pull policy and node cache determine consumption. Impact reaches the Pod's service-account/IAM
+identity, secrets, mounts, host settings, and network only after that boundary; High requires a
+valuable consumer and can become Critical only when that fixed workload context is itself highly
+privileged.
+
+The tested publisher had the documented private-image push set; the final retag operation reused
+existing layers with `BatchCheckLayerAvailability`, `BatchGetImage`, and `PutImage`. Repository,
+tag, cluster, namespace, and workload identifiers have permissionless discovery fallbacks in
+manifests, Helm/Kustomize/GitOps and IaC state, CI logs, admission errors, source configuration,
+local container caches, console URLs, tickets, and CloudTrail/SIEM. Immutable tags and digest pins
+prevent drift; `IfNotPresent` is not a universal defense because an empty node still pulls the
+current tag. The namespace/Pods, EKS cluster/node group/access entry, ECR repository/images, three
+EC2 instances and networking, Auto Scaling resources, logs, roles/policies, local Docker and
+kubeconfig/auth artifacts were removed. Exact-prefix and 18-region inventories were empty; only
+normal terminated-instance history remained.
+
 ### Amazon ECR Public (`ecr-public`) — 2026-09-09
 
 `ecr-public:SetRepositoryPolicy` alone was validated as a public-repository supply-chain takeover.
@@ -1228,6 +1859,11 @@ A disposable role scoped to the exact synthetic repository ARN was denied
 the four upload operations (`InitiateLayerUpload`, `UploadLayerPart`, `CompleteLayerUpload`, and
 `PutImage`), uploaded an in-memory OCI config and tar/gzip layer containing a randomized canary,
 and published that manifest as the mutable `stable` tag.
+
+This is conditional High rather than unconditional Critical: policy replacement proves repository
+write takeover, but privilege impact still requires a later trusted consumer of the public tag.
+Public authorization-token retrieval alone likewise carries only the caller's existing repository
+authorization and is Medium.
 
 An administrator independently observed that `stable` resolved to the candidate-created manifest
 digest and that both uploaded digests were `AVAILABLE`. Thus the impact was a real tagged-image
@@ -1898,7 +2534,7 @@ Trace and insight retrieval can disclose URLs, annotations, errors, and service 
 synthetic trace cannot be deleted before service retention expires. No retained trace was injected
 solely to prove the intended read API, so the row remains blocked.
 
-### CloudWatch Synthetics (`synthetics`) — 2026-09-09
+### CloudWatch Synthetics (`synthetics`) — 2026-09-11
 
 The lab initially contained zero canaries. A disposable canary was created with an execution role
 that could write to one exact S3 bucket and call `organizations:DescribeOrganization`. The
@@ -1921,6 +2557,17 @@ alone, then rolled back after sequentially exposing the same hidden Lambda prepa
 an `iam:PassRole` check. Consequently, neither Synthetics action is High/Critical alone; the tested
 dry-run combination is a conditional role-reuse escalation when the caller can pass a useful
 existing canary role and modify the generated Lambda resources.
+
+`synthetics:StartCanary` was then validated independently as a conditional High start-only
+primitive. The administrator created a stopped one-shot Python canary whose immutable code used its
+stored execution role to read a protected marker and write proof. A candidate with only StartCanary
+on the exact canary ARN was denied GetCanary and held no update, dry-run, Lambda, data, IAM, or
+PassRole access. An empty role was denied and no proof existed before the call. The candidate start
+ran the unchanged script; its run passed and the proof recorded the exact canary-execution-role
+session ARN. This action cannot change code, configuration, or role, so impact requires a known
+stopped canary with useful fixed behavior. A fresh session after policy removal was denied. The
+canary, service-generated Lambda, artifact/proof versions and bucket, logs, and all roles/policies
+were deleted; exact active-resource inventories were empty.
 
 The canary, artifact/proof bucket and objects, generated Lambda function and layer versions, log
 groups, three IAM roles and inline policies, lock, bytecode, and test harness were removed. Exact
@@ -2020,7 +2667,7 @@ data, or provide an AWS identity. They remain Medium unless combined with a sepa
 access path. The instance, bucket/object/access keys, six IAM roles/policies, and local key material
 were deleted. Exact inventories returned zero, and `mykey` was not modified.
 
-### AWS Transfer Family (`transfer`) — 2026-09-09
+### AWS Transfer Family (`transfer`) — 2026-09-11
 
 The account initially contained zero Transfer servers. The isolated fixture created a public SFTP
 server, one service-managed user, and an execution role able to read one exact private S3 canary.
@@ -2048,6 +2695,29 @@ were denied. A baseline connection to the original unused port timed out and pro
 The connector, tiny capture instance, secret, versioned proof bucket, roles/profile/policies,
 security group, ENIs, volumes, and local artifact were removed; exact inventories were empty, apart
 from the normal terminated-instance history.
+
+`transfer:StartFileTransfer` was also independently validated as a conditional High stored-role
+data-transfer primitive. A role with only that action on one exact SFTP connector selected an exact
+private S3 object and an existing remote directory. Transfer Family read the object through the
+connector's retained access role and delivered it to the configured peer; the peer's SHA-256 and
+full content matched the randomized canary, and the administrator-only result was `COMPLETED`.
+
+The candidate was denied direct S3 get/list, secret read, connector describe/list, transfer-result
+read, and IAM read; `iam:PassRole` evaluated to implicit deny. The connector role had exact-object
+read plus bucket-location and secret-read permissions but no S3 list permission. An empty role and
+a fresh post-policy-removal session were denied, and their distinct remote filenames remained
+absent. This does not redirect a connector or bypass its access-role scope: it requires a known
+connector ID and S3 path, a role-authorized object, a usable remote directory, and an already
+configured endpoint where the attacker or another unauthorized party can observe the file. IaC
+state, automation definitions, CLI history, CloudTrail/SIEM copies, and partner-transfer runbooks
+are no-list fallbacks for the connector ID and paths. The outbound SFTP path was tested; the API's
+separate remote-to-S3 retrieval mode was not.
+
+Four isolated harness generations were cleaned after setup/parser retries and final validation.
+Connectors, buckets and objects, secrets, roles and instance profiles, active EC2 instances,
+volumes, security groups, key pairs, CloudWatch log groups, and local key/harness files all returned
+empty exact/prefix inventories. Normal terminated-instance tombstones and immutable CloudTrail
+event history remain as audit records.
 
 ### Billing, retired, and externally provisioned service batch — 2026-09-09
 
@@ -2139,7 +2809,7 @@ The event was deleted with its audit history, followed by the event type, variab
 two IAM roles/policies, and local test harness. A final `GetEvent` returned `Event not found` and
 exact prefixed inventories were empty.
 
-### AWS CodePipeline known-job artifact credentials (`codepipeline`) — 2026-09-10
+### AWS CodePipeline known-job artifact credentials (`codepipeline`) — 2026-09-11
 
 A disposable custom action received one private source artifact. An IAM user holding only
 `codepipeline:GetJobDetails` on `Resource: *`, given the administrator-observed pending job ID,
@@ -2155,6 +2825,88 @@ and downloaded artifacts are permissionless fallbacks for the same content. The 
 cleanup, its execution abandoned, and the pipeline and custom action deleted. The service role,
 both IAM users and access keys, inline policies, both versioned S3 buckets, every object/version,
 and local test harness were removed; exact pipeline, bucket, role, and user inventories are empty.
+
+A separate update-only hypothesis was a precise negative. `codepipeline:UpdatePipeline` on the
+known pipeline hierarchy could not replace a Lambda action while retaining the existing service
+role: AWS required `iam:PassRole` on that unchanged role ARN. Authorization on only the root
+pipeline ARN also missed its stage child ARN. CloudTrail preserved the exact PassRole denial; no
+configuration change was saved and no replacement target ran. The pipeline, two functions, three
+versioned buckets, logs, seven roles/policies, and local fixture were removed, and prefix/tag
+inventories were empty.
+
+`codepipeline:RetryStageExecution` was independently validated as a conditional High stored-role
+replay. A source stage succeeded and a fixed Lambda action failed on an absent synthetic gate. The
+candidate held only RetryStageExecution on the exact stage ARN; exact action and root-pipeline ARNs
+were denied. It was also denied pipeline reads/list/start/update, Lambda invoke/update, source,
+artifact, protected and evidence S3 access, IAM read, and PassRole. `FAILED_ACTIONS` reran only the
+failed action under the same execution ID. After an independent controller opened the gate,
+`ALL_ACTIONS` reran all actions in that named stage, still under the same execution ID, and the
+fixed Lambda wrote the exact protected canary, CodePipeline job ID, and role identity. It did not
+rerun the preceding source stage. This requires a failed, retryable unchanged stage and fixed work
+with a useful effect; a succeeded stage was not retryable. Pipeline/stage/execution IDs have CI,
+deployment, notification, IaC, console/history, log, screenshot, support, and CloudTrail/SIEM
+fallbacks. Empty and fresh revoked controls failed. Pipeline/executions, Lambda/logs, every S3
+version/bucket, and roles/policies were deleted; all-Region/global audits were empty.
+
+`codepipeline:EnableStageTransition` was separately validated as a conditional High release of an
+already waiting execution. An administrator disabled the inbound transition to a fixed Lambda
+stage, started the pipeline, and observed the source succeed while the same execution remained
+`InProgress` with no evidence object. The candidate was denied pipeline reads/list/start/update,
+direct Lambda invocation, protected/evidence S3 access, IAM read, and PassRole. An empty role could
+not enable the transition. Root-pipeline ARN authorization was also denied because AWS evaluated
+the request against the exact stage child ARN
+`arn:aws:codepipeline:REGION:ACCOUNT:PIPELINE/STAGE`.
+
+With only `EnableStageTransition` on that stage ARN, a fresh candidate session enabled the inbound
+transition. CodePipeline recorded that session as `lastChangedBy`, released the same execution
+without another start, and invoked the unchanged action. The fixed Lambda used its stored role to
+copy the exact protected canary and role identity; the stage and pipeline completed `Succeeded`.
+The action cannot alter the pipeline, start a new execution, or choose downstream inputs, so impact
+requires an execution already waiting at a disabled transition and useful fixed work below it.
+Pipeline/stage names have CI/deployment configuration, IaC/state, notifications, console URLs,
+logs, screenshots, runbooks, tickets, support bundles, and CloudTrail/SIEM fallbacks. After policy
+removal, a fresh session was denied and the transition stayed disabled. The pipeline/execution,
+Lambda/log group, every versioned S3 object/bucket, four roles/policies, and local fixture were
+deleted; exact inventories and the broader all-region lab-tag audit were empty apart from
+non-live service tombstones.
+
+`codepipeline:OverrideStageCondition` was then validated as a distinct conditional High gate
+bypass. A V2 pipeline had a `BEFORE_ENTRY` CloudWatch-alarm rule guarding the same style of fixed
+Lambda stage. The alarm was independently placed in `ALARM`, the rule remained `InProgress`, and
+the proof object was absent. An empty role could not override it. A candidate holding only
+`OverrideStageCondition` on the exact stage ARN was denied `GetPipeline` and
+`StartPipelineExecution`, and `iam:PassRole` evaluated to implicit deny. Given the externally known
+execution ID and `BEFORE_ENTRY` condition type, its override was accepted. AWS changed the
+condition to `Overridden`, marked the running rule `Abandoned`, entered the unchanged stage, and
+the fixed Lambda copied the exact protected canary under its stored role. The same execution
+completed `Succeeded`.
+
+The override does not alter pipeline structure, start an execution, select action input, or grant
+general invocation. It requires a currently overridable `BEFORE_ENTRY` or `ON_SUCCESS` condition,
+the pipeline/stage/execution identifiers, and sensitive fixed work behind the gate. A
+CloudWatch-alarm rule also requires the pipeline service role to hold `DescribeAlarms`; that action
+needed wildcard resource authorization in this fixture. A fresh session after removal of the
+singleton override policy was denied. The pipeline/executions, alarm, Lambda/log group, every S3
+version/bucket, roles/policies, and local fixture were deleted; exact resource and tag inventories
+were empty.
+
+`codepipeline:RollbackStage` was also validated as a conditional High replay of a prior stage
+revision. In one unchanged V2 pipeline version, the automatic first execution consumed a `GOOD`
+source artifact and the fixed Lambda action succeeded under its stored role; a later administrator
+execution consumed `BAD` and failed that stage. A candidate with only RollbackStage on the exact
+pipeline/stage child ARN was denied pipeline reads and start, and lacked update, source, artifact,
+protected/evidence data, Lambda, IAM, and PassRole access. An empty role was denied.
+
+The candidate targeted the earlier successful execution ID. CodePipeline created a distinct
+`ManualRollback` execution whose rollback metadata referenced that target, reused its prior
+`GOOD` artifact, and invoked the unchanged Lambda action. The stored Lambda role reproduced the
+protected canary and the rollback completed successfully. The action cannot target a source stage,
+change pipeline structure, select arbitrary new input, or roll back across pipeline versions; it
+requires a known successful execution in the same version and useful fixed work in the selected
+stage. Pipeline and execution IDs have the same CI/IaC/history/log/notification/CloudTrail
+fallbacks as the other stage actions. A fresh revoked session was denied. All disposable pipelines,
+executions, functions/logs, roles/policies, every versioned object/bucket, and local artifacts were
+removed; exact active-resource inventories were empty.
 
 ### Amazon GameLift Servers (`gamelift`) — 2026-09-09
 
@@ -3173,6 +3925,25 @@ profiles, and findings can expose architecture/business metadata and remain Medi
 operations do not independently return credentials or execute in workloads. Downloaded reports,
 diagrams, ticketing/GRC exports, source/IaC, browser storage, application logs, and CloudTrail/SIEM
 copies are fallbacks. No workload, invitation, lens, profile, review, agent, role, or setting changed.
+
+### AWS Glue DataBrew (`databrew`) — stored job transfer, 2026-09-11
+
+A disposable S3 recipe job validated `databrew:StartJobRun` as a conditional High
+cross-service disclosure path. A role holding only that action on the exact job ARN was denied
+`DescribeJob`, source object access, output listing, and IAM role read; the empty control was also
+denied. It nevertheless started the existing job, which reached `SUCCEEDED` under its stored
+DataBrew role. A separate destination reader recovered the exact protected canary from the
+generated CSV. No caller `iam:PassRole` or role override was involved.
+
+Start-only access cannot change the dataset, recipe, role, or output and does not return rows, so it
+is not High in isolation. The tested High combination requires a readable destination or another
+attacker-observable downstream consumer. Without DataBrew list/read permissions, job names and
+Regions remain recoverable from Step Functions, EventBridge schedules, application/CI settings,
+source/IaC/state, deployment output, CloudWatch configuration, console URLs, browser/shell history,
+tickets, screenshots, and CloudTrail/SIEM copies. After IAM propagation, a fresh session was denied.
+The completed job and an extra propagation-control run were deleted/stopped, and the job, dataset,
+recipe, all versioned S3 objects and buckets, four roles, policies, and any lab log inventory were
+removed; exact DataBrew, S3, IAM, and log checks were empty.
 
 ### AWS KMS (`kms`) — 2026-09-08
 

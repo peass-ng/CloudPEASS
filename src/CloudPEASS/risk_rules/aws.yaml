@@ -37,12 +37,10 @@ critical_exact:
   - elasticmapreduce:AddJobFlowSteps
   - ec2:ReplaceIamInstanceProfileAssociation
   - ec2-instance-connect:SendSSHPublicKey
+  - eks:AssociateIdentityProviderConfig
   - elasticfilesystem:DeleteFileSystemPolicy
   - elasticfilesystem:PutFileSystemPolicy
   - entityresolution:PutPolicy
-  - ecr-public:GetAuthorizationToken
-  - ecr-public:SetRepositoryPolicy
-  - ecr:GetAuthorizationToken
   - ecs:ExecuteCommand
   - eks-auth:AssumeRoleForPodIdentity
   - es:UpdateDomainConfig
@@ -104,6 +102,11 @@ critical_exact:
 ## Exact actions that are only medium in isolation. Their documented companion
 ## permissions can still form high-impact combinations.
 medium_override_exact:
+  # Registry authorization tokens carry only the caller's existing ECR/ECR
+  # Public authorization. Live pull/push paths still needed the corresponding
+  # repository actions; token retrieval alone exposed no image or workload.
+  - ecr:GetAuthorizationToken
+  - ecr-public:GetAuthorizationToken
   # Hosted MCP actions only gate tool discovery/invocation. Live calls were
   # delegated as the caller and still enforced every underlying ECS/EKS/IAM
   # or Kubernetes permission; public knowledge tools expose no account data.
@@ -190,6 +193,7 @@ medium_override_exact:
 
 ## Exact action names that must always be classified as `high`.
 high_exact:
+  - ecr-public:SetRepositoryPolicy
   - airflow-serverless:GetTaskInstance
   - airflow-serverless:GetWorkflow
   - airflow-serverless:GetWorkflowRun
@@ -203,7 +207,11 @@ high_exact:
   - apigateway:GET
   - apigateway:PATCH
   - athena:GetQueryExecution
+  - athena:UpdateNamedQuery
+  - athena:UpdateNotebook
+  - athena:UpdatePreparedStatement
   - athena:UpdateWorkGroup
+  - autoscaling:SetDesiredCapacity
   - appconfig:GetHostedConfigurationVersion
   - appsync:GraphQL
   - appsync:GetGraphqlApiEnvironmentVariables
@@ -222,6 +230,8 @@ high_exact:
   - b2bi:GetTransformer
   - cloudformation:DescribeStacks
   - cloudformation:DescribeChangeSet
+  - cloudformation:ExecuteChangeSet
+  - cloudformation:SignalResource
   - cloudformation:GetTemplate
   - cloudformation:GetTemplateSummary
   - cloudformation:ListExports
@@ -232,8 +242,12 @@ high_exact:
   - cloudfront-keyvaluestore:ListKeys
   - cloudfront:ListDistributions
   - cloudwatch:GetDashboard
+  - cloudwatch:SetAlarmState
   - cloudtrail:LookupEvents
   - cloudtrail:UpdateTrail
+  - config:PutDeliveryChannel
+  - config:StartConfigRulesEvaluation
+  - cognito-idp:UpdateUserPoolClient
   - ce:GetCostAndUsage
   - budgets:ViewBudget
   - aws-portal:ViewBilling
@@ -248,9 +262,16 @@ high_exact:
   - codecommit:GetFile
   - codecommit:GitPull
   - codepipeline:PollForJobs
+  - codebuild:RetryBuild
   - codepipeline:PutApprovalResult
   - codepipeline:PutJobSuccessResult
+  - codepipeline:RetryStageExecution
+  - codepipeline:EnableStageTransition
+  - codepipeline:OverrideStageCondition
+  - codepipeline:RollbackStage
   - codepipeline:StartPipelineExecution
+  - ssm:StartAssociationsOnce
+  - synthetics:StartCanary
   - codepipeline:GetJobDetails
   - codepipeline:GetPipeline
   - codepipeline:GetPipelineExecution
@@ -285,6 +306,7 @@ high_exact:
   - datazone:GetEnvironmentCredentials
   - datasync:StartTaskExecution
   - dms:ModifyEndpoint
+  - dms:StartReplicationTask
   - dsql:DbConnect
   - dsql:DbConnectAdmin
   - ec2-instance-connect:OpenTunnel
@@ -299,11 +321,15 @@ high_exact:
   - elasticloadbalancing:ModifyRule
   - ebs:GetSnapshotBlock
   - ecr:GetDownloadUrlForLayer
+  - ecs:UpdateService
   - ecs:DescribeTaskDefinition
   - ecs:DescribeTasks
   - emr-serverless:GetApplication
   - emr-serverless:GetJobRun
   - events:UpdateApiDestination
+  - events:PutRule
+  - events:PutPermission
+  - events:StartReplay
   - events:ListTargetsByRule
   - firehose:UpdateDestination
   - frauddetector:GetEvent
@@ -318,7 +344,11 @@ high_exact:
   - glue:GetJobs
   - glue:GetStatement
   - glue:GetWorkflowRunProperties
+  - glue:BatchCreatePartition
+  - glue:ResumeWorkflowRun
   - glue:StartWorkflowRun
+  - glue:UpdatePartition
+  - glue:UpdateTable
   - geo:GetDevicePosition
   - geo:GetDevicePositionHistory
   - greengrass:GetComponentVersionArtifact
@@ -383,10 +413,16 @@ high_exact:
   - lambda:ListFunctions
   - lambda:ListVersionsByFunction
   - lambda:GetLayerVersion
+  - lambda:AddPermission
+  - lambda:CreateEventSourceMapping
+  - lambda:PutFunctionEventInvokeConfig
+  - lambda:UpdateFunctionEventInvokeConfig
+  - lambda:UpdateEventSourceMapping
   - logs:FilterLogEvents
   - logs:GetLogRecord
   - logs:GetLogEvents
   - logs:GetQueryResults
+  - logs:PutSubscriptionFilter
   - medical-imaging:GetImageFrame
   - medical-imaging:GetImageSetMetadata
   - omics:GetReadSet
@@ -398,6 +434,7 @@ high_exact:
   - profile:SearchProfiles
   - rds-db:connect
   - route53:ChangeResourceRecordSets
+  - s3:PutBucketNotification
   - route53domains:GetDomainDetail
   - route53domains:RetrieveDomainAuthCode
   - route53globalresolver:GetAccessToken
@@ -412,6 +449,7 @@ high_exact:
   - sagemaker:DescribeTrainingJob
   - sagemaker:DescribeAppImageConfig
   - sagemaker:ListAppImageConfigs
+  - sagemaker:RetryPipelineExecution
   - sagemaker:StartPipelineExecution
   - scheduler:GetSchedule
   - servicediscovery:RegisterInstance
@@ -425,6 +463,7 @@ high_exact:
   - signer:StartSigningJob
   - sns:ListSubscriptions
   - sns:ListSubscriptionsByTopic
+  - sns:Subscribe
   - sqs:ReceiveMessage
   - ssm:GetDocument
   - ssm:GetOpsItem
@@ -434,6 +473,7 @@ high_exact:
   - states:DescribeExecution
   - states:GetActivityTask
   - states:GetExecutionHistory
+  - states:RedriveExecution
   - states:StartExecution
   - storagegateway:DescribeChapCredentials
   - sts:GetFederationToken
@@ -445,6 +485,7 @@ high_exact:
   - textract:GetExpenseAnalysis
   - transcribe:GetTranscriptionJob
   - transfer:ImportSshPublicKey
+  - transfer:StartFileTransfer
   - transfer:UpdateConnector
   - translate:GetParallelData
   - translate:GetTerminology
@@ -660,6 +701,7 @@ high_override_exact:
   - textract:GetExpenseAnalysis
   - transcribe:GetTranscriptionJob
   - transfer:ImportSshPublicKey
+  - transfer:StartFileTransfer
   - translate:GetParallelData
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
