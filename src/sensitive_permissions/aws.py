@@ -140,6 +140,10 @@ very_sensitive_combinations = [
     ["iam:ResyncMFADevice"],
     ["iam:UpdateSAMLProvider"],
     ["iam:UpdateOpenIDConnectProviderThumbprint"],
+    ["iam:PutRolePermissionsBoundary"],
+    ["iam:PutUserPermissionsBoundary"],
+    ["iam:AddRoleToInstanceProfile"],
+    ["ec2:ReplaceIamInstanceProfileAssociation"],
 
     ["iot:OpenTunnel"],
     ["iot:RotateTunnelAccessToken"],
@@ -147,6 +151,7 @@ very_sensitive_combinations = [
 
     ["kms:PutKeyPolicy"],
     ["kms:CreateGrant"],
+    ["kms:Decrypt"],
 
     ["lambda:AddLayerVersionPermission"],
     ["lambda:UpdateFunctionCode"],
@@ -177,6 +182,10 @@ very_sensitive_combinations = [
 
     ["sqs:AddPermission"],
     ["sqs:SetQueueAttributes"],
+
+    ["ssm:GetParameter"],
+    ["ssm:GetParameters"],
+    ["ssm:GetParametersByPath"],
 
     ["identitystore:CreateGroupMembership"],
     ["sso:PutInlinePolicyToPermissionSet", "sso:ProvisionPermissionSet"],
@@ -241,6 +250,11 @@ sensitive_combinations = [
     ["amplify:ListBranches"],
     ["amplify:GetArtifactUrl"],
     ["amplify:GetJob"],
+    # Each AppConfig mutation was independently validated against fixed
+    # consumers: one poisons a version selected later, while the other deploys
+    # a pre-existing version. Both are conditional High stored-config paths.
+    ["appconfig:CreateHostedConfigurationVersion"],
+    ["appconfig:StartDeployment"],
     ["appconfig:GetHostedConfigurationVersion"],
     ["appconfig:StartConfigurationSession", "appconfig:GetLatestConfiguration"],
     ["appsync:GraphQL"],
@@ -250,6 +264,7 @@ sensitive_combinations = [
     ["autoscaling:SetDesiredCapacity"],
     ["cognito-idp:UpdateUserPoolClient"],
     ["codebuild:RetryBuild"],
+    ["codecommit:GitPush"],
     ["codepipeline:StartPipelineExecution"],
     ["codepipeline:PutApprovalResult"],
     ["codepipeline:PutJobSuccessResult"],
@@ -519,6 +534,7 @@ sensitive_combinations = [
     ["storagegateway:DescribeChapCredentials"],
     ["sts:GetFederationToken"],
     ["sts:GetWebIdentityToken"],
+    ["sts:GetDelegatedAccessToken"],
     ["tax:GetTaxRegistration"],
     ["tax:ListTaxRegistrations"],
     ["textract:GetDocumentAnalysis"],
@@ -586,10 +602,9 @@ sensitive_combinations = [
     ["athena:GetQueryResults", "s3:GetObject"],
 
     ["ec2:CreateSnapshot"],
+    ["ec2:GetPasswordData"],
     ["ec2:RunInstances"],
-    ["iam:AddRoleToInstanceProfile"],
     ["ec2:AssociateIamInstanceProfile", "ec2:DisassociateIamInstanceProfile"],
-    ["ec2:ReplaceIamInstanceProfileAssociation"],
     ["autoscaling:CreateLaunchConfiguration", "autoscaling:CreateAutoScalingGroup"],
     ["ec2:DescribeLaunchTemplates", "ec2:DescribeLaunchTemplateVersions"],
     ["ec2:DescribeInstances", "ec2:RunInstances", "ec2:CreateSecurityGroup", "ec2:AuthorizeSecurityGroupIngress", "ec2:CreateTrafficMirrorTarget", "ec2:CreateTrafficMirrorSession", "ec2:CreateTrafficMirrorFilter", "ec2:CreateTrafficMirrorFilterRule"],
@@ -617,7 +632,6 @@ sensitive_combinations = [
     ["glue:CreateTrigger"],
 
     ["kms:CreateKey", "kms:ReplicateKey"],
-    ["kms:Decrypt"],
 
     ["lambda:CreateFunction"],
     ["lambda:InvokeFunction"],
@@ -625,6 +639,7 @@ sensitive_combinations = [
     ["lambda:CreateEventSourceMapping"],
     ["lambda:PutFunctionEventInvokeConfig"],
     ["lambda:UpdateFunctionEventInvokeConfig"],
+    ["lambda:PutProvisionedConcurrencyConfig"],
     ["lambda:UpdateFunctionEventInvokeConfig", "sqs:ReceiveMessage"],
 
     ["rds:AddRoleToDBCluster"],
@@ -652,6 +667,7 @@ sensitive_combinations = [
     ["sso:DetachCustomerManagedPolicyReferenceFromPermissionSet"],
     ["sso:DeleteInlinePolicyFromPermissionSet"],
     ["sso:DeletePermissionsBoundaryFromPermissionSet"],
+    ["sso:GetRoleCredentials"],
 
     ["s3:PutBucketNotification"],
     ["s3:PutObject"],
@@ -666,11 +682,11 @@ sensitive_combinations = [
     ["ses:SendCustomVerificationEmail"],
 
     ["secretsmanager:PutSecretValue"],
+    ["secretsmanager:RotateSecret"],
+    ["secretsmanager:ListSecrets"],
     ["sagemaker:RetryPipelineExecution"],
     ["sagemaker:StartPipelineExecution"],
 
-    ["ssm:GetParameter"],
-    ["ssm:GetParameters"],
     ["ssm:PutParameter"],
     ["ssm:ListCommands"],
     ["ssm:GetCommandInvocation"],
@@ -700,7 +716,11 @@ tested_risk_documentation = {
     "appstream:CreateImageBuilderStreamingURL": "aws-services/aws-workspaces-enum.md",
     "appsync:UpdateResolver": "aws-services/aws-appsync-enum.md",
     "apigateway:PATCH": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
+    "apigateway:POST": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
+    "apigateway:PUT": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
     "apprunner:DescribeService": "aws-privilege-escalation/aws-apprunner-privesc/README.md",
+    "appconfig:CreateHostedConfigurationVersion": "aws-services/aws-appconfig-enum.md",
+    "appconfig:StartDeployment": "aws-services/aws-appconfig-enum.md",
     "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:GetSessionEndpoint": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:StartCalculationExecution": "aws-services/aws-s3-athena-and-glacier-enum.md",
@@ -725,7 +745,10 @@ tested_risk_documentation = {
     "backup:PutBackupVaultAccessPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "batch:SubmitJob": "aws-privilege-escalation/aws-batch-privesc/README.md",
     "codebuild:StartCommandExecution": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "codebuild:StartBuild": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "codebuild:StartBuildBatch": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
     "codebuild:RetryBuild": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "codecommit:GitPush": "aws-services/aws-datapipeline-codepipeline-codebuild-and-codecommit.md",
     "codepipeline:StartPipelineExecution": "aws-privilege-escalation/aws-codepipeline-privesc/README.md",
     "codepipeline:PutApprovalResult": "aws-privilege-escalation/aws-codepipeline-privesc/README.md",
     "codepipeline:PutJobSuccessResult": "aws-privilege-escalation/aws-codepipeline-privesc/README.md",
@@ -745,6 +768,8 @@ tested_risk_documentation = {
     "lambda:UpdateEventSourceMapping": "aws-post-exploitation/aws-lambda-post-exploitation/aws-lambda-event-source-mapping-hijack.md",
     "lambda:PutFunctionEventInvokeConfig": "aws-persistence/aws-lambda-persistence/README.md",
     "lambda:UpdateFunctionEventInvokeConfig": "aws-persistence/aws-lambda-persistence/README.md",
+    "lambda:PutProvisionedConcurrencyConfig": "aws-privilege-escalation/aws-lambda-privesc/README.md",
+    "lambda:UpdateFunctionCode": "aws-privilege-escalation/aws-lambda-privesc/README.md",
     "logs:PutSubscriptionFilter": "aws-services/aws-security-and-detection-services/aws-cloudwatch-enum.md",
     "events:UpdateApiDestination": "aws-privilege-escalation/aws-eventbridge-privesc/README.md",
     "events:PutRule": "aws-privilege-escalation/aws-eventbridge-privesc/README.md",
@@ -779,6 +804,7 @@ tested_risk_documentation = {
     "route53:ChangeResourceRecordSets": "aws-services/aws-route53-enum.md",
     "route53globalresolver:GetAccessToken": "aws-services/aws-route53-global-resolver-enum.md",
     "secretsmanager:PutSecretValue": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "secretsmanager:RotateSecret": "aws-persistence/aws-secrets-manager-persistence/README.md",
     "sagemaker:RetryPipelineExecution": "aws-privilege-escalation/aws-sagemaker-privesc/README.md",
     "sagemaker:StartPipelineExecution": "aws-privilege-escalation/aws-sagemaker-privesc/README.md",
     "storagegateway:DescribeChapCredentials": "aws-services/aws-storage-gateway-enum.md",
@@ -829,8 +855,12 @@ live_validated_disclosure_documentation = {
     "amplify:ListBranches": "aws-privilege-escalation/aws-amplify-privesc/README.md",
     "amplify:GetArtifactUrl": "aws-privilege-escalation/aws-amplify-privesc/README.md",
     "amplify:GetJob": "aws-privilege-escalation/aws-amplify-privesc/README.md",
+    "amplifybackend:CreateToken": "aws-privilege-escalation/aws-amplify-privesc/README.md",
+    "amplifybackend:GetToken": "aws-privilege-escalation/aws-amplify-privesc/README.md",
     "apigateway:GET": "aws-services/aws-api-gateway-enum.md",
     "apigateway:PATCH": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
+    "apigateway:POST": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
+    "apigateway:PUT": "aws-post-exploitation/aws-api-gateway-post-exploitation/README.md",
     "athena:GetQueryExecution": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:CreatePresignedNotebookUrl": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:GetSessionEndpoint": "aws-services/aws-s3-athena-and-glacier-enum.md",
@@ -840,6 +870,8 @@ live_validated_disclosure_documentation = {
     "athena:UpdatePreparedStatement": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "athena:UpdateWorkGroup": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "appstream:CreateStreamingURL": "aws-services/aws-workspaces-enum.md",
+    "appconfig:CreateHostedConfigurationVersion": "aws-services/aws-appconfig-enum.md",
+    "appconfig:StartDeployment": "aws-services/aws-appconfig-enum.md",
     "appconfig:GetHostedConfigurationVersion": "aws-services/aws-appconfig-enum.md",
     "appconfig:StartConfigurationSession": "aws-services/aws-appconfig-enum.md",
     "appconfig:GetLatestConfiguration": "aws-services/aws-appconfig-enum.md",
@@ -849,6 +881,7 @@ live_validated_disclosure_documentation = {
     "appsync:UpdateResolver": "aws-services/aws-appsync-enum.md",
     "aps:PutResourcePolicy": "aws-services/aws-managed-prometheus-enum.md",
     "autoscaling:DescribeLaunchConfigurations": "aws-services/aws-ec2-ebs-elb-ssm-vpc-and-vpn-enum/README.md",
+    "backup:PutBackupVaultAccessPolicy": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "backup:CreateBackupAccessPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "backup:DescribeBackupAccessPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "backup:StartRestoreJob": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
@@ -863,6 +896,9 @@ live_validated_disclosure_documentation = {
     "batch:DescribeJobDefinitions": "aws-services/aws-batch-enum.md",
     "batch:DescribeJobs": "aws-services/aws-batch-enum.md",
     "batch:SubmitJob": "aws-privilege-escalation/aws-batch-privesc/README.md",
+    "codebuild:StartBuild": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "codebuild:StartBuildBatch": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "codecommit:GitPush": "aws-services/aws-datapipeline-codepipeline-codebuild-and-codecommit.md",
     "bedrock:Retrieve": "aws-services/aws-bedrock-enum.md",
     "bedrock-agentcore:GetWorkloadAccessTokenForUserId": "aws-services/aws-bedrock-enum.md",
     "bedrock-agentcore:GetResourceApiKey": "aws-services/aws-bedrock-enum.md",
@@ -989,11 +1025,18 @@ live_validated_disclosure_documentation = {
     "datasync:StartTaskExecution": "aws-services/aws-datasync-enum.md",
     "dms:ModifyEndpoint": "aws-services/aws-dms-enum.md",
     "dms:StartReplicationTask": "aws-services/aws-dms-enum.md",
+    "ec2:GetPasswordData": "aws-privilege-escalation/aws-ec2-privesc/README.md",
     "ec2:ModifyInstanceAttribute": "aws-privilege-escalation/aws-ec2-privesc/README.md",
     "ec2:DescribeLaunchTemplateVersions": "aws-privilege-escalation/aws-ec2-privesc/README.md",
     "ec2:DescribeInstanceAttribute": "aws-services/aws-ec2-ebs-elb-ssm-vpc-and-vpn-enum/README.md",
     "elasticache:ModifyUser": "aws-services/aws-elasticache.md",
     "ebs:GetSnapshotBlock": "aws-privilege-escalation/aws-ebs-privesc/README.md",
+    "ecr:GetAuthorizationToken": "aws-privilege-escalation/aws-ecr-privesc/README.md",
+    "ecr:BatchCheckLayerAvailability": "aws-privilege-escalation/aws-ecr-privesc/README.md",
+    "ecr:CompleteLayerUpload": "aws-privilege-escalation/aws-ecr-privesc/README.md",
+    "ecr:InitiateLayerUpload": "aws-privilege-escalation/aws-ecr-privesc/README.md",
+    "ecr:PutImage": "aws-privilege-escalation/aws-ecr-privesc/README.md",
+    "ecr:UploadLayerPart": "aws-privilege-escalation/aws-ecr-privesc/README.md",
     "ecr:GetDownloadUrlForLayer": "aws-post-exploitation/aws-ecr-post-exploitation/README.md",
     "ecr-public:SetRepositoryPolicy": "aws-privilege-escalation/aws-ecr-privesc/README.md",
     "ecs:DescribeTaskDefinition": "aws-services/aws-ecs-enum.md",
@@ -1029,6 +1072,8 @@ live_validated_disclosure_documentation = {
     "eks-auth:AssumeRoleForPodIdentity": "aws-post-exploitation/aws-eks-post-exploitation/README.md",
     "es:UpdateDomainConfig": "aws-services/aws-opensearch-enum.md",
     "iam:CreateAccessKey": "aws-privilege-escalation/aws-iam-privesc/README.md",
+    "iam:PutRolePermissionsBoundary": "aws-privilege-escalation/aws-iam-privesc/README.md",
+    "iam:PutUserPermissionsBoundary": "aws-privilege-escalation/aws-iam-privesc/README.md",
     "memorydb:UpdateUser": "aws-services/aws-memorydb-enum.md",
     "mediapackage:DescribeChannel": "aws-privilege-escalation/aws-mediapackage-privesc/README.md",
     "mediapackage:ListChannels": "aws-privilege-escalation/aws-mediapackage-privesc/README.md",
@@ -1117,6 +1162,8 @@ live_validated_disclosure_documentation = {
     "kinesisvideo:GetMedia": "aws-services/aws-kinesis-video-streams-enum.md",
     "kinesisvideo:GetMediaForFragmentList": "aws-services/aws-kinesis-video-streams-enum.md",
     "lambda:GetFunctionConfiguration": "aws-privilege-escalation/aws-lambda-privesc/README.md",
+    "lambda:PutProvisionedConcurrencyConfig": "aws-privilege-escalation/aws-lambda-privesc/README.md",
+    "lambda:UpdateFunctionCode": "aws-privilege-escalation/aws-lambda-privesc/README.md",
     "lambda:UpdateFunctionEventInvokeConfig": "aws-persistence/aws-lambda-persistence/README.md",
     "lambda:PutFunctionEventInvokeConfig": "aws-persistence/aws-lambda-persistence/README.md",
     "lambda:ListFunctions": "aws-services/aws-lambda-enum.md",
@@ -1148,6 +1195,8 @@ live_validated_disclosure_documentation = {
     "sagemaker:StartPipelineExecution": "aws-privilege-escalation/aws-sagemaker-privesc/README.md",
     "secretsmanager:PutResourcePolicy": "aws-privilege-escalation/aws-secrets-manager-privesc/README.md",
     "secretsmanager:PutSecretValue": "aws-privilege-escalation/aws-codebuild-privesc/README.md",
+    "secretsmanager:RotateSecret": "aws-persistence/aws-secrets-manager-persistence/README.md",
+    "secretsmanager:ListSecrets": "aws-privilege-escalation/aws-secrets-manager-privesc/README.md",
     "s3:GetDataAccess": "aws-services/aws-s3-athena-and-glacier-enum.md",
     "s3:CreateAccessPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
     "s3:GetAccessPoint": "aws-post-exploitation/aws-backup-post-exploitation/README.md",
@@ -1172,6 +1221,7 @@ live_validated_disclosure_documentation = {
     "sns:SetTopicAttributes": "aws-post-exploitation/aws-sns-post-exploitation/README.md",
     "sqs:SetQueueAttributes": "aws-post-exploitation/aws-sqs-post-exploitation/README.md",
     "pipes:DescribePipe": "aws-services/eventbridgescheduler-enum.md",
+    "pipes:UpdatePipe": "aws-services/eventbridgescheduler-enum.md",
     "profile:SearchProfiles": "aws-services/aws-connect-customer-profiles-enum.md",
     "rum:GetAppMonitorData": "aws-services/aws-security-and-detection-services/aws-cloudwatch-enum.md",
     "sdb:GetAttributes": "aws-services/aws-simpledb-enum.md",
@@ -1182,6 +1232,7 @@ live_validated_disclosure_documentation = {
     "route53domains:RetrieveDomainAuthCode": "aws-privilege-escalation/aws-route53-domains-privesc/README.md",
     "route53globalresolver:GetAccessToken": "aws-services/aws-route53-global-resolver-enum.md",
     "rds:ModifyDBInstance": "aws-privilege-escalation/aws-rds-privesc/README.md",
+    "rds:StartExportTask": "aws-privilege-escalation/aws-rds-privesc/README.md",
     "rds-db:connect": "aws-privilege-escalation/aws-rds-privesc/README.md",
     "redshift:GetClusterCredentials": "aws-privilege-escalation/aws-redshift-privesc/README.md",
     "redshift:GetClusterCredentialsWithIAM": "aws-privilege-escalation/aws-redshift-privesc/README.md",
@@ -1192,7 +1243,9 @@ live_validated_disclosure_documentation = {
     "ssm:StartAutomationExecution": "aws-privilege-escalation/aws-ssm-privesc/README.md",
     "ssm:StartAssociationsOnce": "aws-privilege-escalation/aws-ssm-privesc/README.md",
     "ssm:GetParameterHistory": "aws-privilege-escalation/aws-ssm-privesc/README.md",
+    "ssm:GetParametersByPath": "aws-privilege-escalation/aws-ssm-privesc/README.md",
     "ssm:PutParameter": "aws-privilege-escalation/aws-cloudformation-privesc/README.md",
+    "sso:GetRoleCredentials": "aws-privilege-escalation/aws-sso-and-identitystore-privesc/README.md",
     "synthetics:StartCanary": "aws-privilege-escalation/aws-synthetics-privesc/README.md",
     "pipes:StartPipe": "aws-services/eventbridgescheduler-enum.md",
     "states:RedriveExecution": "aws-post-exploitation/aws-stepfunctions-post-exploitation/README.md",
@@ -1205,6 +1258,7 @@ live_validated_disclosure_documentation = {
     "storagegateway:DescribeChapCredentials": "aws-services/aws-storage-gateway-enum.md",
     "sts:GetFederationToken": "aws-privilege-escalation/aws-sts-privesc/README.md",
     "sts:GetWebIdentityToken": "aws-privilege-escalation/aws-sts-privesc/README.md",
+    "sts:GetDelegatedAccessToken": "aws-privilege-escalation/aws-sts-privesc/README.md",
     "tax:GetTaxRegistration": "aws-services/aws-tax-settings-enum.md",
     "tax:ListTaxRegistrations": "aws-services/aws-tax-settings-enum.md",
     "transcribe:GetTranscriptionJob": "aws-services/aws-transcribe-enum.md",
@@ -1216,4 +1270,58 @@ live_validated_disclosure_documentation = {
     "wisdom:GetContent": "aws-services/aws-q-in-connect-enum.md",
     "wickr:CreateDataRetentionBotChallenge": "aws-services/aws-wickr-enum.md",
     "wickr:GetOidcInfo": "aws-services/aws-wickr-enum.md",
+}
+
+
+# These permissions closed gaps found by reconciling the accumulated
+# HackTricks Cloud AWS PR with CloudPEASS's older evidence map. Some were also
+# exercised by the cross-service campaign; this set records why they were
+# added during the book-to-registry reconciliation instead of silently
+# presenting the old map as complete.
+hacktricks_reconciled_true_positive_actions = frozenset(
+    {
+        "amplifybackend:CreateToken",
+        "amplifybackend:GetToken",
+        "apigateway:POST",
+        "apigateway:PUT",
+        "appconfig:CreateHostedConfigurationVersion",
+        "appconfig:StartDeployment",
+        "backup:PutBackupVaultAccessPolicy",
+        "codebuild:StartBuild",
+        "codebuild:StartBuildBatch",
+        "codecommit:GitPush",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:CompleteLayerUpload",
+        "ecr:InitiateLayerUpload",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart",
+        "ec2:GetPasswordData",
+        "iam:PutRolePermissionsBoundary",
+        "iam:PutUserPermissionsBoundary",
+        "lambda:PutProvisionedConcurrencyConfig",
+        "lambda:UpdateFunctionCode",
+        "pipes:UpdatePipe",
+        "rds:StartExportTask",
+        "secretsmanager:RotateSecret",
+        "secretsmanager:ListSecrets",
+        "ssm:GetParametersByPath",
+        "sso:GetRoleCredentials",
+        "sts:GetDelegatedAccessToken",
+    }
+)
+
+
+# Permission-shaped headings in the accumulated HackTricks AWS PR that are
+# deliberately not counted as new positive evidence. Keeping the exclusions
+# explicit makes the book-to-registry reconciliation reproducible.
+hacktricks_pr_heading_exclusions = {
+    "elasticbeanstalk:DeleteApplication": "cleanup/availability action",
+    "elasticbeanstalk:SwapEnvironmentCNAMEs": "cleanup/availability action",
+    "elasticbeanstalk:TerminateEnvironment": "cleanup/availability action",
+    "elasticmapreduce:OpenEditorInConsole": "negative legacy-console boundary",
+    "iam:PassRole": "dependency already registered as standalone Critical",
+    "rds:CreateDBInstance": (
+        "resource creation succeeded without credential exposure or privilege escalation"
+    ),
 }

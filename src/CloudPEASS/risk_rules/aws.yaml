@@ -94,6 +94,42 @@ critical_exact:
   - sqs:SetQueueAttributes
   - sts:GetDelegatedAccessToken
   - sts:GetServiceBearerToken
+  # Reconciled with singleton Critical attack paths documented by HackTricks
+  # and the legacy sensitive-permission registry. Keeping these exact avoids
+  # the generic write heuristic silently downgrading known privilege paths.
+  - codebuild:StartBuild
+  - codebuild:StartBuildBatch
+  - cognito-idp:AdminAddUserToGroup
+  - cognito-idp:AdminConfirmSignUp
+  - cognito-idp:AdminCreateUser
+  - cognito-idp:AdminSetUserPassword
+  - cognito-idp:AdminUpdateUserAttributes
+  - cognito-idp:CreateIdentityProvider
+  - cognito-idp:CreateUserImportJob
+  - cognito-idp:CreateUserPoolClient
+  - cognito-idp:SetUserPoolMfaConfig
+  - cognito-idp:StartUserImportJob
+  - cognito-idp:UpdateIdentityProvider
+  - cognito-idp:UpdateUserPool
+  - ds:ResetUserPassword
+  - ecr:PutRegistryPolicy
+  - glue:UpdateDevEndpoint
+  - glue:UpdateJob
+  - iam:DeactivateMFADevice
+  - iam:ResyncMFADevice
+  - iam:UpdateOpenIDConnectProviderThumbprint
+  - iam:UpdateSAMLProvider
+  - iam:UploadSSHPublicKey
+  - identitystore:CreateGroupMembership
+  - lambda:AddLayerVersionPermission
+  - lightsail:CreateDomainEntry
+  - lightsail:GetRelationalDatabaseMasterUserPassword
+  - lightsail:UpdateDomainEntry
+  - lightsail:UpdateRelationalDatabase
+  - sns:AddPermission
+  - sqs:AddPermission
+  - sso:CreateAccountAssignment
+  - states:UpdateStateMachine
 
 ## =====================
 ## EVIDENCE-BACKED DOWNGRADES
@@ -193,6 +229,73 @@ medium_override_exact:
 
 ## Exact action names that must always be classified as `high`.
 high_exact:
+  # Reconciled with singleton High attack paths documented by HackTricks and
+  # the legacy sensitive-permission registry. Combination-only actions remain
+  # at their standalone level and are intentionally not promoted here.
+  - apigateway:POST
+  - apigateway:PUT
+  - apigateway:UpdateRestApiPolicy
+  - appconfig:CreateHostedConfigurationVersion
+  - appconfig:StartDeployment
+  - chime:CreateApiKey
+  - cloudformation:CreateStack
+  - cloudformation:SetStackPolicy
+  - cloudformation:UpdateStack
+  - cloudformation:UpdateStackSet
+  - codecommit:GitPush
+  - codestar:CreateProject
+  - cognito-identity:SetIdentityPoolRoles
+  - cognito-idp:AdminEnableUser
+  - cognito-idp:AdminInitiateAuth
+  - cognito-idp:AdminRespondToAuthChallenge
+  - datapipeline:ActivatePipeline
+  - datapipeline:CreatePipeline
+  - datapipeline:PutPipelineDefinition
+  - dynamodb:ExportTableToPointInTime
+  - dynamodb:PartiQLSelect
+  - dynamodb:PutItem
+  - dynamodb:RestoreTableFromBackup
+  - dynamodb:UpdateItem
+  - ec2:CreateSnapshot
+  - ec2:RunInstances
+  - ecs:CreateService
+  - ecs:RunTask
+  - ecs:StartTask
+  - ecs:UpdateServicePrimaryTaskSet
+  - glue:CreateDevEndpoint
+  - glue:CreateJob
+  - glue:CreateTrigger
+  - lambda:CreateFunction
+  - lambda:InvokeFunction
+  - lambda:InvokeFunctionUrl
+  - lambda:PutProvisionedConcurrencyConfig
+  - rds:AddRoleToDBCluster
+  - rds:AddRoleToDBInstance
+  - rds:DownloadDBLogFilePortion
+  - rds:RestoreDBInstanceFromDBSnapshot
+  - redshift:ModifyCluster
+  - secretsmanager:RotateSecret
+  - ses:SendBounce
+  - ses:SendBulkEmail
+  - ses:SendBulkTemplatedEmail
+  - ses:SendCustomVerificationEmail
+  - ses:SendEmail
+  - ses:SendRawEmail
+  - ses:SendTemplatedEmail
+  - sns:Publish
+  - sns:Unsubscribe
+  - sqs:PurgeQueue
+  - sqs:SendMessage
+  - sso:DeleteInlinePolicyFromPermissionSet
+  - sso:DeletePermissionsBoundaryFromPermissionSet
+  - sso:DetachCustomerManagedPolicyReferenceFromPermissionSet
+  - sso:DetachManagedPolicyFromPermissionSet
+  - states:CreateStateMachine
+  - states:RevealSecrets
+  - states:TestState
+  - workdocs:AddResourcePermissions
+  - workdocs:AddUserToGroup
+  - workdocs:CreateUser
   - ecr-public:SetRepositoryPolicy
   - airflow-serverless:GetTaskInstance
   - airflow-serverless:GetWorkflow
@@ -439,7 +542,6 @@ high_exact:
   - route53domains:RetrieveDomainAuthCode
   - route53globalresolver:GetAccessToken
   - rum:GetAppMonitorData
-  - route53globalresolver:GetAccessToken
   - sdb:GetAttributes
   - sdb:Select
   - s3:GetDataAccess
@@ -497,6 +599,10 @@ high_exact:
 ## Evidence-backed corrections for stale upstream/cache entries. These take
 ## precedence over critical_exact and low_exact during classification.
 high_override_exact:
+  # These commands were validated as sensitive execution-output/status reads;
+  # override older downloaded rule snapshots that classified them Low.
+  - ssm:GetCommandInvocation
+  - ssm:ListCommands
   - servicecatalog:GetProvisionedProductOutputs
   - account:GetContactInformation
   - amplify:GetApp

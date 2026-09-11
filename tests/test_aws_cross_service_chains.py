@@ -1,4 +1,10 @@
+import re
+from pathlib import Path
+
+from CloudPEASS.permission_risk_classifier import classify_permission
 from sensitive_permissions.aws import (
+    hacktricks_pr_heading_exclusions,
+    hacktricks_reconciled_true_positive_actions,
     live_validated_disclosure_documentation,
     sensitive_combinations,
     tested_risk_documentation,
@@ -633,3 +639,98 @@ def test_callback_output_injection_requires_a_live_task_token():
         "iam:PassRole",
         "sagemaker:CreatePresignedNotebookInstanceUrl",
     ] in very_sensitive_combinations
+
+
+def test_singleton_attack_registry_and_runtime_classifier_agree():
+    critical_singletons = {
+        combination[0]
+        for combination in very_sensitive_combinations
+        if len(combination) == 1
+    }
+    high_singletons = {
+        combination[0]
+        for combination in sensitive_combinations
+        if len(combination) == 1
+    }
+
+    for action in critical_singletons:
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "critical", action
+    for action in high_singletons - critical_singletons:
+        assert classify_permission(
+            "aws", action, unknown_default="medium"
+        ) == "high", action
+
+
+def test_hacktricks_reconciliation_is_complete_and_evidenced():
+    expected = {
+        "amplifybackend:CreateToken",
+        "amplifybackend:GetToken",
+        "apigateway:POST",
+        "apigateway:PUT",
+        "appconfig:CreateHostedConfigurationVersion",
+        "appconfig:StartDeployment",
+        "backup:PutBackupVaultAccessPolicy",
+        "codebuild:StartBuild",
+        "codebuild:StartBuildBatch",
+        "codecommit:GitPush",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:CompleteLayerUpload",
+        "ecr:InitiateLayerUpload",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart",
+        "ec2:GetPasswordData",
+        "iam:PutRolePermissionsBoundary",
+        "iam:PutUserPermissionsBoundary",
+        "lambda:PutProvisionedConcurrencyConfig",
+        "lambda:UpdateFunctionCode",
+        "pipes:UpdatePipe",
+        "rds:StartExportTask",
+        "secretsmanager:RotateSecret",
+        "secretsmanager:ListSecrets",
+        "ssm:GetParametersByPath",
+        "sso:GetRoleCredentials",
+        "sts:GetDelegatedAccessToken",
+    }
+    assert hacktricks_reconciled_true_positive_actions == expected
+    assert expected <= set(live_validated_disclosure_documentation)
+
+
+def test_hacktricks_pr_heading_exclusions_are_explicit():
+    assert hacktricks_pr_heading_exclusions == {
+        "elasticbeanstalk:DeleteApplication": "cleanup/availability action",
+        "elasticbeanstalk:SwapEnvironmentCNAMEs": "cleanup/availability action",
+        "elasticbeanstalk:TerminateEnvironment": "cleanup/availability action",
+        "elasticmapreduce:OpenEditorInConsole": "negative legacy-console boundary",
+        "iam:PassRole": "dependency already registered as standalone Critical",
+        "rds:CreateDBInstance": (
+            "resource creation succeeded without credential exposure or privilege escalation"
+        ),
+    }
+
+
+def test_complete_known_positive_inventory_matches_evidence_and_classifier():
+    tracker = (
+        Path(__file__).resolve().parents[1]
+        / "docs"
+        / "AWS-cross-service-security-review.md"
+    ).read_text(encoding="utf-8")
+    begin = "<!-- BEGIN GENERATED KNOWN-POSITIVE AWS TEST INVENTORY -->"
+    end = "<!-- END GENERATED KNOWN-POSITIVE AWS TEST INVENTORY -->"
+    assert tracker.count(begin) == tracker.count(end) == 1
+    generated = tracker.split(begin, 1)[1].split(end, 1)[0]
+    rows = {
+        action: level.lower()
+        for action, level in re.findall(
+            r"^\| `([^`]+)` \| (Critical|High|Medium|Low) \|",
+            generated,
+            flags=re.MULTILINE,
+        )
+    }
+    assert set(rows) == set(live_validated_disclosure_documentation)
+    for action, documented_level in rows.items():
+        assert documented_level == classify_permission(
+            "aws", action, unknown_default="medium"
+        ), action

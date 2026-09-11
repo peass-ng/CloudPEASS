@@ -20,6 +20,10 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "amplify:GetJob",
     "apigateway:GET",
     "apigateway:PATCH",
+    "apigateway:POST",
+    "apigateway:PUT",
+    "appconfig:CreateHostedConfigurationVersion",
+    "appconfig:StartDeployment",
     "athena:GetQueryExecution",
     "appstream:CreateStreamingURL",
     "apprunner:DescribeService",
@@ -57,6 +61,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "aws-marketplace:GetAgreementTerms",
     "codebuild:BatchGetBuilds",
     "codebuild:BatchGetProjects",
+    "codecommit:GitPush",
     "codeartifact:GetPackageVersionAsset",
     "codecommit:GetBlob",
     "codecommit:GetCommit",
@@ -165,6 +170,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "lambda:ListFunctions",
     "lambda:ListVersionsByFunction",
     "lambda:GetLayerVersion",
+    "lambda:PutProvisionedConcurrencyConfig",
     "logs:FilterLogEvents",
     "logs:GetLogRecord",
     "logs:GetLogEvents",
@@ -181,6 +187,7 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "s3vectors:GetVectors",
     "s3express:CreateSession",
     "scheduler:GetSchedule",
+    "secretsmanager:RotateSecret",
     "servicediscovery:RegisterInstance",
     "pipes:DescribePipe",
     "profile:SearchProfiles",
@@ -294,6 +301,7 @@ def test_live_validated_disclosures_have_service_specific_evidence():
             (
                 "aws-post-exploitation/",
                 "aws-privilege-escalation/",
+                "aws-persistence/",
                 "aws-services/",
             )
         )
