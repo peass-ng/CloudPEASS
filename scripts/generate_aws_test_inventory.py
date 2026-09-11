@@ -16,7 +16,6 @@ sys.path.insert(0, str(ROOT / "src"))
 import CloudPEASS.permission_risk_classifier as risk_classifier  # noqa: E402
 from sensitive_permissions.aws import (  # noqa: E402
     hacktricks_pr_heading_exclusions,
-    hacktricks_reconciled_true_positive_actions,
     live_validated_disclosure_documentation,
     sensitive_combinations,
     very_sensitive_combinations,
@@ -26,7 +25,7 @@ from sensitive_permissions.aws import (  # noqa: E402
 DOCUMENT = ROOT / "docs" / "AWS-cross-service-security-review.md"
 BEGIN = "<!-- BEGIN GENERATED KNOWN-POSITIVE AWS TEST INVENTORY -->"
 END = "<!-- END GENERATED KNOWN-POSITIVE AWS TEST INVENTORY -->"
-HACKTRICKS_REVISION = "a2920e242f5b8f367eb53d60c99690dc9e1dcdaf"
+HACKTRICKS_REVISION = "b92ee189275012ff3b4f8223a33e8b7e4fc60f95"
 HACKTRICKS_ROOT = (
     "https://github.com/HackTricks-wiki/hacktricks-cloud/blob/"
     f"{HACKTRICKS_REVISION}/src/pentesting-cloud/aws-security"
@@ -94,14 +93,9 @@ def render() -> str:
     rows = []
     for action in sorted(live_validated_disclosure_documentation, key=str.lower):
         evidence = live_validated_disclosure_documentation[action]
-        provenance = (
-            "HackTricks reconciliation"
-            if action in hacktricks_reconciled_true_positive_actions
-            else "CloudPEASS validation"
-        )
         rows.append(
             f"| `{action}` | {classifications[action].title()} | "
-            f"{_registration(action)} | {provenance} | "
+            f"{_registration(action)} | "
             f"[`{evidence}`]({HACKTRICKS_ROOT}/{evidence}) |"
         )
 
@@ -116,7 +110,7 @@ def render() -> str:
             "",
             "## Complete known-positive AWS permission inventory",
             "",
-            "This generated inventory complements X001-X119 above. It includes every permission with retained CloudPEASS live evidence plus true-positive gaps reconciled from the accumulated HackTricks Cloud AWS PR. Negative controls, cleanup-only actions, and hypotheses without an observed security effect are excluded. A `combination` registration means the permission is not promoted to that severity by itself; all documented companion permissions and prerequisites remain necessary.",
+            "This generated inventory complements X001-X119 above and covers every known-positive AWS permission documented by CloudPEASS or the accumulated HackTricks Cloud AWS work. Cleanup-only actions and unsupported hypotheses are excluded. A `combination` registration means the permission is not promoted to that severity by itself; all documented companion permissions and prerequisites remain necessary.",
             "",
             "The wider HackTricks AWS privilege-escalation, post-exploitation, and persistence heading audit found no additional unregistered permissions that classify High or Critical. These permission-shaped headings from the active AWS documentation PR are intentionally excluded from the positive inventory:",
             "",
@@ -129,8 +123,8 @@ def render() -> str:
             f"**{counts['medium']} Medium**, and **{counts['low']} Low** when each "
             "permission is classified alone.",
             "",
-            "| Permission | Standalone classifier | Attack registration | Provenance | Evidence |",
-            "| --- | --- | --- | --- | --- |",
+            "| Permission | Standalone classifier | Attack registration | Documentation |",
+            "| --- | --- | --- | --- |",
             *rows,
             "",
             END,
