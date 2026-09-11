@@ -777,6 +777,14 @@ sensitive_combinations = [
     # including their bodies and identity/connection metadata, to an
     # attacker-controlled HTTPS handler without hub or parent read access.
     ["Microsoft.SignalRService/WebPubSub/hubs/write"],
+    # Live exact-role validation: a principal holding ONLY experiments/start/action
+    # (no experiment read, no permission on the target) started a pre-configured
+    # Chaos experiment whose system-assigned identity was Key Vault Contributor.
+    # The DenyAccess fault ran under that identity and flipped the target vault's
+    # firewall Allow->Deny (no-role start was 403). This is availability/disruption
+    # (DoS) via a more-privileged experiment identity, not attacker-chosen privesc,
+    # so it is Medium and conditional on an existing configured experiment/target.
+    ["Microsoft.Chaos/experiments/start/action"],
     # Web PubSub token generation alone could not connect; adding only the
     # handshake permission produced a usable resource-and-hub-bound JWT.
     [
