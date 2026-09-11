@@ -129,7 +129,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
 
     def test_wildcards_keep_maximum_risk_from_likely_child_verbs(self) -> None:
         self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/read"), "low")
-        self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/write"), "medium")
+        self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/write"), "high")
         self.assertEqual(self.classify("Microsoft.KeyVault/vaults/secrets/*"), "critical")
         self.assertEqual(self.classify("Microsoft.KeyVault/vaults/certificates/*"), "medium")
         self.assertEqual(
@@ -237,12 +237,15 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Search/searchServices/regenerateAdminKey/action": "critical",
             "Microsoft.Synapse/workspaces/administrators/write": "critical",
             "Microsoft.Synapse/workspaces/sqlAdministrators/write": "critical",
+            "Microsoft.Web/sites/config/Write": "critical",
             "Microsoft.DocumentDB/databaseAccounts/readonlykeys/action": "high",
             "Microsoft.DocumentDB/databaseAccounts/readonlykeys/read": "high",
             "Microsoft.DigitalTwins/query/action": "high",
             "Microsoft.DigitalTwins/digitaltwins/read": "high",
+            "Microsoft.DigitalTwins/digitaltwins/write": "high",
             "Microsoft.DigitalTwins/digitaltwins/relationships/read": "high",
             "Microsoft.Attestation/attestationProviders/attestation/write": "high",
+            "Microsoft.Web/connections/write": "high",
             "Microsoft.Logic/workflows/triggers/listCallbackUrl/action": "high",
             "Microsoft.Logic/workflows/versions/triggers/listCallbackUrl/action": "high",
             "Microsoft.Logic/workflows/triggers/run/action": "high",
@@ -256,6 +259,9 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.EventGrid/topicSpaces/publish/action": "high",
             "Microsoft.EventGrid/topicSpaces/subscribe/action": "high",
             "Microsoft.EventGrid/eventSubscriptions/getDeliveryAttributes/action": "high",
+            "Microsoft.EventGrid/eventSubscriptions/write": "high",
+            "Microsoft.Insights/ActionGroups/Write": "high",
+            "Microsoft.Devices/IotHubs/write": "high",
             "Microsoft.Devices/IotHubs/devices/read": "high",
             "Microsoft.Devices/IotHubs/devices/write": "high",
             "Microsoft.Devices/IotHubs/twins/read": "high",
@@ -361,6 +367,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.ApiManagement/service/workspaces/toolServers/listSecrets/action": "high",
             "Microsoft.AppConfiguration/configurationStores/ListKeyValue/action": "high",
             "Microsoft.AppConfiguration/configurationStores/keyValues/read": "high",
+            "Microsoft.AppConfiguration/configurationStores/keyValues/write": "high",
             "Microsoft.Web/staticSites/listSecrets/action": "critical",
             "Microsoft.CognitiveServices/accounts/listKeys/action": "critical",
             "Microsoft.MachineLearningServices/workspaces/listKeys/action": "critical",
@@ -890,6 +897,47 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             with self.subTest(chain=chain):
                 self.assertIn(chain, configured)
 
+    def test_service_bus_forwarding_requires_exact_linked_write_pair(self) -> None:
+        from sensitive_permissions.azure import (
+            sensitive_combinations as azure_sensitive_combinations,
+        )
+
+        combination = (
+            "Microsoft.ServiceBus/namespaces/topics/subscriptions/write",
+            "Microsoft.ServiceBus/namespaces/queues/write",
+        )
+        self.assertIn(
+            combination,
+            {tuple(candidate) for candidate in azure_sensitive_combinations},
+        )
+        for permission in combination:
+            with self.subTest(permission=permission):
+                self.assertEqual(self.classify(permission), "medium")
+                self.assertNotIn([permission], azure_sensitive_combinations)
+
+    def test_event_hubs_capture_redirect_requires_exact_linked_permissions(self) -> None:
+        from sensitive_permissions.azure import (
+            sensitive_combinations as azure_sensitive_combinations,
+        )
+
+        combination = (
+            "Microsoft.EventHub/namespaces/eventhubs/write",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/write",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write",
+        )
+        self.assertIn(
+            combination,
+            {tuple(candidate) for candidate in azure_sensitive_combinations},
+        )
+        self.assertEqual(self.classify(combination[0]), "medium")
+        self.assertEqual(self.classify(combination[1]), "medium")
+        # This DataAction is independently High because a separate live test
+        # proved privileged-consumer configuration poisoning with it alone.
+        self.assertEqual(self.classify(combination[2]), "high")
+        self.assertEqual(
+            self.classify("Microsoft.EventHub/namespaces/write"), "medium"
+        )
+
     def test_graph_scopes_and_unresolved_entra_evidence_are_classified(self) -> None:
         self.assertEqual(self.classify("openid"), "low")
         self.assertEqual(self.classify("User.Read"), "low")
@@ -1000,7 +1048,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read": "high",
             "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/permanentDelete/action": "medium",
             "Microsoft.KeyVault/vaults/secrets/recover/action": "medium",
-            "Microsoft.KeyVault/vaults/secrets/setSecret/action": "medium",
+            "Microsoft.KeyVault/vaults/secrets/setSecret/action": "high",
             "Microsoft.Automation/automationAccounts/certificates/getCount/action": "medium",
             "Microsoft.Devices/iotHubs/certificates/generateVerificationCode/action": "medium",
             "Microsoft.ManagedIdentity/userAssignedIdentities/listAssociatedResources/action": "medium",
@@ -1079,16 +1127,30 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "appstream:CreateAppBlockBuilderStreamingURL": "critical",
             "appstream:CreateImageBuilderStreamingURL": "critical",
             "apprunner:DescribeService": "high",
+            "appsync:UpdateResolver": "high",
+            "apigateway:PATCH": "high",
             "airflow-serverless:GetTaskInstance": "high",
             "airflow-serverless:GetWorkflow": "high",
             "airflow-serverless:GetWorkflowRun": "high",
             "athena:CreatePresignedNotebookUrl": "critical",
             "athena:GetSessionEndpoint": "critical",
             "athena:StartCalculationExecution": "critical",
+            "athena:UpdateWorkGroup": "high",
             "codebuild:StartCommandExecution": "critical",
+            "codepipeline:StartPipelineExecution": "high",
+            "codepipeline:PutApprovalResult": "high",
+            "codepipeline:PutJobSuccessResult": "high",
+            "cloudtrail:UpdateTrail": "high",
+            "events:UpdateApiDestination": "high",
+            "elasticloadbalancing:ModifyRule": "high",
+            "firehose:UpdateDestination": "high",
             "glue:RunStatement": "critical",
+            "glue:StartJobRun": "critical",
+            "glue:StartWorkflowRun": "high",
             "backup:DeleteRecoveryPoint": "high",
             "backup:PutBackupVaultAccessPolicy": "critical",
+            "batch:SubmitJob": "critical",
+            "elasticmapreduce:AddJobFlowSteps": "critical",
             "iot:OpenTunnel": "critical",
             "iot:RotateTunnelAccessToken": "critical",
             "wickr:CreateDataRetentionBotChallenge": "critical",
@@ -1112,9 +1174,14 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "mq:UpdateUser": "high",
             "notifications:GetManagedNotificationEvent": "high",
             "notifications:ListManagedNotificationEvents": "high",
+            "pipes:StartPipe": "high",
             "route53domains:GetDomainDetail": "high",
             "route53domains:RetrieveDomainAuthCode": "high",
             "route53globalresolver:GetAccessToken": "high",
+            "secretsmanager:PutSecretValue": "high",
+            "sagemaker:StartPipelineExecution": "high",
+            "transfer:UpdateConnector": "high",
+            "s3:PutObject": "high",
             "storagegateway:DescribeChapCredentials": "high",
             "wickr:GetOidcInfo": "high",
             "s3:PutAccessPointPolicy": "critical",
@@ -1123,6 +1190,8 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "servicediscovery:RegisterInstance": "high",
             "signer:StartSigningJob": "high",
             "ssm:StartAutomationExecution": "critical",
+            "ssm:PutParameter": "high",
+            "states:StartExecution": "high",
             "sts:GetFederationToken": "high",
             "synthetics:StartCanaryDryRun": "medium",
             "textract:GetDocumentAnalysis": "high",

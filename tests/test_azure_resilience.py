@@ -413,6 +413,26 @@ def test_dataprotection_blob_restore_requires_linked_storage_read():
     assert not combined["critical"]
 
 
+def test_blob_write_consumed_by_privileged_workload_is_high_not_critical():
+    permission = "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+    assert [permission] in sensitive_combinations
+
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+
+    # A live exact-role test proved a scheduled ADF Lookup -> MSI Web activity
+    # consumed the attacker-replaced JSON and disclosed a factory MI token.
+    # The operation stays High because an existing privileged consumer is a
+    # prerequisite; Blob write alone is not direct Azure code execution.
+    assert categories["high"] == [permission]
+    assert not categories["critical"]
+
+
 def test_synapse_admin_writes_are_validated_critical_singletons():
     permissions = {
         "Microsoft.Synapse/workspaces/administrators/write",
@@ -1016,6 +1036,21 @@ def test_sandbox_file_read_is_a_validated_high_singleton():
 
 def test_legacy_logic_workflow_run_is_a_validated_high_singleton():
     permission = "Microsoft.Logic/workflows/run/action"
+    peas = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "Azure",
+        1,
+    )
+
+    assert [permission] in sensitive_combinations
+    categories = peas.analyze_group({permission}, [])["permissions_cat"]
+    assert permission in categories["high"]
+    assert permission not in categories["critical"]
+
+
+def test_logic_api_connection_write_is_a_validated_conditional_high_singleton():
+    permission = "Microsoft.Web/connections/write"
     peas = CloudPEASS(
         very_sensitive_combinations,
         sensitive_combinations,

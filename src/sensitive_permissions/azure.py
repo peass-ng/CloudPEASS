@@ -43,6 +43,11 @@ very_sensitive_combinations = [
     # repository and the corresponding endpoint served the injected canary.
     ["Microsoft.Web/sites/sourcecontrols/write"],
     ["Microsoft.Web/sites/slots/sourcecontrols/write"],
+    # Live exact-role validation changed only config/web.appCommandLine on a
+    # Linux app. The platform recycled from a benign Node server into an
+    # attacker-selected dormant program while site/config reads and a sibling
+    # config write remained denied. This is direct workload execution.
+    ["Microsoft.Web/sites/config/write"],
 
     ["Microsoft.Automation/automationAccounts/runbooks/draft/write", "Microsoft.Automation/automationAccounts/runbooks/draft/content/write", "Microsoft.Automation/automationAccounts/runbooks/draft/testJob/write"],
     ["Microsoft.Automation/automationAccounts/runbooks/draft/write", "Microsoft.Automation/automationAccounts/runbooks/draft/content/write", "Microsoft.Automation/automationAccounts/runbooks/publish/action", "Microsoft.Automation/automationAccounts/jobs/write"],
@@ -100,9 +105,7 @@ very_sensitive_combinations = [
     ["Microsoft.Web/sites/host/listkeys/action"],
     ["Microsoft.Web/sites/slots/host/listkeys/action"],
     ["Microsoft.Web/sites/config/list/action"],
-    ["Microsoft.Web/sites/config/list/action", "Microsoft.Web/sites/config/write"],
     ["Microsoft.Web/sites/publishxml/action"],
-    ["Microsoft.Web/sites/config/write", "Microsoft.Web/sites/config/list/action"],
 
     ["Microsoft.Logic/workflows/write"],
     ["Microsoft.Web/sites/basicPublishingCredentialsPolicies/read", "Microsoft.Web/sites/write", "Microsoft.Web/sites/config/list/action"],
@@ -199,6 +202,15 @@ very_sensitive_combinations = [
 
 sensitive_combinations = [
     ["AuditLog.Read.All"],
+    # Exact target-scoped API connection write redirected the next unchanged
+    # Logic workflow output to an attacker-selected Blob sink without read or
+    # workflow permissions. Impact requires a future privileged consumer.
+    ["Microsoft.Web/connections/write"],
+    # Exact ARM Action and data-plane DataAction tests independently poisoned
+    # a write-only secret consumed by a privileged scheduled workload. Impact
+    # depends on an unversioned downstream consumer, so these are High.
+    ["Microsoft.KeyVault/vaults/secrets/write"],
+    ["Microsoft.KeyVault/vaults/secrets/setSecret/action"],
     ["Directory.Read.All"],
     ["Directory.ReadWrite.All"],
     ["Group.ReadWrite.All"],
@@ -429,6 +441,19 @@ sensitive_combinations = [
     ["Microsoft.EventGrid/systemTopics/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/domains/eventSubscriptions/getFullUrl/action"],
     ["Microsoft.EventGrid/domains/topics/eventSubscriptions/getFullUrl/action"],
+    # Live exact-role validation overwrote an existing custom-topic event
+    # subscription so future events were delivered to an attacker-controlled
+    # HTTPS webhook. No-role and sibling-topic writes were denied. Redirecting
+    # to another Azure Storage queue additionally required the destination
+    # account's Microsoft.Storage/storageAccounts/write permission.
+    ["Microsoft.EventGrid/eventSubscriptions/write"],
+    # Live exact-role validation replaced the receiver of an existing Action
+    # Group with an attacker-controlled HTTPS webhook. The caller could not
+    # read the group or write its sibling; a pre-existing Activity Log alert
+    # subsequently delivered its synthetic description and resource metadata
+    # to the replacement endpoint. Impact requires an active alert/receiver
+    # consumer, so this is conditional High rather than Critical.
+    ["Microsoft.Insights/ActionGroups/Write"],
     # Exact receive-only DataAction recovered the full seeded CloudEvent and
     # its delivery lock token while ARM namespace read remained denied.
     ["Microsoft.EventGrid/events/receive/action"],
@@ -449,6 +474,11 @@ sensitive_combinations = [
     # desired-state command injection, cloud-to-device delivery, direct method
     # invocation, targeted job execution, and full registry export/import.
     # Device keys also minted a configured Storage file-upload SAS.
+    # Separately, exact hub write replaced a DeviceMessages route with an
+    # attacker-supplied Storage connection string. Future telemetry appeared
+    # in that container while the former destination received nothing new;
+    # no Storage RBAC or linked authorization was required.
+    ["Microsoft.Devices/IotHubs/write"],
     ["Microsoft.Devices/IotHubs/devices/read"],
     ["Microsoft.Devices/IotHubs/devices/write"],
     ["Microsoft.Devices/IotHubs/twins/read"],
@@ -470,6 +500,15 @@ sensitive_combinations = [
     # Bus receive could also permanently complete the received message.
     ["Microsoft.EventHub/namespaces/messages/receive/action"],
     ["Microsoft.EventHub/namespaces/messages/send/action"],
+    # Live capture redirection required the event-hub write plus both linked
+    # Storage permissions. Namespace write was irrelevant, and either Storage
+    # permission by itself failed. The combination archived future events to
+    # an attacker-readable container; it did not backfill retained events.
+    [
+        "Microsoft.EventHub/namespaces/eventhubs/write",
+        "Microsoft.Storage/storageAccounts/blobServices/containers/write",
+        "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write",
+    ],
     ["Microsoft.ServiceBus/namespaces/messages/receive/action"],
     ["Microsoft.ServiceBus/namespaces/messages/send/action"],
     # Shared-access rules may be Listen-, Send-, or Manage-scoped, so their
@@ -496,6 +535,15 @@ sensitive_combinations = [
         "Microsoft.ServiceBus/namespaces/queues/authorizationRules/write",
         "Microsoft.ServiceBus/namespaces/queues/authorizationRules/listKeys/action",
     ],
+    # Live exact-role validation showed both operations are required. Topic
+    # subscription write alone passed primary authorization but failed linked
+    # authorization on the destination queue; queue write alone could not
+    # alter the subscription. Together they forwarded both retained and future
+    # topic messages into an attacker-readable queue.
+    [
+        "Microsoft.ServiceBus/namespaces/topics/subscriptions/write",
+        "Microsoft.ServiceBus/namespaces/queues/write",
+    ],
     ["Microsoft.ContainerRegistry/registries/runs/listLogSasUrl/action"],
     ["Microsoft.Compute/disks/beginGetAccess/action"],
     ["Microsoft.Compute/snapshots/beginGetAccess/action"],
@@ -507,6 +555,9 @@ sensitive_combinations = [
     # disclosed their own protected properties and remained instance-scoped.
     ["Microsoft.DigitalTwins/query/action"],
     ["Microsoft.DigitalTwins/digitaltwins/read"],
+    # Live cross-service validation poisoned a selector later trusted by an
+    # Automation managed identity, exposing its Key Vault-readable canary.
+    ["Microsoft.DigitalTwins/digitaltwins/write"],
     ["Microsoft.DigitalTwins/digitaltwins/relationships/read"],
     # Live exact-role validation changed and reset the SGX trust policy on an
     # unsigned Azure Attestation provider. Signed providers additionally
@@ -600,6 +651,9 @@ sensitive_combinations = [
     ["Microsoft.Network/connections/sharedKey/read"],
     ["Microsoft.AppConfiguration/configurationStores/ListKeyValue/action"],
     ["Microsoft.AppConfiguration/configurationStores/keyValues/read"],
+    # Live exact-role validation for both the Action and DataAction catalog
+    # forms poisoned a secret selector consumed by a privileged Automation MI.
+    ["Microsoft.AppConfiguration/configurationStores/keyValues/write"],
     ["Microsoft.Logic/integrationAccounts/agreements/listContentCallbackUrl/action"],
     ["Microsoft.Logic/integrationAccounts/assemblies/listContentCallbackUrl/action"],
     ["Microsoft.Logic/integrationAccounts/maps/listContentCallbackUrl/action"],
@@ -607,6 +661,13 @@ sensitive_combinations = [
     ["Microsoft.Logic/integrationAccounts/schemas/listContentCallbackUrl/action"],
     ["Microsoft.Logic/workflows/listCallbackUrl/action"],
     ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"],
+    # Live exact-role validation scoped this DataAction to one private JSON
+    # control blob. The caller could not read that blob, overwrite its sibling,
+    # or access Data Factory. Its replacement was nevertheless consumed by an
+    # existing schedule and redirected an MSI-authenticated Web activity to an
+    # owned receiver. The captured factory-identity ARM token then read a
+    # protected canary. This is High and workload-conditional, not Critical.
+    ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"],
     ["Microsoft.Storage/storageAccounts/fileServices/fileshares/files/read"],
     ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/read"],
     ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/read"],

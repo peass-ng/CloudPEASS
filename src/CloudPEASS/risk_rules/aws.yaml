@@ -23,6 +23,7 @@ critical_exact:
   - athena:GetSessionEndpoint
   - athena:StartCalculationExecution
   - backup:PutBackupVaultAccessPolicy
+  - batch:SubmitJob
   - codebuild:StartCommandExecution
   - codeartifact:GetAuthorizationToken
   - cognito-idp:AddUserPoolClientSecret
@@ -33,6 +34,7 @@ critical_exact:
   - ec2:AssociateIamInstanceProfile
   - ec2:GetPasswordData
   - ec2:ModifyInstanceAttribute
+  - elasticmapreduce:AddJobFlowSteps
   - ec2:ReplaceIamInstanceProfileAssociation
   - ec2-instance-connect:SendSSHPublicKey
   - elasticfilesystem:DeleteFileSystemPolicy
@@ -50,6 +52,7 @@ critical_exact:
   - grafana:CreateWorkspaceApiKey
   - grafana:CreateWorkspaceServiceAccountToken
   - glue:RunStatement
+  - glue:StartJobRun
   - iam:CreateAccessKey
   - iam:PassRole
   - iot:OpenTunnel
@@ -200,10 +203,12 @@ high_exact:
   - apigateway:GET
   - apigateway:PATCH
   - athena:GetQueryExecution
+  - athena:UpdateWorkGroup
   - appconfig:GetHostedConfigurationVersion
   - appsync:GraphQL
   - appsync:GetGraphqlApiEnvironmentVariables
   - appsync:ListApiKeys
+  - appsync:UpdateResolver
   - appstream:CreateStreamingURL
   - apprunner:DescribeService
   - cassandra:Select
@@ -228,6 +233,7 @@ high_exact:
   - cloudfront:ListDistributions
   - cloudwatch:GetDashboard
   - cloudtrail:LookupEvents
+  - cloudtrail:UpdateTrail
   - ce:GetCostAndUsage
   - budgets:ViewBudget
   - aws-portal:ViewBilling
@@ -242,6 +248,9 @@ high_exact:
   - codecommit:GetFile
   - codecommit:GitPull
   - codepipeline:PollForJobs
+  - codepipeline:PutApprovalResult
+  - codepipeline:PutJobSuccessResult
+  - codepipeline:StartPipelineExecution
   - codepipeline:GetJobDetails
   - codepipeline:GetPipeline
   - codepipeline:GetPipelineExecution
@@ -287,12 +296,14 @@ high_exact:
   - ec2:DescribeInstanceAttribute
   - elasticache:ModifyUser
   - elasticloadbalancing:ModifyListener
+  - elasticloadbalancing:ModifyRule
   - ebs:GetSnapshotBlock
   - ecr:GetDownloadUrlForLayer
   - ecs:DescribeTaskDefinition
   - ecs:DescribeTasks
   - emr-serverless:GetApplication
   - emr-serverless:GetJobRun
+  - events:UpdateApiDestination
   - events:ListTargetsByRule
   - firehose:UpdateDestination
   - frauddetector:GetEvent
@@ -307,6 +318,7 @@ high_exact:
   - glue:GetJobs
   - glue:GetStatement
   - glue:GetWorkflowRunProperties
+  - glue:StartWorkflowRun
   - geo:GetDevicePosition
   - geo:GetDevicePositionHistory
   - greengrass:GetComponentVersionArtifact
@@ -382,6 +394,7 @@ high_exact:
   - invoicing:GetInvoicePDF
   - invoicing:ListInvoiceSummaries
   - pipes:DescribePipe
+  - pipes:StartPipe
   - profile:SearchProfiles
   - rds-db:connect
   - route53:ChangeResourceRecordSets
@@ -399,6 +412,7 @@ high_exact:
   - sagemaker:DescribeTrainingJob
   - sagemaker:DescribeAppImageConfig
   - sagemaker:ListAppImageConfigs
+  - sagemaker:StartPipelineExecution
   - scheduler:GetSchedule
   - servicediscovery:RegisterInstance
   - ses:GetSuppressedDestination
@@ -415,10 +429,12 @@ high_exact:
   - ssm:GetDocument
   - ssm:GetOpsItem
   - ssm:GetParameterHistory
+  - ssm:PutParameter
   - states:DescribeStateMachine
   - states:DescribeExecution
   - states:GetActivityTask
   - states:GetExecutionHistory
+  - states:StartExecution
   - storagegateway:DescribeChapCredentials
   - sts:GetFederationToken
   - sts:GetWebIdentityToken
@@ -429,6 +445,7 @@ high_exact:
   - textract:GetExpenseAnalysis
   - transcribe:GetTranscriptionJob
   - transfer:ImportSshPublicKey
+  - transfer:UpdateConnector
   - translate:GetParallelData
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke

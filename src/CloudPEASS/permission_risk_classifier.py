@@ -283,6 +283,11 @@ _AZURE_CRITICAL_EXACT = frozenset(
         # a distinct canary from each target endpoint.
         "microsoft.web/sites/sourcecontrols/write",
         "microsoft.web/sites/slots/sourcecontrols/write",
+        # An exact config-write singleton changed config/web.appCommandLine on
+        # a Linux app. Its automatic recycle selected attacker-chosen code and
+        # served the execution canary while config/site reads and a sibling
+        # app write remained denied.
+        "microsoft.web/sites/config/write",
         "microsoft.web/sites/slots/publishxml/action",
         "microsoft.web/sites/slots/config/list/action",
         # Live validation confirmed that start/action accepts a per-execution
@@ -391,6 +396,22 @@ _AZURE_CRITICAL_EXACT = frozenset(
 
 _AZURE_HIGH_EXACT = frozenset(
     {
+        # Exact connection-scoped validation replaced a Blob API connection's
+        # write-only destination credentials without workflow or connection
+        # read access. The next unchanged Logic workflow run wrote its static
+        # protected canary to the replacement sink; no-role and sibling writes
+        # were denied. A future privileged consumer is required, so this is a
+        # conditional High rather than an unconditional Critical permission.
+        "microsoft.web/connections/write",
+        # Live cross-service validation proved both Key Vault write surfaces
+        # independently. The ARM Action and data-plane DataAction each changed
+        # a write-only secret selector consumed by a scheduled Automation job;
+        # the victim's separate identity then disclosed a protected Key Vault
+        # canary. Target reads, opposite-plane writes, sibling secrets, sibling
+        # vaults, and no-role requests were denied. A latest-version consumer
+        # is required, so these are High rather than Critical.
+        "microsoft.keyvault/vaults/secrets/write",
+        "microsoft.keyvault/vaults/secrets/setsecret/action",
         # Live exact-role validation activated a retained inactive revision
         # and made its previously unavailable code endpoint run again. The
         # action cannot alter the revision, so its conditional workload and
@@ -421,6 +442,11 @@ _AZURE_HIGH_EXACT = frozenset(
         # principal was denied on the sibling Digital Twins instance.
         "microsoft.digitaltwins/query/action",
         "microsoft.digitaltwins/digitaltwins/read",
+        # An exact write-only principal replaced a secret selector on a known
+        # twin. A scheduled Automation consumer then used its own managed
+        # identity to resolve and disclose the selected Key Vault secret. Twin
+        # read/query and the sibling instance remained denied.
+        "microsoft.digitaltwins/digitaltwins/write",
         "microsoft.digitaltwins/digitaltwins/relationships/read",
         # Exact Batch read DataActions disclosed job and job-schedule command
         # lines, plaintext environment values, and SAS-like metadata.
@@ -598,6 +624,16 @@ _AZURE_HIGH_EXACT = frozenset(
         "microsoft.eventgrid/systemtopics/eventsubscriptions/getfullurl/action",
         "microsoft.eventgrid/domains/eventsubscriptions/getfullurl/action",
         "microsoft.eventgrid/domains/topics/eventsubscriptions/getfullurl/action",
+        # Exact topic-scoped write redirected an existing subscription to an
+        # attacker HTTPS webhook and exfiltrated the next synthetic event.
+        # Azure Storage destinations separately enforced linked account write.
+        "microsoft.eventgrid/eventsubscriptions/write",
+        # An exact write-only principal replaced an existing Action Group's
+        # receivers with an attacker-controlled webhook. A pre-existing
+        # Activity Log alert then delivered the synthetic alert description
+        # and victim resource identifiers to that endpoint. Action Group GET
+        # and a sibling-group write remained denied.
+        "microsoft.insights/actiongroups/write",
         # Exact receive-only DataAction recovered a seeded CloudEvent and its
         # queue-delivery lock token without namespace management read.
         "microsoft.eventgrid/events/receive/action",
@@ -618,6 +654,9 @@ _AZURE_HIGH_EXACT = frozenset(
         # scheduled a device method, read its stored payload, and exported or
         # imported the complete identity registry. Recovered/selected device
         # keys authenticated independently and could mint file-upload SAS.
+        # Exact hub write also replaced the telemetry route with an attacker
+        # Storage connection string and exfiltrated the next device event.
+        "microsoft.devices/iothubs/write",
         "microsoft.devices/iothubs/devices/read",
         "microsoft.devices/iothubs/devices/write",
         "microsoft.devices/iothubs/twins/read",
@@ -688,6 +727,20 @@ _AZURE_HIGH_EXACT = frozenset(
         # a Free App Configuration store, without requiring data-plane RBAC.
         "microsoft.appconfiguration/configurationstores/listkeyvalue/action",
         "microsoft.appconfiguration/configurationstores/keyvalues/read",
+        # The provider advertises this same operation in both Actions and
+        # DataActions. Each exact-role form independently replaced a secret
+        # selector consumed by an Automation managed identity, causing the
+        # next run to disclose a Key Vault secret that the attacker could not
+        # access directly. No-role, opposite-plane, and sibling-store controls
+        # were denied.
+        "microsoft.appconfiguration/configurationstores/keyvalues/write",
+        # An exact blob-scoped write-only DataAction replaced a private JSON
+        # control object consumed by an existing scheduled Data Factory
+        # pipeline. The attacker had no Blob read or Data Factory permission;
+        # the next Lookup -> MSI Web activity sent the factory identity token
+        # to the selected URL, and that token read an MI-only ARM canary.
+        # Existing consumer behavior and identity privileges bound the impact.
+        "microsoft.storage/storageaccounts/blobservices/containers/blobs/write",
         # A read SAS from each operation was live-tested by downloading a
         # seeded byte range from the raw managed VHD. This exposes the complete
         # disk/snapshot without requiring attachment to an attacker VM.

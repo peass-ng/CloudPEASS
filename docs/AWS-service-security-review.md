@@ -6,6 +6,11 @@ the 475 entries currently published by AWS's Policy Generator catalog. Entries
 that share a prefix are combined because IAM cannot distinguish them by service
 name. It is a work queue, not a claim that a queued service has no attack surface.
 
+Service-prefix completion is not the end of the review. The companion
+[cross-service review](AWS-cross-service-security-review.md) tracks cases where one
+service consumes code, configuration, events, credentials, or roles controlled
+through another service.
+
 ## Status meanings
 
 - `queued`: not yet reviewed in this campaign.
@@ -361,6 +366,15 @@ private proof object contained the exact JSON body, bearer `Authorization` heade
 sensitive header. No `apigateway:POST` deployment action was needed because auto-deploy published
 the integration update.
 
+A separate role-reuse fixture kept a `CredentialsArn` on the integration. The exact-integration
+PATCH-only role changed only `IntegrationUri`; the stored API Gateway role, integration type, and
+payload format remained unchanged. The next unsigned request invoked a second Lambda already
+authorized to that integration role, and the function wrote proof using its own execution role.
+The updater was denied integration reads, direct Lambda invocation, S3 proof access, IAM reads,
+and `iam:PassRole`; empty-role and post-policy-removal updates were denied. The API was restored to
+the benign function before teardown. All API, Lambda, IAM, bucket versions, logs, ZIPs, and local
+proof artifacts were deleted and exact-prefix inventories were empty.
+
 The action is High based on the independently observed request and token disclosure. Whether it
 becomes privilege escalation or Critical depends on the affected route, its authorization model,
 the secrets carried by clients, and whether the replacement endpoint is accepted. Without list or
@@ -541,6 +555,18 @@ group deletion until delayed ENI detachment completed. Both IAM users, every acc
 inline policy were deleted. Exact-prefix ALB, security-group, and IAM inventories returned empty.
 Two earlier harness-only failures—the CLI shorthand parser and a non-portable case-insensitive
 `awk` expression—also ran full cleanup and did not count as security results.
+
+`elasticloadbalancing:ModifyRule` was separately validated as conditional High on one exact
+non-default listener rule. The rule matched a specific host and `/sensitive/*` path and initially
+forwarded to a benign target group. An action-only role changed it to a second target group that
+had already been registered by the fixture. A separate POST then delivered the exact synthetic
+sensitive header and body to the capture Lambda, which wrote proof under its execution role. The
+candidate was denied ELB describe calls, `RegisterTargets`, `ModifyListener`, EC2/IAM reads, direct
+Lambda invocation, S3 list, and `iam:PassRole`; empty-role and fresh post-removal calls were denied.
+The action cannot create or register a target by itself, so High impact requires a known matching
+rule, compatible pre-existing target group, and sensitive traffic. The ALB/listener/rule, target
+groups, Lambdas/logs, versioned bucket, SG/ENIs, roles/policies, ZIPs, and local fixture were deleted;
+exact-prefix inventories were empty.
 
 ### Amazon Cognito Identity (`cognito-identity`) — 2026-09-08
 
@@ -956,6 +982,23 @@ were not consumed; policy-generation behavior therefore remains blocked behind a
 synthetic trail/role and pass-role validation rather than being inferred safe. These rows are
 recorded as prerequisite blockers, not negative security conclusions.
 
+### Amazon MWAA (`airflow`) — S3 DAG poisoning, 2026-09-11
+
+A role with `s3:PutObject` on one exact configured DAG key replaced a benign Python module. About a
+minute later the MWAA scheduler automatically imported it and wrote proof as the environment's
+execution role; no DAG run, Airflow token, or MWAA API permission was needed. The writer was denied
+S3 list/read/proof writes, MWAA get/update, Lambda, and `iam:PassRole`; an empty role could not
+overwrite the object. The benign DAG was restored before teardown.
+
+This exact consumer is Critical when its execution role or network position is privileged, but
+global `s3:PutObject` remains High because an arbitrary object has no execution effect without a
+known mutable consumer. DAG bucket/key discovery does not inherently require AWS list permission:
+IaC/state, deployment configuration, Airflow settings, CI logs, shell/browser history, cached API
+output, errors, or CloudTrail/SIEM copies can disclose it. The environment reached `AVAILABLE`
+before deletion and was then polled to `ResourceNotFound`. Its endpoints/ENIs, NAT/EIP, logs, all
+bucket versions, roles/policies, route tables/subnets/security group/IGW/VPC, proof, and sensitive
+local artifacts were deleted; exact identifier and prefix audits were empty.
+
 ### AWS MWAA Serverless (`airflow-serverless`) — sensitive workflow reads, 2026-09-10
 
 Three independent IAM users, each restricted to one read action, recovered different sensitive
@@ -1038,6 +1081,17 @@ URLs, local notebook metadata, browser artifacts, CLI output, shell history, Clo
 application/orchestration logs, screenshots and support bundles, and CloudTrail/SIEM copies. The
 session, statement, secret, execution role and inline policy, both IAM users, and both access keys
 were deleted; exact Glue, Secrets Manager, and IAM lookups confirmed the test resources absent.
+
+`glue:StartWorkflowRun` was also validated as a conditional High cross-service input primitive. An
+exact-workflow start-only role replaced the default `payload` run property; an unchanged on-demand
+trigger launched an unchanged Python-shell job, which retrieved that property and wrote the injected
+value to a fixed S3 sink as its execution role. The caller was denied direct sink read/write,
+`GetWorkflow`, `ListWorkflows`, `GetWorkflowRunProperties`, `UpdateWorkflow`, and `iam:PassRole`;
+empty-role and fresh post-policy-removal sessions were denied. Run properties do not automatically
+override code or job arguments, so this is High only when an existing job trusts a property that
+controls a sensitive source, destination, query, API action, or artifact. All workflow resources,
+bucket versions, roles, policies, logs, and local artifacts were deleted, and exact-prefix audits in
+all 18 enabled Regions were empty.
 
 ### Amazon Managed Service for Prometheus (`aps`) — 2026-09-09
 
@@ -1400,21 +1454,28 @@ CloudFormation, and Auto Scaling orchestration. A duplicated `autoscaling:Suspen
 in the multi-action legacy chain was also removed. No new attack entry or severity promotion was
 made.
 
-### Amazon EMR (`elasticmapreduce`) — 2026-09-09
+### Amazon EMR (`elasticmapreduce`) — 2026-09-11
 
-An all-region review queried 34 SDK Regions and found zero active classic EMR clusters, Studios,
-or notebook executions in every reachable Region. The current Botocore EMR model exposes no
-legacy operation containing `Editor`. There is therefore no safe existing target on which to test
-whether `AddJobFlowSteps` can execute an inline `command-runner.jar` step under a useful EC2
-instance profile, or whether any legacy notebook flow remains reachable.
+`elasticmapreduce:AddJobFlowSteps` was validated as a standalone Critical execution primitive on a
+known active cluster. The candidate role had only that action on the exact cluster ARN. A direct
+SDK request added a `command-runner.jar` shell step, which completed and wrote a proof containing
+the identity of the cluster's existing `EMR_EC2_DefaultRole` instance profile. The candidate was
+independently denied `DescribeCluster`, direct S3 proof writes, and `iam:PassRole`; an empty role
+and a fresh session after policy removal were both denied the step request.
 
-Two unsupported singleton severities were removed. `RunJobFlow` documents `iam:PassRole` as a
-dependent action when selecting the EMR service role and EC2 instance profile, so it is not a
-standalone High escalation primitive. `OpenEditorInConsole` was marked Critical in the legacy list
-even though the existing documentation requires a compatible editor and surrounding editor
-operations, and the current SDK no longer exposes that API family. Both now remain Medium in
-isolation; contextual multi-permission chains can still be security-critical. No cluster, step,
-role, Studio, notebook, EC2 instance, or network resource was created or changed.
+The high-level `aws emr add-steps` command unexpectedly called `DescribeCluster` before submission,
+so it failed for the exact-only session. Calling the `AddJobFlowSteps` API directly through the SDK
+succeeded, demonstrating that describe access is a client-side convenience rather than an API
+authorization dependency. Exploitation still needs a known live cluster ID, while IaC, logs,
+shell history, cached output, and CloudTrail copies can provide that identifier when enumeration is
+denied.
+
+`RunJobFlow` continues to require `iam:PassRole` when selecting the service and EC2 roles, and the
+legacy `OpenEditorInConsole` operation remains unsupported by the current SDK model, so neither is
+treated as a standalone escalation. After validation the cluster and EC2 instance were terminated,
+its volumes and ENIs disappeared, the versioned bucket and every object version, roles and policies,
+logs and local artifacts were deleted, and attributable unused EMR managed security groups were
+removed. Direct prefix inventories were empty; only terminal EMR/EC2 history remains.
 
 ### Amazon EMR on EKS (`emr-containers`) — 2026-09-09
 
@@ -1977,6 +2038,17 @@ network reachability to the endpoint, and useful permissions on the user's confi
 server/user, SSH-key records, bucket/object, three roles and inline policies, local keys, harness,
 lock, and bytecode were deleted. Exact post-cleanup checks returned zero for every fixture resource.
 
+`transfer:UpdateConnector` was independently validated as a conditional High stored-credential
+redirection primitive. A role restricted to that action on one connector ARN changed only its SFTP
+URL. The connector retained its access role, Secrets Manager reference, and trusted host key; a
+later administrator `TestConnection` sent the exact stored username and password to the redirected
+capture endpoint. The candidate itself was denied `DescribeConnector`, `TestConnection`, direct
+secret access, S3 proof read/write, and `iam:PassRole`; empty-role and post-policy-removal controls
+were denied. A baseline connection to the original unused port timed out and produced no proof.
+The connector, tiny capture instance, secret, versioned proof bucket, roles/profile/policies,
+security group, ENIs, volumes, and local artifact were removed; exact inventories were empty, apart
+from the normal terminated-instance history.
+
 ### Billing, retired, and externally provisioned service batch — 2026-09-09
 
 The re:Invent billing prefix exposes only permission-only `info` and `approve` operations. There is
@@ -2352,6 +2424,15 @@ certificate-authenticated device simulator subscribed to the exact reserved requ
 received the stored payload canary. An empty role was denied. This is High conditional remote-device
 action: it invokes an existing command but neither changes its stored payload nor guarantees how a
 device processes it, so it is not labeled unconditional code execution.
+
+An exact-topic `iot:Publish` role was also tested against an unchanged enabled SQL rule and Lambda
+action. An administrator-published baseline succeeded first; the candidate then injected a unique
+canary, which the existing Lambda wrote to a fixed proof prefix as its own execution role. The
+publisher was denied direct Lambda invoke/get, S3 proof read/write, IAM access, IoT rule/endpoint
+discovery, and `iam:PassRole`; empty-role, sibling-topic, and post-policy-removal publishes were
+denied. Rule actions/SQL and Lambda code, role, and modification fingerprints were unchanged. This
+is conditional High message/stored-authority injection only when a real rule consumer trusts the
+payload for a sensitive operation; it is not arbitrary Lambda invocation or role assumption.
 
 No list permission was required for either path once identifiers were known. Useful discovery
 fallbacks include device firmware and local agent state, configuration/certificate filenames,
