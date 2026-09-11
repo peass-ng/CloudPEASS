@@ -26,7 +26,7 @@ from sensitive_permissions.aws import (  # noqa: E402
 DOCUMENT = ROOT / "docs" / "AWS-cross-service-security-review.md"
 BEGIN = "<!-- BEGIN GENERATED KNOWN-POSITIVE AWS TEST INVENTORY -->"
 END = "<!-- END GENERATED KNOWN-POSITIVE AWS TEST INVENTORY -->"
-HACKTRICKS_REVISION = "bcd4ee49928fa5bc053f82cd966e2cb7d85177e9"
+HACKTRICKS_REVISION = "c019dd4724ec9ca95b23da4654493c3a02b4f933"
 HACKTRICKS_ROOT = (
     "https://github.com/HackTricks-wiki/hacktricks-cloud/blob/"
     f"{HACKTRICKS_REVISION}/src/pentesting-cloud/aws-security"
