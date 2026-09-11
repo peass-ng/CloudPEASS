@@ -416,6 +416,131 @@ def test_every_high_or_critical_rule_has_hacktricks_evidence():
                 "gcp-privilege-escalation/",
                 "gcp-post-exploitation/",
                 "gcp-to-workspace-pivoting/",
+                # Some newer services document their abuse on the service enum
+                # page rather than a dedicated privesc/post-exploitation page.
+                "gcp-services/",
             )
         )
         assert document.endswith(".md")
+
+
+@pytest.mark.parametrize(
+    "permission",
+    [
+        # Config Controller / KCC: KRM API host IAM takeover -> owner-level KCC.
+        "krmapihosting.krmApiHosts.setIamPolicy",
+    ],
+)
+def test_newer_service_takeovers_are_critical(permission):
+    assert classify_permission("gcp", permission) == "critical"
+
+
+@pytest.mark.parametrize(
+    "permission",
+    [
+        # Bare Metal Solution host code execution / data exposure.
+        "baremetalsolution.sshKeys.create",
+        "baremetalsolution.instances.enableInteractiveSerialConsole",
+        "baremetalsolution.nfsshares.update",
+        # BigLake storage-location repointing (data poisoning / read-MITM).
+        "biglake.tables.update",
+        "biglake.catalogs.update",
+        # BigQuery connection read-through and credential repointing.
+        "bigquery.connections.create",
+        "bigquery.connections.use",
+        "bigquery.connections.update",
+        # Cloud KMS EKM MITM over external key material.
+        "cloudkms.ekmConnections.update",
+        "cloudkms.ekmConfigs.update",
+        # Cloud Trace / Error Reporting secret leakage.
+        "cloudtrace.traces.get",
+        "cloudtrace.traces.list",
+        "errorreporting.groups.list",
+        "errorreporting.errorEvents.list",
+        # Contact Center AI Insights confused-deputy reads and PII disclosure.
+        "contactcenterinsights.conversations.get",
+        "contactcenterinsights.conversations.export",
+        # Cloud Domains hijack / auth-code disclosure.
+        "domains.registrations.configureDns",
+        "domains.registrations.update",
+        "domains.registrations.configureManagement",
+        "domains.registrations.configureContact",
+        # Vertex AI Search corpus exfil and RAG poisoning.
+        "discoveryengine.documents.get",
+        "discoveryengine.documents.import",
+        "discoveryengine.servingConfigs.search",
+        "discoveryengine.servingConfigs.answer",
+        "discoveryengine.targetSites.create",
+        # Live Stream confused-deputy storage and ingest-URI disclosure.
+        "livestream.channels.create",
+        "livestream.inputs.get",
+        "livestream.inputs.list",
+        # Looker export redirection / SSO hijack.
+        "looker.instances.export",
+        "looker.instances.update",
+        # Managed Kafka data-plane and Secret Manager disclosure.
+        "managedkafka.clusters.connect",
+        "managedkafka.connectors.create",
+        "managedkafka.connectClusters.create",
+        "managedkafka.connectClusters.update",
+        # NetApp Volumes export tampering and exfil-clone.
+        "netapp.volumes.update",
+        "netapp.snapshots.create",
+        "netapp.volumes.restore",
+        "netapp.storagePools.restoreVolume",
+        # Network Security TLS downgrade MITM.
+        "networksecurity.serverTlsPolicies.update",
+        "networksecurity.clientTlsPolicies.create",
+        # Network Services mesh route/endpoint hijack.
+        "networkservices.httpRoutes.create",
+        "networkservices.endpointPolicies.update",
+        # Parallelstore confused-deputy export/import.
+        "parallelstore.instances.exportData",
+        "parallelstore.instances.importData",
+        # Transcoder confused-deputy job.
+        "transcoder.jobs.create",
+        # VM Migration whole-VM disk exfil.
+        "vmmigration.cloneJobs.create",
+        "vmmigration.cutoverJobs.create",
+        "vmmigration.migratingVms.update",
+        "vmmigration.targets.create",
+        # VMware Engine (GCVE) cleartext admin credential return.
+        "vmwareengine.privateClouds.showVcenterCredentials",
+        "vmwareengine.privateClouds.showNsxCredentials",
+        "vmwareengine.privateClouds.resetVcenterCredentials",
+        "vmwareengine.privateClouds.resetNsxCredentials",
+    ],
+)
+def test_newer_service_attack_permissions_are_high(permission):
+    assert classify_permission("gcp", permission) == "high"
+
+
+@pytest.mark.parametrize(
+    "permission",
+    [
+        # Candidate SMB domain-join credential read; may be redacted by the API.
+        "netapp.activeDirectories.get",
+    ],
+)
+def test_speculative_credential_reads_are_medium(permission):
+    assert classify_permission("gcp", permission, unknown_default="medium") == "medium"
+
+
+def test_migration_center_discovery_client_is_critical_only_with_actas():
+    peass = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "GCP",
+        1,
+    )
+    incomplete = peass.analyze_sensitive_combinations(
+        {"migrationcenter.discoveryClients.create"}
+    )
+    assert incomplete["very_sensitive_perms"] == set()
+
+    complete = {
+        "migrationcenter.discoveryClients.create",
+        "iam.serviceAccounts.actAs",
+    }
+    result = peass.analyze_sensitive_combinations(complete)
+    assert complete <= result["very_sensitive_perms"]

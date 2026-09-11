@@ -107,6 +107,13 @@ very_sensitive_combinations = [
     # Database account takeover.
     ["cloudsql.users.create"],
     ["cloudsql.users.update"],
+
+    # Registering a Migration Center discovery client with a caller-specified
+    # service account impersonates it (actAs-gated).
+    [
+        "migrationcenter.discoveryClients.create",
+        "iam.serviceAccounts.actAs",
+    ],
 ]
 
 
@@ -380,4 +387,25 @@ risk_documentation = (
     ("spanner.*", "gcp-post-exploitation/gcp-spanner-post-exploitation.md"),
     ("storage.*", "gcp-privilege-escalation/gcp-storage-privesc.md"),
     ("workflows.*", "gcp-privilege-escalation/gcp-workflows-privesc.md"),
+    # Newer service attack paths. Some are documented on the service enum pages
+    # under gcp-services/ rather than a dedicated privesc/post-exploitation page.
+    ("baremetalsolution.*", "gcp-services/gcp-bare-metal-solution-enum.md"),
+    ("biglake.*", "gcp-services/gcp-biglake-enum.md"),
+    ("cloudtrace.*", "gcp-services/gcp-trace-profiler-error-reporting-enum.md"),
+    ("contactcenterinsights.*", "gcp-services/gcp-contact-center-insights-enum.md"),
+    ("discoveryengine.*", "gcp-services/gcp-vertex-ai-search-enum.md"),
+    ("domains.*", "gcp-post-exploitation/gcp-cloud-domains-post-exploitation.md"),
+    ("errorreporting.*", "gcp-services/gcp-trace-profiler-error-reporting-enum.md"),
+    ("krmapihosting.*", "gcp-services/gcp-config-controller-enum.md"),
+    ("livestream.*", "gcp-post-exploitation/gcp-live-stream-post-exploitation.md"),
+    ("looker.*", "gcp-services/gcp-looker-enum.md"),
+    ("managedkafka.*", "gcp-services/gcp-managed-kafka-enum.md"),
+    ("migrationcenter.*", "gcp-services/gcp-migration-center-enum.md"),
+    ("netapp.*", "gcp-services/gcp-netapp-volumes-enum.md"),
+    ("networksecurity.*", "gcp-privilege-escalation/gcp-networksecurity-privesc.md"),
+    ("networkservices.*", "gcp-privilege-escalation/gcp-networkservices-privesc.md"),
+    ("parallelstore.*", "gcp-privilege-escalation/gcp-parallelstore-privesc.md"),
+    ("transcoder.*", "gcp-post-exploitation/gcp-transcoder-post-exploitation.md"),
+    ("vmmigration.*", "gcp-services/gcp-vm-migration-enum.md"),
+    ("vmwareengine.*", "gcp-services/gcp-vmwareengine-gcve-enum.md"),
 )

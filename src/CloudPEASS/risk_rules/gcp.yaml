@@ -40,6 +40,10 @@ critical_exact:
   - iam.googleapis.com/workloadIdentityPools.undelete
   - iam.googleapis.com/workloadIdentityPools.update
   - integrations.authConfigs.get
+  # Config Controller / KCC: taking the KRM API host IAM policy grants cluster
+  # access, then applied KRM resources execute as the roles/owner Config
+  # Connector identity, escalating to project takeover.
+  - krmapihosting.krmApiHosts.setIamPolicy
   - osconfig.patchJobs.exec
   - resourcemanager.folders.setIamPolicy
   - resourcemanager.organizations.setIamPolicy
@@ -157,6 +161,110 @@ high_exact:
   - workflows.stepEntries.list
   - workflows.workflows.get
   - workflows.workflows.list
+  # --- Newer service attack paths. Each service family below has matching
+  # HackTricks evidence in sensitive_permissions.gcp (risk_documentation). ---
+  # Bare Metal Solution: SSH-key plant / serial console = host code execution;
+  # NFS export tampering exposes enterprise data.
+  - baremetalsolution.instances.enableInteractiveSerialConsole
+  - baremetalsolution.nfsshares.update
+  - baremetalsolution.sshKeys.create
+  # BigLake: repointing a catalog/database/namespace/table storage LOCATION to
+  # an attacker bucket poisons downstream query reads.
+  - biglake.catalogs.update
+  - biglake.databases.update
+  - biglake.namespaces.update
+  - biglake.tables.update
+  # BigQuery connections: managed-SA read-through, EXTERNAL_QUERY against stored
+  # Cloud SQL credentials, and credential/instance repointing.
+  - bigquery.connections.create
+  - bigquery.connections.update
+  - bigquery.connections.use
+  # Cloud KMS EKM: repointing an EKM connection or the location default gives
+  # MITM over external key wrap/unwrap material.
+  - cloudkms.ekmConfigs.update
+  - cloudkms.ekmConnections.update
+  # Cloud Trace / Error Reporting: span labels and error payloads routinely leak
+  # tokens, connection strings, and secret names.
+  - cloudtrace.traces.get
+  - cloudtrace.traces.list
+  - errorreporting.errorEvents.list
+  - errorreporting.groups.list
+  # Contact Center AI Insights: confused-deputy GCS reads, full transcript/PII
+  # disclosure, and export to an attacker-owned BigQuery dataset.
+  - contactcenterinsights.conversations.create
+  - contactcenterinsights.conversations.export
+  - contactcenterinsights.conversations.get
+  - contactcenterinsights.conversations.upload
+  # Vertex AI Search (Discovery Engine): corpus read/exfil, confused-deputy
+  # import, and RAG poisoning of served documents/sites.
+  - discoveryengine.documents.create
+  - discoveryengine.documents.get
+  - discoveryengine.documents.import
+  - discoveryengine.documents.list
+  - discoveryengine.documents.update
+  - discoveryengine.servingConfigs.answer
+  - discoveryengine.servingConfigs.search
+  - discoveryengine.targetSites.create
+  # Cloud Domains: NS repoint, EPP auth-code disclosure / transfer takeover, and
+  # registrant PII exposure.
+  - domains.registrations.configureContact
+  - domains.registrations.configureDns
+  - domains.registrations.configureManagement
+  - domains.registrations.update
+  # Live Stream: confused-deputy channel/asset storage access and secret ingest
+  # URI disclosure.
+  - livestream.assets.create
+  - livestream.channels.create
+  - livestream.inputs.get
+  - livestream.inputs.list
+  # Looker: export redirection to an attacker bucket and SSO-app hijack.
+  - looker.instances.export
+  - looker.instances.update
+  # Managed Kafka: broker consume/produce, connector exfil/injection, and Secret
+  # Manager version disclosure into an attacker-controlled Connect worker.
+  - managedkafka.clusters.connect
+  - managedkafka.connectClusters.create
+  - managedkafka.connectClusters.update
+  - managedkafka.connectors.create
+  - managedkafka.connectors.update
+  # NetApp Volumes: export-policy tampering and snapshot/backup exfil-clone.
+  - netapp.backups.create
+  - netapp.backups.createCrossProjectBackup
+  - netapp.snapshots.create
+  - netapp.storagePools.restoreVolume
+  - netapp.volumes.createCrossProjectBackup
+  - netapp.volumes.restore
+  - netapp.volumes.update
+  # Network Security: TLS-policy downgrade to plaintext enables MITM/credential
+  # sniffing of the referencing endpoints.
+  - networksecurity.clientTlsPolicies.create
+  - networksecurity.clientTlsPolicies.update
+  - networksecurity.serverTlsPolicies.create
+  - networksecurity.serverTlsPolicies.update
+  # Network Services: HttpRoute / EndpointPolicy hijack reroutes or downgrades
+  # in-mesh traffic for MITM/credential capture.
+  - networkservices.endpointPolicies.create
+  - networkservices.endpointPolicies.update
+  - networkservices.httpRoutes.create
+  - networkservices.httpRoutes.update
+  # Parallelstore: confused-deputy filesystem export (exfil) and import (poison).
+  - parallelstore.instances.exportData
+  - parallelstore.instances.importData
+  # Transcoder: confused-deputy job reads a victim GCS input and writes output to
+  # an attacker-reachable bucket.
+  - transcoder.jobs.create
+  # VM Migration: clone/cutover materializes replicated source disks into an
+  # attacker-controlled instance/project = whole-VM data exfil.
+  - vmmigration.cloneJobs.create
+  - vmmigration.cutoverJobs.create
+  - vmmigration.migratingVms.update
+  - vmmigration.targets.create
+  # VMware Engine (GCVE): show/reset returns cleartext vCenter/NSX-T admin
+  # credentials = full control of the SDDC and its guest VMs.
+  - vmwareengine.privateClouds.resetNsxCredentials
+  - vmwareengine.privateClouds.resetVcenterCredentials
+  - vmwareengine.privateClouds.showNsxCredentials
+  - vmwareengine.privateClouds.showVcenterCredentials
 
 # Exact overrides for names that contain security-looking words but disclose
 # only metadata or perform ordinary lifecycle operations.
@@ -218,6 +326,9 @@ medium_exact:
   - logging.views.access
   - managedidentities.domains.resetpassword
   - monitoring.dashboards.delete
+  # Candidate SMB domain-join credential read; kept medium because the API may
+  # redact the stored password.
+  - netapp.activeDirectories.get
   - networkmanagement.providers.generateProviderAccessToken
   - recaptchaenterprise.keys.retrievelegacysecretkey
   - run.jobs.run
@@ -236,10 +347,6 @@ medium_exact:
   - spanner.databases.write
   - storage.objects.update
   - transferappliance.credentials.get
-  - vmwareengine.privateClouds.resetNsxCredentials
-  - vmwareengine.privateClouds.resetVcenterCredentials
-  - vmwareengine.privateClouds.showNsxCredentials
-  - vmwareengine.privateClouds.showVcenterCredentials
 
 low_exact:
   - cloudasset.assets.listSecretManagerSecretVersions
