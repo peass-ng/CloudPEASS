@@ -5,9 +5,7 @@ hypothesis until a least-privilege principal, a permission-removed control, an
 observed security effect, and complete cleanup satisfy the evidence gate in
 `AWS-service-security-review.md`.
 
-Status values are `queued`, `in_progress`, `validated`, `negative`, `blocked`,
-and `conditional`. `Negative` means the tested generic claim did not work; it does
-not mean every application-specific composition is safe.
+Status values are `queued`, `in_progress`, `validated`, `negative`, `blocked`, and `conditional`. `Negative` means the tested generic claim did not work; it does not mean every application-specific composition is safe.
 
 ## Mutable code and artifact consumers
 
@@ -151,18 +149,9 @@ not mean every application-specific composition is safe.
 
 ## Complete known-positive AWS permission inventory
 
-This generated inventory complements X001-X119 above. It includes every
-permission with retained CloudPEASS live evidence plus true-positive gaps
-reconciled from the accumulated HackTricks Cloud AWS PR. Negative controls,
-cleanup-only actions, and hypotheses without an observed security effect are
-excluded. A `combination` registration means the permission is not promoted to
-that severity by itself; all documented companion permissions and prerequisites
-remain necessary.
+This generated inventory complements X001-X119 above. It includes every permission with retained CloudPEASS live evidence plus true-positive gaps reconciled from the accumulated HackTricks Cloud AWS PR. Negative controls, cleanup-only actions, and hypotheses without an observed security effect are excluded. A `combination` registration means the permission is not promoted to that severity by itself; all documented companion permissions and prerequisites remain necessary.
 
-The wider HackTricks AWS privilege-escalation, post-exploitation, and
-persistence heading audit found no additional unregistered permissions that
-classify High or Critical. These permission-shaped headings from the active
-AWS documentation PR are intentionally excluded from the positive inventory:
+The wider HackTricks AWS privilege-escalation, post-exploitation, and persistence heading audit found no additional unregistered permissions that classify High or Critical. These permission-shaped headings from the active AWS documentation PR are intentionally excluded from the positive inventory:
 
 | Excluded PR heading | Reason |
 | --- | --- |
