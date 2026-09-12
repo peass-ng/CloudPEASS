@@ -48,6 +48,40 @@ very_sensitive_combinations = [
     # attacker-selected dormant program while site/config reads and a sibling
     # config write remained denied. This is direct workload execution.
     ["Microsoft.Web/sites/config/write"],
+    # The slot-specific operation was validated independently: only the target
+    # slot recycled into the attacker-selected program; production and a
+    # sibling slot remained outside the exact role's scope.
+    ["Microsoft.Web/sites/slots/config/write"],
+    # Live exact-role validation restored an attacker-controlled App Service
+    # backup from a private Blob SAS into one production app. The caller could
+    # not read the site/config or restore a sibling. The restored code ran as
+    # the target's preserved system identity and returned a Key Vault canary.
+    # The similarly named sites/restore/write alias only reached 404/405 legacy
+    # routes and is deliberately not promoted.
+    ["Microsoft.Web/sites/restoreFromBackupBlob/action"],
+    # Live exact-role validation installed an attacker-supplied NuGet package
+    # through the otherwise bodyless site-extension route. Its install.cmd
+    # wrote attacker ASPX into wwwroot; that code ran as the app's preserved
+    # system identity and returned a Key Vault-only canary.
+    ["Microsoft.Web/sites/siteextensions/write"],
+    # Live exact-role validation invoked the OneDeploy extension with an
+    # attacker-controlled private-Blob ZIP. The replacement application ran
+    # as the target's preserved identity and returned the protected canary.
+    ["Microsoft.Web/sites/extensions/write"],
+    # Live exact-role validation replaced one known Function's files and HTTP
+    # binding. No site/function read or trigger-sync permission was present;
+    # the next request ran the injected code as the Function managed identity
+    # and returned a protected ARM canary.
+    ["Microsoft.Web/sites/functions/write"],
+    # Live minimum-role validation against the Azure Files share backing a
+    # Function App: file write alone could not issue an Entra FileREST request,
+    # and backup intent alone lacked write. The exact pair blindly replaced
+    # index.js; the next key-protected request ran it as the Function managed
+    # identity and returned the ARM-only canary without a restart.
+    [
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/write",
+        "Microsoft.Storage/storageAccounts/fileServices/writeFileBackupSemantics/action",
+    ],
 
     ["Microsoft.Automation/automationAccounts/runbooks/draft/write", "Microsoft.Automation/automationAccounts/runbooks/draft/content/write", "Microsoft.Automation/automationAccounts/runbooks/draft/testJob/write"],
     ["Microsoft.Automation/automationAccounts/runbooks/draft/write", "Microsoft.Automation/automationAccounts/runbooks/draft/content/write", "Microsoft.Automation/automationAccounts/runbooks/publish/action", "Microsoft.Automation/automationAccounts/jobs/write"],
@@ -164,7 +198,14 @@ very_sensitive_combinations = [
     ["Microsoft.Devices/IotHubs/listkeys/action"],
     ["Microsoft.Devices/IotHubs/iotHubKeys/listkeys/action"],
     ["Microsoft.KeyVault/vaults/accessPolicies/write"],
+    ["Microsoft.Kusto/clusters/databases/principalAssignments/write"],
+    ["Microsoft.Kusto/clusters/principalAssignments/write"],
     ["Microsoft.KeyVault/vaults/deploy/action", "Microsoft.Resources/deployments/write"],
+    # Live exact-role validation: templateSpecs/versions/write alone (scoped to one
+    # spec, no RG read, no Microsoft.Authorization) overwrote a template-spec version;
+    # the next authorized deployment consuming it created an attacker role assignment
+    # under the deployer's identity (supply-chain privesc).
+    ["Microsoft.Resources/templateSpecs/versions/write"],
     ["Microsoft.Search/searchServices/listAdminKeys/action"],
     ["Microsoft.Search/searchServices/regenerateAdminKey/action"],
     ["Microsoft.Storage/storageAccounts/listAccountSas/action"],
@@ -206,6 +247,18 @@ sensitive_combinations = [
     # Logic workflow output to an attacker-selected Blob sink without read or
     # workflow permissions. Impact requires a future privileged consumer.
     ["Microsoft.Web/connections/write"],
+    # Exact access-policy write on a V2 API connection authorized an otherwise
+    # forbidden Workflow Standard identity to use the connection's unreadable
+    # credentials after its attacker-controlled runtime refreshed.
+    ["Microsoft.Web/connections/accessPolicies/Write"],
+    # An exact map-scoped write blindly replaced an XSLT used by an unchanged
+    # Logic workflow. Its next protected input disclosed the selected secret
+    # field despite denied map/workflow reads and denied sibling writes.
+    ["Microsoft.Logic/integrationAccounts/maps/write"],
+    # A blind Dapr component update supplied a replacement state-store
+    # destination and credentials. A later unchanged managed-identity workload
+    # wrote its Key Vault-only canary there without component read/listSecrets.
+    ["Microsoft.App/managedEnvironments/daprComponents/write"],
     # Exact ARM Action and data-plane DataAction tests independently poisoned
     # a write-only secret consumed by a privileged scheduled workload. Impact
     # depends on an unversioned downstream consumer, so these are High.
@@ -225,7 +278,17 @@ sensitive_combinations = [
     ["microsoft.directory/devices/registeredUsers/update"],
     ["Microsoft.Authorization/roleDefinitions/Write"],
     ["Microsoft.ManagedIdentity/userAssignedIdentities/assign/action"],
-    ["Microsoft.Automation/automationAccounts/schedules/write", "Microsoft.Automation/automationAccounts/jobSchedules/write"],
+    # Live exact-role validation at one job-schedule child proved that this
+    # singleton can blindly attach a known published, identity-bearing runbook
+    # to an existing enabled schedule with attacker-selected parameters. The
+    # next platform-owned tick exfiltrated the runbook MI's protected canary;
+    # schedule/runbook/job reads and direct job start remained denied.
+    ["Microsoft.Automation/automationAccounts/jobSchedules/write"],
+    # Exact module-scoped write replaced a classic dependency without module,
+    # runbook, job, account, or source-Blob read. The next unchanged scheduled
+    # runbook loaded it and exfiltrated its MI-only ARM canary. This remains
+    # workload-conditional High because a compatible future consumer is needed.
+    ["Microsoft.Automation/automationAccounts/modules/write"],
     ["Microsoft.Automation/automationAccounts/sourceControls/write"],
     # Live validated with exact roles. Job streams exposed output, error,
     # warning, and verbose canaries; variable reads exposed an unencrypted
@@ -318,6 +381,16 @@ sensitive_combinations = [
     ["Microsoft.ContainerRegistry/registries/importImage/action"],
     ["Microsoft.ContainerRegistry/registries/tasks/listDetails/action"],
     ["Microsoft.ContainerRegistry/registries/taskruns/listDetails/action"],
+    # Live validated on an ABAC-enabled registry. content/write alone received
+    # push but ACR rejected the manifest replacement because pull was also
+    # required. The exact read+write pair retagged an existing attacker image
+    # as a mutable tag; a later legitimate Container App revision restart
+    # pulled it and exposed a managed-identity-only ARM canary. Metadata write,
+    # registry ARM read, and listCredentials were not required.
+    [
+        "Microsoft.ContainerRegistry/registries/repositories/content/read",
+        "Microsoft.ContainerRegistry/registries/repositories/content/write",
+    ],
     # Live validated with an exact DataAction: code submitted under a known
     # session identifier read a retained file created by a different caller.
     ["Microsoft.App/sessionPools/executions/action"],
@@ -403,6 +476,31 @@ sensitive_combinations = [
     # signature and invalidated the prior primary-signed callback.
     ["Microsoft.Logic/workflows/accessKeys/list/action"],
     ["Microsoft.DataFactory/factories/pipelines/createRun/action"],
+    # Live exact-role validation blindly replaced a known sink linked service
+    # with an attacker-keyed private Storage destination. The next unchanged
+    # pipeline run copied its protected canary to that destination; linked-
+    # service/pipeline reads, createRun, and a sibling write remained denied.
+    ["Microsoft.DataFactory/factories/linkedservices/write"],
+    # Live exact-role validation at one dataset resource blindly replaced its
+    # known sink linked-service/path. The next unchanged owner-started pipeline
+    # copied a private source canary only to the attacker-readable sink, while
+    # dataset/pipeline reads, createRun, sibling write, and source Blob read
+    # remained denied. This is workload-conditional High, not Critical.
+    ["Microsoft.DataFactory/factories/datasets/write"],
+    # Live exact-role validation blindly replaced a factory global URL
+    # parameter. The next unchanged owner-started pipeline sent its protected
+    # managed-identity ARM result to the attacker receiver; parameter/pipeline
+    # reads, createRun, and a sibling factory write stayed denied.
+    ["Microsoft.DataFactory/factories/globalParameters/write"],
+    # An enabled schedule trigger rejects mutation. Live minimum-role testing
+    # proved that Stop + Write changed only the known trigger's pipeline URL
+    # parameter, Start was separately enforced, and the next scheduled run
+    # sent a protected factory-MI result to the attacker receiver.
+    [
+        "Microsoft.DataFactory/factories/triggers/stop/action",
+        "Microsoft.DataFactory/factories/triggers/write",
+        "Microsoft.DataFactory/factories/triggers/start/action",
+    ],
     # Live exact-role validation recovered a plaintext secret-like pipeline
     # parameter from a known completed run. Parameters declared SecureString
     # remained redacted in this representation.
@@ -429,6 +527,30 @@ sensitive_combinations = [
         "Microsoft.StreamAnalytics/streamingjobs/inputs/Sample/action",
         "Microsoft.StreamAnalytics/streamingjobs/inputs/OperationResults/read",
     ],
+    # Live minimum-role validation against an active Stream Analytics job:
+    # output write alone reached the service but could not mutate an active
+    # job. Stop + output write redirected its existing Blob sink to an
+    # attacker-keyed private account, and Start resumed the unchanged query.
+    # The next private input event appeared only at the replacement sink.
+    [
+        "Microsoft.StreamAnalytics/streamingjobs/Stop/action",
+        "Microsoft.StreamAnalytics/streamingjobs/outputs/Write",
+        "Microsoft.StreamAnalytics/streamingjobs/Start/action",
+    ],
+    # Live minimum-role validation against an existing Azure SQL Elastic Job:
+    # step write alone was linked-authorized against both the stored credential
+    # and target group. Exact read on those two linked resources (the credential
+    # response exposed only its username) allowed a blind T-SQL replacement.
+    # The separately enforced executions/write operation then started that
+    # version via PUT /executions/{uuid}; it copied a protected database canary
+    # using the stored SQL credential. Every singleton and a sibling job stayed
+    # denied, so this is a workload-conditional High chain rather than Critical.
+    [
+        "Microsoft.Sql/servers/jobAgents/jobs/steps/write",
+        "Microsoft.Sql/servers/jobAgents/credentials/read",
+        "Microsoft.Sql/servers/jobAgents/targetGroups/read",
+        "Microsoft.Sql/servers/jobAgents/jobs/executions/write",
+    ],
     # Live minimum-role validation: the action passed ARM alone but Databricks
     # bootstrap stayed 403. Adding only workspace read placed the user in the
     # workspace admins group and enabled the admin-only SCIM user list.
@@ -447,6 +569,12 @@ sensitive_combinations = [
     # to another Azure Storage queue additionally required the destination
     # account's Microsoft.Storage/storageAccounts/write permission.
     ["Microsoft.EventGrid/eventSubscriptions/write"],
+    # The namespace-topic alias was independently live validated. An exact
+    # event-subscription-scoped role replaced an existing push destination
+    # with an attacker Logic webhook. The next private CloudEvent arrived
+    # only at the replacement consumer; GET and a sibling-topic write stayed
+    # denied. This is not inferred from the classic generic alias above.
+    ["Microsoft.EventGrid/namespaces/topics/eventSubscriptions/write"],
     # Live exact-role validation replaced the receiver of an existing Action
     # Group with an attacker-controlled HTTPS webhook. The caller could not
     # read the group or write its sibling; a pre-existing Activity Log alert
@@ -454,6 +582,16 @@ sensitive_combinations = [
     # to the replacement endpoint. Impact requires an active alert/receiver
     # consumer, so this is conditional High rather than Critical.
     ["Microsoft.Insights/ActionGroups/Write"],
+    # Live minimum-role validation changed an existing Storage metric alert
+    # from an inert threshold to a matching one. Azure linked-authorized both
+    # the monitored resource and Action Group, so the write required these two
+    # exact reads at their respective scopes. The next evaluation invoked an
+    # unchanged Logic playbook whose MI disclosed the ARM-protected canary.
+    [
+        "Microsoft.Insights/metricAlerts/write",
+        "Microsoft.Storage/storageAccounts/read",
+        "Microsoft.Insights/actionGroups/read",
+    ],
     # Exact receive-only DataAction recovered the full seeded CloudEvent and
     # its delivery lock token while ARM namespace read remained denied.
     ["Microsoft.EventGrid/events/receive/action"],
@@ -511,6 +649,19 @@ sensitive_combinations = [
     ],
     ["Microsoft.ServiceBus/namespaces/messages/receive/action"],
     ["Microsoft.ServiceBus/namespaces/messages/send/action"],
+    # Live exact DataAction validation injected a base64-encoded command into
+    # one known Storage Queue. The caller could not peek the target, access the
+    # account, or add to a sibling queue. An existing unchanged queue-triggered
+    # Function consumed it and used its managed identity to disclose an ARM-
+    # protected canary. A wrong command was consumed without disclosure.
+    ["Microsoft.Storage/storageAccounts/queueServices/queues/messages/add/action"],
+    # Independently live validated at one known Table entity. Both the broad
+    # write and narrower update-only action changed an unreadable TargetUri;
+    # the next unchanged Function invocation followed it with its managed
+    # identity and disclosed the ARM-only canary. Entity read, account read,
+    # and sibling-table updates remained denied.
+    ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/write"],
+    ["Microsoft.Storage/storageAccounts/tableServices/tables/entities/update/action"],
     # Shared-access rules may be Listen-, Send-, or Manage-scoped, so their
     # credentials are High but not inherently subscription/tenant takeover.
     ["Microsoft.EventHub/namespaces/authorizationRules/listkeys/action"],
@@ -576,6 +727,13 @@ sensitive_combinations = [
     # send the Search managed-identity token to an unrelated HTTPS endpoint.
     # The captured token then read a separately Entra-protected canary API.
     ["Microsoft.Search/searchServices/skillsets/write"],
+    # Live exact-role validation showed each singleton can redirect data that
+    # the Search managed identity can read into an independently readable
+    # index, without Search-object reads or direct access to the source Blob.
+    # dataSources/write needs a later existing indexer run; indexers/write both
+    # auto-runs a new indexer and authorizes its Search data-plane run/reset.
+    ["Microsoft.Search/searchServices/dataSources/write"],
+    ["Microsoft.Search/searchServices/indexers/write"],
     ["Microsoft.Search/searchServices/createQueryKey/action"],
     ["Microsoft.Search/searchServices/listQueryKeys/action"],
     ["Microsoft.EventGrid/topics/listKeys/action"],
@@ -615,6 +773,18 @@ sensitive_combinations = [
     ["Microsoft.SignalRService/SignalR/auth/accessKey/action"],
     ["Microsoft.SignalRService/SignalR/clientConnection/send/action"],
     ["Microsoft.SignalRService/WebPubSub/clientConnection/send/action"],
+    # A blind exact hub update redirected future authenticated user events,
+    # including their bodies and identity/connection metadata, to an
+    # attacker-controlled HTTPS handler without hub or parent read access.
+    ["Microsoft.SignalRService/WebPubSub/hubs/write"],
+    # Live exact-role validation: a principal holding ONLY experiments/start/action
+    # (no experiment read, no permission on the target) started a pre-configured
+    # Chaos experiment whose system-assigned identity was Key Vault Contributor.
+    # The DenyAccess fault ran under that identity and flipped the target vault's
+    # firewall Allow->Deny (no-role start was 403). This is availability/disruption
+    # (DoS) via a more-privileged experiment identity, not attacker-chosen privesc,
+    # so it is Medium and conditional on an existing configured experiment/target.
+    ["Microsoft.Chaos/experiments/start/action"],
     # Web PubSub token generation alone could not connect; adding only the
     # handshake permission produced a usable resource-and-hub-bound JWT.
     [
