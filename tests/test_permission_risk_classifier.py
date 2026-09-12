@@ -1103,6 +1103,8 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "amplifybackend:GetToken": "low",
             "cognito-identity:GetOpenIdToken": "low",
             "codeartifact:GetAuthorizationToken": "high",
+            "ecr:GetAuthorizationToken": "medium",
+            "ecr-public:GetAuthorizationToken": "medium",
             "ec2:GetPasswordData": "high",
             "events:RetrieveConnectionCredentials": "medium",
             "sts:GetDelegatedAccessToken": "high",
@@ -1129,28 +1131,63 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "apprunner:DescribeService": "high",
             "appsync:UpdateResolver": "high",
             "apigateway:PATCH": "high",
+            "apigateway:POST": "high",
+            "apigateway:PUT": "high",
+            "appconfig:CreateHostedConfigurationVersion": "high",
+            "appconfig:StartDeployment": "high",
             "airflow-serverless:GetTaskInstance": "high",
             "airflow-serverless:GetWorkflow": "high",
             "airflow-serverless:GetWorkflowRun": "high",
             "athena:CreatePresignedNotebookUrl": "critical",
             "athena:GetSessionEndpoint": "critical",
             "athena:StartCalculationExecution": "critical",
+            "athena:UpdateNamedQuery": "high",
+            "athena:UpdateNotebook": "high",
+            "athena:UpdatePreparedStatement": "high",
             "athena:UpdateWorkGroup": "high",
+            "autoscaling:SetDesiredCapacity": "high",
             "codebuild:StartCommandExecution": "critical",
+            "codebuild:StartBuild": "critical",
+            "codebuild:StartBuildBatch": "critical",
+            "codebuild:RetryBuild": "high",
+            "codecommit:GitPush": "high",
             "codepipeline:StartPipelineExecution": "high",
             "codepipeline:PutApprovalResult": "high",
             "codepipeline:PutJobSuccessResult": "high",
+            "codepipeline:RetryStageExecution": "high",
+            "codepipeline:EnableStageTransition": "high",
+            "codepipeline:OverrideStageCondition": "high",
+            "codepipeline:RollbackStage": "high",
             "cloudtrail:UpdateTrail": "high",
+            "cloudformation:ExecuteChangeSet": "high",
+            "cloudformation:SignalResource": "high",
+            "cloudwatch:SetAlarmState": "high",
+            "config:PutDeliveryChannel": "high",
+            "config:StartConfigRulesEvaluation": "high",
+            "cognito-idp:UpdateUserPoolClient": "high",
             "events:UpdateApiDestination": "high",
+            "events:PutRule": "high",
+            "events:PutPermission": "high",
+            "events:StartReplay": "high",
+            "s3:PutBucketNotification": "high",
+            "sns:Subscribe": "high",
             "elasticloadbalancing:ModifyRule": "high",
+            "ecs:UpdateService": "high",
+            "dms:StartReplicationTask": "high",
             "firehose:UpdateDestination": "high",
             "glue:RunStatement": "critical",
             "glue:StartJobRun": "critical",
             "glue:StartWorkflowRun": "high",
+            "glue:BatchCreatePartition": "high",
+            "glue:UpdatePartition": "high",
+            "glue:UpdateTable": "high",
+            "glue:ResumeWorkflowRun": "high",
             "backup:DeleteRecoveryPoint": "high",
             "backup:PutBackupVaultAccessPolicy": "critical",
             "batch:SubmitJob": "critical",
             "elasticmapreduce:AddJobFlowSteps": "critical",
+            "eks:AssociateIdentityProviderConfig": "critical",
+            "ecr:SetRepositoryPolicy": "high",
             "iot:OpenTunnel": "critical",
             "iot:RotateTunnelAccessToken": "critical",
             "wickr:CreateDataRetentionBotChallenge": "critical",
@@ -1161,7 +1198,15 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "ivs:CreateStreamKey": "high",
             "ivs:UpdateChannel": "high",
             "lakeformation:PutDataLakeSettings": "high",
+            "lambda:AddPermission": "high",
             "lambda:GetFunction": "high",
+            "lambda:UpdateEventSourceMapping": "high",
+            "lambda:CreateEventSourceMapping": "high",
+            "lambda:PutFunctionEventInvokeConfig": "high",
+            "lambda:UpdateFunctionEventInvokeConfig": "high",
+            "lambda:PutProvisionedConcurrencyConfig": "high",
+            "lambda:UpdateFunctionCode": "critical",
+            "logs:PutSubscriptionFilter": "high",
             "m2:GetSignedBluinsightsUrl": "high",
             "mediaconnect:AddFlowOutputs": "high",
             "mediaconnect:DescribeFlowSourceThumbnail": "high",
@@ -1178,8 +1223,12 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "route53domains:GetDomainDetail": "high",
             "route53domains:RetrieveDomainAuthCode": "high",
             "route53globalresolver:GetAccessToken": "high",
+            "route53:ChangeResourceRecordSets": "high",
             "secretsmanager:PutSecretValue": "high",
+            "secretsmanager:RotateSecret": "high",
             "sagemaker:StartPipelineExecution": "high",
+            "sagemaker:RetryPipelineExecution": "high",
+            "transfer:StartFileTransfer": "high",
             "transfer:UpdateConnector": "high",
             "s3:PutObject": "high",
             "storagegateway:DescribeChapCredentials": "high",
@@ -1190,10 +1239,13 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "servicediscovery:RegisterInstance": "high",
             "signer:StartSigningJob": "high",
             "ssm:StartAutomationExecution": "critical",
+            "ssm:StartAssociationsOnce": "high",
             "ssm:PutParameter": "high",
             "states:StartExecution": "high",
+            "states:RedriveExecution": "high",
             "sts:GetFederationToken": "high",
             "synthetics:StartCanaryDryRun": "medium",
+            "synthetics:StartCanary": "high",
             "textract:GetDocumentAnalysis": "high",
             "textract:GetDocumentTextDetection": "high",
             "textract:GetExpenseAnalysis": "high",
@@ -1374,6 +1426,41 @@ def test_live_validated_appstream_streaming_url_is_high():
         "aws", "appstream:CreateStreamingURL", unknown_default="medium"
     ) == "high"
     assert ["appstream:CreateStreamingURL"] in sensitive_combinations
+
+
+def test_live_validated_execute_change_set_is_conditionally_high():
+    assert classify_permission(
+        "aws", "cloudformation:ExecuteChangeSet", unknown_default="medium"
+    ) == "high"
+    assert ["cloudformation:ExecuteChangeSet"] in sensitive_combinations
+
+
+def test_live_validated_signal_resource_is_conditionally_high():
+    assert classify_permission(
+        "aws", "cloudformation:SignalResource", unknown_default="medium"
+    ) == "high"
+    assert ["cloudformation:SignalResource"] in sensitive_combinations
+
+
+def test_live_validated_enable_stage_transition_is_conditionally_high():
+    assert classify_permission(
+        "aws", "codepipeline:EnableStageTransition", unknown_default="medium"
+    ) == "high"
+    assert ["codepipeline:EnableStageTransition"] in sensitive_combinations
+
+
+def test_live_validated_override_stage_condition_is_conditionally_high():
+    assert classify_permission(
+        "aws", "codepipeline:OverrideStageCondition", unknown_default="medium"
+    ) == "high"
+    assert ["codepipeline:OverrideStageCondition"] in sensitive_combinations
+
+
+def test_live_validated_dms_start_replication_task_is_conditionally_high():
+    assert classify_permission(
+        "aws", "dms:StartReplicationTask", unknown_default="medium"
+    ) == "high"
+    assert ["dms:StartReplicationTask"] in sensitive_combinations
 
 
 def test_live_validated_low_cost_configuration_disclosures_are_high():

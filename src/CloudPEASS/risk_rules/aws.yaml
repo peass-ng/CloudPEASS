@@ -37,12 +37,10 @@ critical_exact:
   - elasticmapreduce:AddJobFlowSteps
   - ec2:ReplaceIamInstanceProfileAssociation
   - ec2-instance-connect:SendSSHPublicKey
+  - eks:AssociateIdentityProviderConfig
   - elasticfilesystem:DeleteFileSystemPolicy
   - elasticfilesystem:PutFileSystemPolicy
   - entityresolution:PutPolicy
-  - ecr-public:GetAuthorizationToken
-  - ecr-public:SetRepositoryPolicy
-  - ecr:GetAuthorizationToken
   - ecs:ExecuteCommand
   - eks-auth:AssumeRoleForPodIdentity
   - es:UpdateDomainConfig
@@ -96,6 +94,42 @@ critical_exact:
   - sqs:SetQueueAttributes
   - sts:GetDelegatedAccessToken
   - sts:GetServiceBearerToken
+  # Reconciled with singleton Critical attack paths documented by HackTricks
+  # and the legacy sensitive-permission registry. Keeping these exact avoids
+  # the generic write heuristic silently downgrading known privilege paths.
+  - codebuild:StartBuild
+  - codebuild:StartBuildBatch
+  - cognito-idp:AdminAddUserToGroup
+  - cognito-idp:AdminConfirmSignUp
+  - cognito-idp:AdminCreateUser
+  - cognito-idp:AdminSetUserPassword
+  - cognito-idp:AdminUpdateUserAttributes
+  - cognito-idp:CreateIdentityProvider
+  - cognito-idp:CreateUserImportJob
+  - cognito-idp:CreateUserPoolClient
+  - cognito-idp:SetUserPoolMfaConfig
+  - cognito-idp:StartUserImportJob
+  - cognito-idp:UpdateIdentityProvider
+  - cognito-idp:UpdateUserPool
+  - ds:ResetUserPassword
+  - ecr:PutRegistryPolicy
+  - glue:UpdateDevEndpoint
+  - glue:UpdateJob
+  - iam:DeactivateMFADevice
+  - iam:ResyncMFADevice
+  - iam:UpdateOpenIDConnectProviderThumbprint
+  - iam:UpdateSAMLProvider
+  - iam:UploadSSHPublicKey
+  - identitystore:CreateGroupMembership
+  - lambda:AddLayerVersionPermission
+  - lightsail:CreateDomainEntry
+  - lightsail:GetRelationalDatabaseMasterUserPassword
+  - lightsail:UpdateDomainEntry
+  - lightsail:UpdateRelationalDatabase
+  - sns:AddPermission
+  - sqs:AddPermission
+  - sso:CreateAccountAssignment
+  - states:UpdateStateMachine
 
 ## =====================
 ## EVIDENCE-BACKED DOWNGRADES
@@ -104,6 +138,11 @@ critical_exact:
 ## Exact actions that are only medium in isolation. Their documented companion
 ## permissions can still form high-impact combinations.
 medium_override_exact:
+  # Registry authorization tokens carry only the caller's existing ECR/ECR
+  # Public authorization. Live pull/push paths still needed the corresponding
+  # repository actions; token retrieval alone exposed no image or workload.
+  - ecr:GetAuthorizationToken
+  - ecr-public:GetAuthorizationToken
   # Hosted MCP actions only gate tool discovery/invocation. Live calls were
   # delegated as the caller and still enforced every underlying ECS/EKS/IAM
   # or Kubernetes permission; public knowledge tools expose no account data.
@@ -190,6 +229,74 @@ medium_override_exact:
 
 ## Exact action names that must always be classified as `high`.
 high_exact:
+  # Reconciled with singleton High attack paths documented by HackTricks and
+  # the legacy sensitive-permission registry. Combination-only actions remain
+  # at their standalone level and are intentionally not promoted here.
+  - apigateway:POST
+  - apigateway:PUT
+  - apigateway:UpdateRestApiPolicy
+  - appconfig:CreateHostedConfigurationVersion
+  - appconfig:StartDeployment
+  - chime:CreateApiKey
+  - cloudformation:CreateStack
+  - cloudformation:SetStackPolicy
+  - cloudformation:UpdateStack
+  - cloudformation:UpdateStackSet
+  - codecommit:GitPush
+  - codestar:CreateProject
+  - cognito-identity:SetIdentityPoolRoles
+  - cognito-idp:AdminEnableUser
+  - cognito-idp:AdminInitiateAuth
+  - cognito-idp:AdminRespondToAuthChallenge
+  - datapipeline:ActivatePipeline
+  - datapipeline:CreatePipeline
+  - datapipeline:PutPipelineDefinition
+  - dynamodb:ExportTableToPointInTime
+  - dynamodb:PartiQLSelect
+  - dynamodb:PutItem
+  - dynamodb:RestoreTableFromBackup
+  - dynamodb:UpdateItem
+  - ec2:CreateSnapshot
+  - ec2:RunInstances
+  - ecs:CreateService
+  - ecs:RunTask
+  - ecs:StartTask
+  - ecs:UpdateServicePrimaryTaskSet
+  - glue:CreateDevEndpoint
+  - glue:CreateJob
+  - glue:CreateTrigger
+  - lambda:CreateFunction
+  - lambda:InvokeFunction
+  - lambda:InvokeFunctionUrl
+  - lambda:PutProvisionedConcurrencyConfig
+  - rds:AddRoleToDBCluster
+  - rds:AddRoleToDBInstance
+  - rds:DownloadDBLogFilePortion
+  - rds:RestoreDBInstanceFromDBSnapshot
+  - redshift:ModifyCluster
+  - secretsmanager:RotateSecret
+  - ses:SendBounce
+  - ses:SendBulkEmail
+  - ses:SendBulkTemplatedEmail
+  - ses:SendCustomVerificationEmail
+  - ses:SendEmail
+  - ses:SendRawEmail
+  - ses:SendTemplatedEmail
+  - sns:Publish
+  - sns:Unsubscribe
+  - sqs:PurgeQueue
+  - sqs:SendMessage
+  - sso:DeleteInlinePolicyFromPermissionSet
+  - sso:DeletePermissionsBoundaryFromPermissionSet
+  - sso:DetachCustomerManagedPolicyReferenceFromPermissionSet
+  - sso:DetachManagedPolicyFromPermissionSet
+  - states:CreateStateMachine
+  - states:RevealSecrets
+  - states:TestState
+  - workdocs:AddResourcePermissions
+  - workdocs:AddUserToGroup
+  - workdocs:CreateUser
+  - ecr-public:SetRepositoryPolicy
   - airflow-serverless:GetTaskInstance
   - airflow-serverless:GetWorkflow
   - airflow-serverless:GetWorkflowRun
@@ -203,7 +310,11 @@ high_exact:
   - apigateway:GET
   - apigateway:PATCH
   - athena:GetQueryExecution
+  - athena:UpdateNamedQuery
+  - athena:UpdateNotebook
+  - athena:UpdatePreparedStatement
   - athena:UpdateWorkGroup
+  - autoscaling:SetDesiredCapacity
   - appconfig:GetHostedConfigurationVersion
   - appsync:GraphQL
   - appsync:GetGraphqlApiEnvironmentVariables
@@ -222,6 +333,8 @@ high_exact:
   - b2bi:GetTransformer
   - cloudformation:DescribeStacks
   - cloudformation:DescribeChangeSet
+  - cloudformation:ExecuteChangeSet
+  - cloudformation:SignalResource
   - cloudformation:GetTemplate
   - cloudformation:GetTemplateSummary
   - cloudformation:ListExports
@@ -232,8 +345,12 @@ high_exact:
   - cloudfront-keyvaluestore:ListKeys
   - cloudfront:ListDistributions
   - cloudwatch:GetDashboard
+  - cloudwatch:SetAlarmState
   - cloudtrail:LookupEvents
   - cloudtrail:UpdateTrail
+  - config:PutDeliveryChannel
+  - config:StartConfigRulesEvaluation
+  - cognito-idp:UpdateUserPoolClient
   - ce:GetCostAndUsage
   - budgets:ViewBudget
   - aws-portal:ViewBilling
@@ -248,9 +365,16 @@ high_exact:
   - codecommit:GetFile
   - codecommit:GitPull
   - codepipeline:PollForJobs
+  - codebuild:RetryBuild
   - codepipeline:PutApprovalResult
   - codepipeline:PutJobSuccessResult
+  - codepipeline:RetryStageExecution
+  - codepipeline:EnableStageTransition
+  - codepipeline:OverrideStageCondition
+  - codepipeline:RollbackStage
   - codepipeline:StartPipelineExecution
+  - ssm:StartAssociationsOnce
+  - synthetics:StartCanary
   - codepipeline:GetJobDetails
   - codepipeline:GetPipeline
   - codepipeline:GetPipelineExecution
@@ -285,6 +409,7 @@ high_exact:
   - datazone:GetEnvironmentCredentials
   - datasync:StartTaskExecution
   - dms:ModifyEndpoint
+  - dms:StartReplicationTask
   - dsql:DbConnect
   - dsql:DbConnectAdmin
   - ec2-instance-connect:OpenTunnel
@@ -299,11 +424,15 @@ high_exact:
   - elasticloadbalancing:ModifyRule
   - ebs:GetSnapshotBlock
   - ecr:GetDownloadUrlForLayer
+  - ecs:UpdateService
   - ecs:DescribeTaskDefinition
   - ecs:DescribeTasks
   - emr-serverless:GetApplication
   - emr-serverless:GetJobRun
   - events:UpdateApiDestination
+  - events:PutRule
+  - events:PutPermission
+  - events:StartReplay
   - events:ListTargetsByRule
   - firehose:UpdateDestination
   - frauddetector:GetEvent
@@ -318,7 +447,11 @@ high_exact:
   - glue:GetJobs
   - glue:GetStatement
   - glue:GetWorkflowRunProperties
+  - glue:BatchCreatePartition
+  - glue:ResumeWorkflowRun
   - glue:StartWorkflowRun
+  - glue:UpdatePartition
+  - glue:UpdateTable
   - geo:GetDevicePosition
   - geo:GetDevicePositionHistory
   - greengrass:GetComponentVersionArtifact
@@ -383,10 +516,16 @@ high_exact:
   - lambda:ListFunctions
   - lambda:ListVersionsByFunction
   - lambda:GetLayerVersion
+  - lambda:AddPermission
+  - lambda:CreateEventSourceMapping
+  - lambda:PutFunctionEventInvokeConfig
+  - lambda:UpdateFunctionEventInvokeConfig
+  - lambda:UpdateEventSourceMapping
   - logs:FilterLogEvents
   - logs:GetLogRecord
   - logs:GetLogEvents
   - logs:GetQueryResults
+  - logs:PutSubscriptionFilter
   - medical-imaging:GetImageFrame
   - medical-imaging:GetImageSetMetadata
   - omics:GetReadSet
@@ -398,11 +537,11 @@ high_exact:
   - profile:SearchProfiles
   - rds-db:connect
   - route53:ChangeResourceRecordSets
+  - s3:PutBucketNotification
   - route53domains:GetDomainDetail
   - route53domains:RetrieveDomainAuthCode
   - route53globalresolver:GetAccessToken
   - rum:GetAppMonitorData
-  - route53globalresolver:GetAccessToken
   - sdb:GetAttributes
   - sdb:Select
   - s3:GetDataAccess
@@ -412,6 +551,7 @@ high_exact:
   - sagemaker:DescribeTrainingJob
   - sagemaker:DescribeAppImageConfig
   - sagemaker:ListAppImageConfigs
+  - sagemaker:RetryPipelineExecution
   - sagemaker:StartPipelineExecution
   - scheduler:GetSchedule
   - servicediscovery:RegisterInstance
@@ -425,6 +565,7 @@ high_exact:
   - signer:StartSigningJob
   - sns:ListSubscriptions
   - sns:ListSubscriptionsByTopic
+  - sns:Subscribe
   - sqs:ReceiveMessage
   - ssm:GetDocument
   - ssm:GetOpsItem
@@ -434,6 +575,7 @@ high_exact:
   - states:DescribeExecution
   - states:GetActivityTask
   - states:GetExecutionHistory
+  - states:RedriveExecution
   - states:StartExecution
   - storagegateway:DescribeChapCredentials
   - sts:GetFederationToken
@@ -445,6 +587,7 @@ high_exact:
   - textract:GetExpenseAnalysis
   - transcribe:GetTranscriptionJob
   - transfer:ImportSshPublicKey
+  - transfer:StartFileTransfer
   - transfer:UpdateConnector
   - translate:GetParallelData
   - translate:GetTerminology
@@ -456,6 +599,10 @@ high_exact:
 ## Evidence-backed corrections for stale upstream/cache entries. These take
 ## precedence over critical_exact and low_exact during classification.
 high_override_exact:
+  # These commands were validated as sensitive execution-output/status reads;
+  # override older downloaded rule snapshots that classified them Low.
+  - ssm:GetCommandInvocation
+  - ssm:ListCommands
   - servicecatalog:GetProvisionedProductOutputs
   - account:GetContactInformation
   - amplify:GetApp
@@ -660,6 +807,7 @@ high_override_exact:
   - textract:GetExpenseAnalysis
   - transcribe:GetTranscriptionJob
   - transfer:ImportSshPublicKey
+  - transfer:StartFileTransfer
   - translate:GetParallelData
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
