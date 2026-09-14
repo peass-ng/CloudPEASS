@@ -136,6 +136,7 @@ class AWSPEASS(CloudPEASS):
         self.action_catalog_source = None
         self.public_managed_policy_actions = None
         self.simulation_is_admin = False
+        self.simulation_failure_code = None
         self.max_permissions_per_category = 50
 
         # Preserve an explicitly selected profile for CLI probes. Besides
@@ -879,6 +880,39 @@ class AWSPEASS(CloudPEASS):
             "complete": complete,
         }
 
+    @staticmethod
+    def _api_operation_name(operation):
+        return "".join(part.capitalize() for part in str(operation).split("_"))
+
+    def _confirm_partial_iam_visibility(self):
+        failures = []
+        seen = set()
+        for error in self.iam_errors:
+            failure = (
+                self._api_operation_name(error.get("operation", "unknown")),
+                error.get("code", "UnknownError"),
+            )
+            if failure not in seen:
+                seen.add(failure)
+                failures.append(failure)
+        if failures:
+            details = ", ".join(f"{operation} ({code})" for operation, code in failures)
+            print(f"{Fore.YELLOW}IAM visibility is partial because these reads failed: {details}.")
+        else:
+            print(
+                f"{Fore.YELLOW}IAM visibility is partial because not every referenced policy "
+                "document could be recovered."
+            )
+
+        if self.no_ask:
+            print(f"{Fore.YELLOW}Continuing fallback discovery because --no-ask was set.")
+            return True
+        answer = input(
+            f"{Fore.YELLOW}Continue with fallback permission discovery "
+            f"(IAM simulation and/or live read-only probes)? (Y/n): {Fore.RESET}"
+        ).strip().casefold()
+        return answer not in {"n", "no"}
+
     # IAM simulator (read-only) and cascading fallbacks
     def simulate_batch(self, actions, max_attempts=5):
         allowed = set()
@@ -907,10 +941,12 @@ class AWSPEASS(CloudPEASS):
                 if code in {"Throttling", "ThrottlingException", "TooManyRequestsException", "RequestLimitExceeded"}:
                     time.sleep(min(2 ** attempt, 16))
                     continue
+                self.simulation_failure_code = code or "ClientError"
                 if self.debug:
                     print(f"{Fore.YELLOW}[DEBUG] Simulation batch failed ({code}): {exc}")
                 return set(), False
             except BotoCoreError as exc:
+                self.simulation_failure_code = type(exc).__name__
                 if self.debug:
                     print(f"{Fore.YELLOW}[DEBUG] Simulation batch failed: {exc}")
                 return set(), False
@@ -1099,23 +1135,47 @@ class AWSPEASS(CloudPEASS):
             f"{Fore.GREEN}Simulating {len(all_actions)} actions in {len(batches)} read-only batches "
             f"(catalog: {self.action_catalog_source})..."
         )
-        allowed = set()
-        successful_batches = 0
-        with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
-            futures = [executor.submit(self.simulate_batch, batch) for batch in batches]
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Simulating permissions"):
-                try:
-                    batch_allowed, ok = future.result()
-                except Exception as exc:
-                    if self.debug:
-                        print(f"{Fore.YELLOW}[DEBUG] Unexpected simulator worker failure: {exc}")
-                    self.policy_notes.append("An IAM simulator worker failed unexpectedly.")
-                    continue
-                allowed.update(batch_allowed)
-                successful_batches += int(ok)
-        if successful_batches == 0:
-            print(f"{Fore.YELLOW}IAM simulation was unavailable; moving to the next fallback.")
+        # Check one batch before queuing the whole catalog. Without this gate an
+        # AccessDenied response is repeated for every batch, which can take
+        # minutes even though the caller has no simulator permission at all.
+        self.simulation_failure_code = None
+        first_allowed, first_ok = self.simulate_batch(batches[0])
+        if not first_ok:
+            code = self.simulation_failure_code
+            remaining = len(batches) - 1
+            if code in AUTHORIZATION_ERRORS:
+                print(
+                    f"{Fore.YELLOW}IAM simulation is not authorized ({code}); "
+                    f"skipping the remaining {remaining} batch(es)."
+                )
+            else:
+                suffix = f" ({code})" if code else ""
+                print(
+                    f"{Fore.YELLOW}IAM simulation was unavailable on the first batch{suffix}; "
+                    f"skipping the remaining {remaining} batch(es)."
+                )
             return [], False
+
+        allowed = set(first_allowed)
+        successful_batches = 1
+        remaining_batches = batches[1:]
+        if remaining_batches:
+            with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
+                futures = [executor.submit(self.simulate_batch, batch) for batch in remaining_batches]
+                for future in tqdm(
+                    as_completed(futures),
+                    total=len(futures),
+                    desc="Simulating permissions",
+                ):
+                    try:
+                        batch_allowed, ok = future.result()
+                    except Exception as exc:
+                        if self.debug:
+                            print(f"{Fore.YELLOW}[DEBUG] Unexpected simulator worker failure: {exc}")
+                        self.policy_notes.append("An IAM simulator worker failed unexpectedly.")
+                        continue
+                    allowed.update(batch_allowed)
+                    successful_batches += int(ok)
         if successful_batches != len(batches):
             self.policy_notes.append(
                 f"IAM simulation was partial: {successful_batches}/{len(batches)} batches completed."
@@ -1232,6 +1292,7 @@ class AWSPEASS(CloudPEASS):
             "unrestricted_admin": False,
             "complete": False,
         }
+        continue_after_partial = True
 
         if self.principal_type == "root":
             print(
@@ -1269,6 +1330,11 @@ class AWSPEASS(CloudPEASS):
                 f"{len(policy_result['allow'])} allowed action pattern(s), "
                 f"{len(policy_result['deny'])} explicit deny pattern(s)."
             )
+            if (
+                self.iam_visibility == "partial"
+                and not (self.skip_simulation and self.skip_bruteforce)
+            ):
+                continue_after_partial = self._confirm_partial_iam_visibility()
         else:
             print(f"{Fore.YELLOW}[1/3] IAM policy reads skipped by --skip-iam-policies.")
 
@@ -1294,7 +1360,9 @@ class AWSPEASS(CloudPEASS):
         )
         simulation_permissions = []
         simulation_complete = False
-        if self.skip_simulation:
+        if not continue_after_partial:
+            print(f"{Fore.YELLOW}[2/3] IAM simulation skipped by user choice.")
+        elif self.skip_simulation:
             print(f"{Fore.YELLOW}[2/3] IAM simulation skipped by --skip-simulation.")
         elif needs_fallback:
             print(f"{Fore.CYAN}[2/3] Trying IAM simulation (read-only; it does not execute actions)...")
@@ -1317,12 +1385,17 @@ class AWSPEASS(CloudPEASS):
         else:
             print(f"{Fore.GREEN}[2/3] Full IAM policy documents were read; simulation is not needed.")
 
-        run_bruteforce = self.bruteforce_always or (
-            needs_fallback
-            and (not simulation_complete or not simulation_permissions or self.is_session_principal)
+        run_bruteforce = continue_after_partial and (
+            self.bruteforce_always
+            or (
+                needs_fallback
+                and (not simulation_complete or not simulation_permissions or self.is_session_principal)
+            )
         )
         bf_permissions = []
-        if self.skip_bruteforce:
+        if not continue_after_partial:
+            print(f"{Fore.YELLOW}[3/3] Live read-only probes skipped by user choice.")
+        elif self.skip_bruteforce:
             print(f"{Fore.YELLOW}[3/3] Live read-only probes skipped by --skip-bruteforce.")
         elif run_bruteforce:
             print(
