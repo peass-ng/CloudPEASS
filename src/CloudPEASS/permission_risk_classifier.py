@@ -1,7 +1,7 @@
 """
 Permission risk classifier for AWS, Azure, and GCP.
 Adapted from Blue-PEASS for CloudPEASS integration.
-Loads bundled risk rules and refreshes them from Blue-CloudPEASS when possible.
+Uses bundled audited rules; network/cache is a fallback for missing bundles.
 
 Note: The Blue-CloudPEASS repository must be publicly accessible at:
 https://github.com/peass-ng/Blue-CloudPEASS
@@ -9,6 +9,8 @@ https://github.com/peass-ng/Blue-CloudPEASS
 
 from __future__ import annotations
 
+import ast
+from functools import lru_cache
 import fnmatch
 import os
 import re
@@ -80,84 +82,33 @@ def _download_risk_rules(provider: str) -> Optional[str]:
 
 
 def _load_yaml(provider: str) -> dict:
-    """Load rules from the network/cache plus the bundled offline baseline."""
-    cache_path = _cache_dir() / f"{provider}.yaml"
-    try:
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        # Read-only homes/containers must still be able to use bundled rules.
-        pass
-
-    yaml_text = None
-    downloaded_data = {}
-    
-    # Download if cache is stale
-    if _should_refresh_cache(cache_path):
-        downloaded_text = _download_risk_rules(provider)
-        downloaded_data = _parse_rules_yaml(
-            downloaded_text, provider, "downloaded"
-        )
-        if downloaded_data:
-            yaml_text = downloaded_text
-            try:
-                cache_path.write_text(yaml_text, encoding="utf-8")
-            except OSError:
-                pass
-
-    # Fallback to cached version
-    if yaml_text is None and cache_path.exists():
-        try:
-            yaml_text = cache_path.read_text(encoding="utf-8")
-        except OSError:
-            pass
-
+    """Use the shipped audit deterministically; external rules are a fallback."""
+    if provider not in {"aws", "gcp", "azure"}:
+        raise ValueError(f"Unknown provider: {provider}")
     bundled_path = _bundled_rules_path(provider)
     try:
         bundled_text = bundled_path.read_text(encoding="utf-8")
     except OSError:
         bundled_text = None
+    bundled = _parse_rules_yaml(bundled_text, provider, "bundled")
+    if bundled:
+        return bundled
 
-    bundled_data = _parse_rules_yaml(bundled_text, provider, "bundled")
-    external_data = downloaded_data or _parse_rules_yaml(
-        yaml_text, provider, "cached"
-    )
-    # Azure and GCP ship catalog-audited rule sets with CloudPEASS. Keep their
-    # severity decisions deterministic: a stale user cache or a temporarily
-    # different upstream revision must not silently relabel the same scan.
-    if provider in {"azure", "gcp"} and bundled_data:
-        return bundled_data
-    if not bundled_data:
-        return external_data
-    if not external_data:
-        return bundled_data
-
-    # Remote rules can tune scalar heuristics, while bundled list entries remain
-    # a minimum safety baseline if a remote revision accidentally omits one.
-    merged = dict(bundled_data)
-    for key, value in external_data.items():
-        if key in {
-            "write_like_prefix_regex",
-            "bulk_medium_write_prefix_regex",
-            "dangerous_write_regex",
-            "service_medium_dangerous_regex",
-        }:
+    cache_path = _cache_dir() / f"{provider}.yaml"
+    if _should_refresh_cache(cache_path):
+        downloaded = _download_risk_rules(provider)
+        parsed = _parse_rules_yaml(downloaded, provider, "downloaded")
+        if parsed:
             try:
-                re.compile(str(value))
-            except re.error as exc:
-                print(
-                    f"Warning: Ignoring invalid downloaded risk regex "
-                    f"{key}={value!r}: {exc}"
-                )
-                continue
-        if isinstance(value, list) and isinstance(merged.get(key), list):
-            combined = list(merged[key])
-            for item in value:
-                if item not in combined:
-                    combined.append(item)
-            merged[key] = combined
-        else:
-            merged[key] = value
-    return merged
+                cache_path.parent.mkdir(parents=True, exist_ok=True)
+                cache_path.write_text(downloaded, encoding="utf-8")
+            except OSError:
+                pass
+            return parsed
+    try:
+        return _parse_rules_yaml(cache_path.read_text(encoding="utf-8"), provider, "cached")
+    except OSError:
+        return {}
 
 
 @dataclass(frozen=True)
@@ -2058,6 +2009,124 @@ def azure_regex_classify(permission: str, rules: AzureRules) -> Optional[str]:
     return _azure_classify_non_wildcard(permission, rules)
 
 
+@lru_cache(maxsize=None)
+def severity_overrides(provider: str) -> dict[str, str]:
+    """Exact audited decisions take precedence over generic and legacy rules."""
+    raw = _load_yaml(provider).get("severity_overrides", {})
+    if not isinstance(raw, dict) or any(v not in RISK_LEVELS for v in raw.values()):
+        raise ValueError(f"Invalid severity overrides for {provider}")
+    return {(p.casefold() if provider in {"aws", "azure"} else p): level for p, level in raw.items()}
+
+
+def severity_override(provider: str, permission: str) -> Optional[str]:
+    provider = provider.lower().strip()
+    permission = permission.strip()
+    return severity_overrides(provider).get(permission.casefold() if provider in {"aws", "azure"} else permission)
+
+
+@lru_cache(maxsize=None)
+def severity_caps(provider: str) -> frozenset[str]:
+    return frozenset(p.casefold() if provider in {"aws", "azure"} else p for p in _load_yaml(provider).get("severity_caps", []))
+
+
+def is_severity_capped(provider: str, permission: str) -> bool:
+    permission = permission.casefold() if provider in {"aws", "azure"} else permission
+    return permission in severity_caps(provider)
+
+
+@lru_cache(maxsize=None)
+def load_criticality_combinations(provider: str) -> dict[str, tuple[tuple[str, ...], ...]]:
+    if provider not in {"aws", "gcp", "azure"}:
+        raise ValueError(f"Unknown provider: {provider}")
+    source = Path(__file__).resolve().parent.parent / "sensitive_permissions" / f"{provider}.py"
+    if source.is_file():
+        names = {"very_sensitive_combinations": "critical", "sensitive_combinations": "high"}
+        result = {}
+        for node in ast.parse(source.read_text(encoding="utf-8")).body:
+            if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name) and node.targets[0].id in names:
+                result[names[node.targets[0].id]] = tuple(tuple(c) for c in ast.literal_eval(node.value))
+        return result
+    source = _bundled_rules_path(provider).with_name(f"{provider}_criticality.yaml")
+    data = yaml.safe_load(source.read_text(encoding="utf-8"))
+    if data.get("version") != 1 or data.get("provider") != provider:
+        raise ValueError(f"Invalid criticality metadata in {source}")
+    return {level: tuple(tuple(c) for c in data[level]) for level in ("critical", "high")}
+
+
+def _permission_matches(provider: str, permission: str, pattern: str, *, reverse: bool = True) -> bool:
+    """Match CloudPEASS permission patterns, including returned Azure wildcards."""
+    if provider in {"aws", "azure"}:
+        permission = permission.casefold()
+        pattern = pattern.casefold()
+    if fnmatch.fnmatchcase(permission, pattern):
+        return True
+    if not reverse:
+        return False
+    if provider == "azure":
+        graph_prefixes = (
+            "entra.",
+            "microsoft.azure.",
+            "microsoft.directory/",
+            "microsoft.office365.",
+            "microsoft.teams/",
+            "owner of ",
+        )
+        pattern_is_arm = "/" in pattern and not pattern.startswith(graph_prefixes)
+        return "*" in permission and pattern_is_arm and fnmatch.fnmatchcase(pattern, permission)
+    return fnmatch.fnmatchcase(pattern, permission)
+
+
+def _combination_levels(provider: str, permissions: Iterable[str]) -> dict[str, str]:
+    """Return severity upgrades produced by complete CloudPEASS combinations."""
+    provider = provider.lower().strip()
+    permission_list = list(permissions)
+    upgrades: dict[str, str] = {}
+    combinations = load_criticality_combinations(provider)
+
+    # Apply High first so Critical always wins if a permission appears in both.
+    for level in ("high", "critical"):
+        for combination in combinations[level]:
+            if not all(
+                any(_permission_matches(provider, permission, pattern) for permission in permission_list)
+                for pattern in combination
+            ):
+                continue
+            for pattern in combination:
+                for permission in permission_list:
+                    if _permission_matches(provider, permission, pattern, reverse=False):
+                        current = upgrades.get(permission)
+                        if current is None or RISK_ORDER[level] > RISK_ORDER[current]:
+                            upgrades[permission] = level
+    return upgrades
+
+
+@lru_cache(maxsize=None)
+def _singleton_rules(provider: str) -> tuple[dict[str, str], tuple[tuple[str, str], ...]]:
+    exact = {}
+    patterns = []
+    for level in ("high", "critical"):
+        for combo in load_criticality_combinations(provider)[level]:
+            if len(combo) != 1:
+                continue
+            pattern = combo[0].casefold() if provider in {"aws", "azure"} else combo[0]
+            if any(c in pattern for c in "*?["):
+                patterns.append((pattern, level))
+            else:
+                exact[pattern] = level
+    return exact, tuple(patterns)
+
+
+def _singleton_level(provider: str, permission: str) -> Optional[str]:
+    if provider in {"aws", "azure"}:
+        permission = permission.casefold()
+    exact, patterns = _singleton_rules(provider)
+    result = exact.get(permission)
+    for pattern, level in patterns:
+        if fnmatch.fnmatchcase(permission, pattern) and RISK_ORDER[level] > RISK_ORDER.get(result, -1):
+            result = level
+    return result
+
+
 def classify_permission(provider: str, permission: str, *, unknown_default: str = "high") -> str:
     """
     Classify a single permission by risk level.
@@ -2077,6 +2146,9 @@ def classify_permission(provider: str, permission: str, *, unknown_default: str 
     if not permission:
         return unknown_default
 
+    override = severity_override(provider, permission)
+    if override is not None:
+        return override
     if provider == "aws":
         category = aws_regex_classify(permission, load_rules("aws"))
     elif provider == "gcp":
@@ -2086,7 +2158,11 @@ def classify_permission(provider: str, permission: str, *, unknown_default: str 
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
-    return category or unknown_default
+    combination = _singleton_level(provider, permission)
+    category = category or unknown_default
+    if combination and RISK_ORDER[combination] > RISK_ORDER[category]:
+        category = combination
+    return category
 
 
 def classify_all(
@@ -2105,6 +2181,9 @@ def classify_all(
     Returns:
         Dictionary mapping risk levels to lists of permissions
     """
+    provider = provider.lower().strip()
+    permissions = list(permissions)
+    upgrades = _combination_levels(provider, [p.strip() for p in permissions if isinstance(p, str) and p.strip()])
     categories: dict[str, list[str]] = {"low": [], "medium": [], "high": [], "critical": []}
     seen: set[str] = set()
 
@@ -2117,6 +2196,9 @@ def classify_all(
         seen.add(perm)
 
         category = classify_permission(provider, perm, unknown_default=unknown_default)
+        upgrade = upgrades.get(perm)
+        if not is_severity_capped(provider, perm) and upgrade and RISK_ORDER[upgrade] > RISK_ORDER[category]:
+            category = upgrade
         categories[category].append(perm)
 
     return categories

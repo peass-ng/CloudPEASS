@@ -26,13 +26,11 @@ from src.sensitive_permissions.gcp import (
         "iam.googleapis.com/workloadIdentityPoolProviders.update",
         "iam.googleapis.com/workloadIdentityPools.undelete",
         "iam.googleapis.com/workloadIdentityPools.update",
-        "integrations.authConfigs.get",
         "container.pods.exec",
         "container.nodes.proxy",
         "container.serviceAccounts.createToken",
         "cloudbuild.builds.create",
         "composer.environments.executeAirflowCommand",
-        "secretmanager.versions.access",
     ],
 )
 def test_direct_compromise_permissions_are_critical(permission):
@@ -42,6 +40,9 @@ def test_direct_compromise_permissions_are_critical(permission):
 @pytest.mark.parametrize(
     "permission",
     [
+        "integrations.authConfigs.get",
+        "secretmanager.versions.access",
+        "secretmanager.secrets.update",
         "agentidentity.authProviders.retrieveCredentials",
         "agentidentity.authProviders.update",
         "aiplatform.pipelineJobs.get",
@@ -62,7 +63,6 @@ def test_direct_compromise_permissions_are_critical(permission):
         "pubsub.subscriptions.consume",
         "run.routes.invoke",
         "secretmanager.versions.add",
-        "secretmanager.versions.destroy",
         "container.clusters.getCredentials",
         "container.pods.attach",
         "container.pods.getLogs",
@@ -92,7 +92,6 @@ def test_direct_compromise_permissions_are_critical(permission):
         "healthcare.hl7V2Messages.get",
         "healthcare.hl7V2Messages.ingest",
         "iam.serviceAccounts.getOpenIdToken",
-        "cloudkms.cryptoKeyVersions.destroy",
         "artifactregistry.repositories.uploadArtifacts",
         "datastore.entities.create",
         "datastore.entities.delete",
@@ -128,6 +127,8 @@ def test_data_plane_and_context_dependent_permissions_are_high(permission):
 @pytest.mark.parametrize(
     "permission",
     [
+        "secretmanager.versions.destroy",
+        "cloudkms.cryptoKeyVersions.destroy",
         "compute.disks.create",
         "compute.disks.update",
         "monitoring.dashboards.update",
@@ -142,7 +143,6 @@ def test_data_plane_and_context_dependent_permissions_are_high(permission):
         "monitoring.dashboards.delete",
         "run.jobs.run",
         "run.jobs.runWithOverrides",
-        "secretmanager.secrets.update",
         "storage.objects.update",
         "iam.roles.create",
         "logging.views.access",
@@ -416,6 +416,7 @@ def test_every_high_or_critical_rule_has_hacktricks_evidence():
                 "gcp-privilege-escalation/",
                 "gcp-post-exploitation/",
                 "gcp-to-workspace-pivoting/",
+                "gcp-persistence/",
                 # Some newer services document their abuse on the service enum
                 # page rather than a dedicated privesc/post-exploitation page.
                 "gcp-services/",

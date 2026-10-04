@@ -9,13 +9,12 @@ and labels incomplete evidence.
 
 ## Critical
 
-Critical permissions expose credentials or bypass an authorization boundary
+Critical permissions mint credentials or bypass an authorization boundary
 directly:
 
 | Permission pattern | Potential attack path |
 | --- | --- |
-| get, list, watch, or wildcard on Secrets | Read tokens, TLS keys, registry credentials, or application secrets. |
-| get, list, watch, or wildcard on all resources | Read Secrets plus every current and future resource in the granted scope. |
+| wildcard verb on all core resources | Unrestricted core operations, including token minting and node proxy access. |
 | create or wildcard on serviceaccounts/token | Mint a bound token for a named ServiceAccount. |
 | get, create, or wildcard on nodes/proxy | Reach kubelet APIs; get-only executed through direct kubelet WebSocket `/exec`, while create-only executed through `/run` directly and via the API-server proxy in the v1.37 test. |
 | impersonate users or ServiceAccounts | Send authorized requests as another user or ServiceAccount. Group/UID/extra grants alone cannot start impersonation. |
@@ -25,7 +24,9 @@ directly:
 ## High
 
 High permissions provide code execution, policy bypass, traffic interception,
-control-plane modification, or a strong conditional escalation primitive:
+control-plane modification, protected data access, or a strong conditional escalation primitive:
+
+- Secret get/list/watch and read-only wildcards covering core resources expose credentials and protected content.
 
 - Pod create/update/patch and create/update/patch on Deployments, DaemonSets,
   StatefulSets, ReplicaSets, ReplicationControllers, Jobs, and CronJobs. A Pod
@@ -65,10 +66,9 @@ control-plane modification, or a strong conditional escalation primitive:
   NodeRestriction adds extra label protection for kubelet identities.
 - Ingress status update/patch when an active controller consumes mutable
   annotations as routing or exposure configuration.
-- Legacy DaemonSet, PodDisruptionBudget, CustomResourceDefinition, and Namespace
-  status update/patch because accepted owner references can make garbage
-  collection delete the object and its dependents. ReplicaSet status is also
-  High when an active Deployment rollout consumes forged availability.
+- Namespace status update/patch can alter labels that an admission or policy control trusts.
+  Legacy DaemonSet, PodDisruptionBudget and CustomResourceDefinition status owner-reference
+  deletion, and ReplicaSet status forged availability, are Medium availability attacks.
 - Ingress create/patch when an active controller accepts the object.
   Create can expose an internal Service through a new host/path; patch can
   redirect a trusted route to another Service.
@@ -131,7 +131,7 @@ the pods/ephemeralcontainers representation is not reported as injection.
 
 Classification uses both API group and resource. A custom resource called
 `secrets`, `pods`, or `services` in an unrelated API group is not treated as the
-built-in object. A core-resource wildcard can include Secrets and is critical;
+built-in object. A read-only core-resource wildcard can include Secrets and is High;
 a wildcard confined to another API group is not. Wildcard rules still include
 future resources in their group and therefore carry version-drift risk. Custom
 and controller-specific resources cannot be classified from RBAC names alone,
