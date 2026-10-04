@@ -1112,9 +1112,9 @@ class AwsRiskClassificationTest(unittest.TestCase):
             "appsync:PutResourcePolicy": "high",
             "acm:DescribeCertificate": "low",
             "s3:GetObject": "high",
-            "kms:Decrypt": "critical",
-            "secretsmanager:GetSecretValue": "critical",
-            "ssm:GetParameter": "critical",
+            "kms:Decrypt": "high",
+            "secretsmanager:GetSecretValue": "high",
+            "ssm:GetParameter": "high",
             "madeup:UnknownAction": "medium",
         }
         for permission, level in expected.items():

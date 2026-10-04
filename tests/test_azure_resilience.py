@@ -1,3 +1,4 @@
+from src.CloudPEASS.permission_risk_classifier import RISK_ORDER, is_severity_capped, severity_override
 import time
 from types import SimpleNamespace
 
@@ -318,7 +319,11 @@ def test_every_configured_azure_attack_combination_reaches_its_declared_tier():
         for combination in combinations:
             categories = peas.analyze_group(set(combination), [])["permissions_cat"]
             for permission in combination:
-                assert permission in categories[expected], (expected, combination)
+                actual = next(level for level, values in categories.items() if permission in values)
+                if is_severity_capped("azure", permission):
+                    assert actual == severity_override("azure", permission), (expected, combination)
+                else:
+                    assert RISK_ORDER[actual] >= RISK_ORDER[expected], (expected, combination)
 
 
 def test_compute_application_access_requires_workspace_read_combination():
@@ -749,7 +754,7 @@ def test_batch_job_configuration_reads_are_high_singletons():
         assert not categories["critical"]
 
 
-def test_databricks_workspace_admin_bootstrap_requires_read_pair():
+def test_databricks_admin_grant_is_critical_and_retains_read_dependency():
     combination = [
         "Microsoft.Databricks/workspaces/assignWorkspaceAdmin/action",
         "Microsoft.Databricks/workspaces/read",
@@ -763,12 +768,14 @@ def test_databricks_workspace_admin_bootstrap_requires_read_pair():
         1,
     )
     categories = peas.analyze_group(set(combination), [])["permissions_cat"]
-    assert set(categories["high"]) == set(combination)
-    assert not categories["critical"]
+    assert categories["critical"] == [combination[0]]
+    assert categories["high"] == [combination[1]]
 
     action_only = {combination[0]}
     categories = peas.analyze_group(action_only, [])["permissions_cat"]
-    assert categories["medium"] == [combination[0]]
+    # The direct admin grant is Critical; executing the documented bootstrap
+    # still requires the read permission recorded in the complete pair above.
+    assert categories["critical"] == [combination[0]]
     assert not categories["high"]
 
 

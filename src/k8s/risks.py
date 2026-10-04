@@ -109,7 +109,7 @@ def classify_permission(key: PermissionKey) -> tuple[str, str]:
 
     if resource == "*":
         if (verb in READ_VERBS or verb == "*") and group in CORE_GROUPS:
-            return "critical", "Can read every current and future API resource, including Secrets."
+            return ("critical" if verb == "*" else "high"), "Can read every current and future API resource, including Secrets."
         if verb in READ_VERBS or verb == "*":
             return "medium", f"Can read every current and future resource in API group {group}."
         if verb in CHANGE_VERBS and group in {
@@ -124,7 +124,7 @@ def classify_permission(key: PermissionKey) -> tuple[str, str]:
             return "high", "Can change every current and future API resource allowed by this scope."
     if resource == "secrets" and group in CORE_GROUPS:
         if verb in READ_VERBS or verb == "*":
-            return "critical", "Can read Secret objects, which commonly contain credentials."
+            return "high", "Can read Secret objects, which commonly contain credentials."
         if verb in CHANGE_VERBS:
             return "high", "Can create or replace credentials and configuration stored in Secrets."
     if (
@@ -269,7 +269,7 @@ def classify_permission(key: PermissionKey) -> tuple[str, str]:
         )
     ) and verb in {"update", "patch", "*"}:
         return (
-            "high",
+            "medium",
             "Can mutate owner references through a legacy status endpoint and cause the "
             "garbage collector to delete the object and its dependents.",
         )
@@ -279,7 +279,7 @@ def classify_permission(key: PermissionKey) -> tuple[str, str]:
         and verb in {"update", "patch", "*"}
     ):
         return (
-            "high",
+            "medium",
             "Can forge ReplicaSet availability consumed by a Deployment and defeat rollout "
             "availability guarantees when the target belongs to an active rollout.",
         )

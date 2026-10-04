@@ -6,6 +6,8 @@ Welcome to the **Cloud Privilege Escalation Awesome Script Suite** – your one-
 
 This toolkit leverages advanced techniques to enumerate your permissions (it uses different permission enumeration techniques depending on the cloud) and utilizes insights from **[HackTricks Cloud](https://cloud.hacktricks.wiki/en/index.html)** plus a curated permissions catalog (**Blue-CloudPEASS**) to classify permissions as **critical / high / medium / low**.
 
+Permission ratings follow the shared [severity policy](docs/permission-severity-policy.md), with [audited source evidence](docs/permission-severity-audit.csv).
+
 ---
 
 <details>

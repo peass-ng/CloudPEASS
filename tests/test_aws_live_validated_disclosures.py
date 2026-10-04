@@ -795,11 +795,11 @@ def test_live_validated_route53_global_resolver_token_disclosure():
 
 def test_live_validated_acm_private_key_export():
     action = "acm:ExportCertificate"
-    critical = {tuple(candidate) for candidate in very_sensitive_combinations}
+    critical = {tuple(candidate) for candidate in sensitive_combinations}
     assert (action,) in critical
     assert classify_permission(
         "aws", action, unknown_default="medium"
-    ) == "critical"
+    ) == "high"
     assert live_validated_disclosure_documentation[action] == (
         "aws-services/aws-certificate-manager-acm-and-private-certificate-authority-pca.md"
     )
@@ -1033,11 +1033,11 @@ def test_live_validated_docdb_elastic_admin_password_takeover():
 
 def test_live_validated_elasticache_modify_user_password_takeover():
     action = "elasticache:ModifyUser"
-    high = {tuple(candidate) for candidate in sensitive_combinations}
+    high = {tuple(candidate) for candidate in very_sensitive_combinations}
     assert (action,) in high
     assert classify_permission(
         "aws", action, unknown_default="medium"
-    ) == "high"
+    ) == "critical"
     assert live_validated_disclosure_documentation[action] == (
         "aws-services/aws-elasticache.md"
     )
@@ -1045,11 +1045,11 @@ def test_live_validated_elasticache_modify_user_password_takeover():
 
 def test_live_validated_memorydb_update_user_password_takeover():
     action = "memorydb:UpdateUser"
-    high = {tuple(candidate) for candidate in sensitive_combinations}
+    high = {tuple(candidate) for candidate in very_sensitive_combinations}
     assert (action,) in high
     assert classify_permission(
         "aws", action, unknown_default="medium"
-    ) == "high"
+    ) == "critical"
     assert live_validated_disclosure_documentation[action] == (
         "aws-services/aws-memorydb-enum.md"
     )
