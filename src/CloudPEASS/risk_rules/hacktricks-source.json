@@ -1,0 +1,11 @@
+{
+  "repository": "HackTricks-wiki/hacktricks-cloud",
+  "revision": "cfaea7fce524b2ebfe99d91f55821069d171d0a1",
+  "path": "src/permission-categorizations",
+  "sha256": {
+    "aws.yaml": "ac4c18437bae33a6e7a884ff5464a2f88c819a1b8a82994e202e7f6d3db95236",
+    "gcp.yaml": "4ca95cbb6403cb296749a1c9da082c755d57714c85ae967187dfd9c4f6d4000e",
+    "azure.yaml": "6bbfc1e1982014a840b6c45acb4d6ef90f1fb15ab45753197e5d0be793c1205c",
+    "k8s.yaml": "249e26b173c83bac64d718037042dc55df49b21165d9194c73ff8e24c6ffaa18"
+  }
+}

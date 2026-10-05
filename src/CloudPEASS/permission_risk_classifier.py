@@ -2057,6 +2057,9 @@ def is_severity_capped(provider: str, permission: str) -> bool:
 def load_criticality_combinations(provider: str) -> dict[str, tuple[tuple[str, ...], ...]]:
     if provider not in {"aws", "gcp", "azure"}:
         raise ValueError(f"Unknown provider: {provider}")
+    canonical = _load_yaml(provider).get("combinations")
+    if canonical is not None:
+        return {level: tuple(tuple(c) for c in canonical[level]) for level in ("critical", "high")}
     source = Path(__file__).resolve().parent.parent / "sensitive_permissions" / f"{provider}.py"
     if source.is_file():
         names = {"very_sensitive_combinations": "critical", "sensitive_combinations": "high"}
@@ -2146,6 +2149,13 @@ def _singleton_level(provider: str, permission: str) -> Optional[str]:
     return result
 
 
+@lru_cache(maxsize=None)
+def _catalog_severities(provider: str) -> dict[str, str]:
+    return {(permission.casefold() if provider in {"aws", "azure"} else permission): level
+            for level, permissions in _load_yaml(provider).get("permission_categories", {}).items()
+            for permission in permissions}
+
+
 def classify_permission(provider: str, permission: str, *, unknown_default: str = "high") -> str:
     """
     Classify a single permission by risk level.
@@ -2170,7 +2180,10 @@ def classify_permission(provider: str, permission: str, *, unknown_default: str 
     override = severity_override(provider, permission)
     if override is not None:
         return override
-    if provider == "aws":
+    catalog = _catalog_severities(provider).get(permission.casefold() if provider in {"aws", "azure"} else permission)
+    if catalog is not None:
+        category = catalog
+    elif provider == "aws":
         category = aws_regex_classify(permission, load_rules("aws"))
     elif provider == "gcp":
         category = gcp_regex_classify(permission, load_rules("gcp"))

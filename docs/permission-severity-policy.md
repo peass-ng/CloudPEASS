@@ -1,6 +1,6 @@
 # Permission severity policy
 
-Both CloudPEASS and Blue-CloudPEASS use these levels for AWS, GCP, Azure and Kubernetes:
+Both CloudPEASS and Blue-CloudPEASS use these levels for AWS, GCP, Azure and Kubernetes. The canonical files live in [HackTricks Cloud](https://github.com/HackTricks-wiki/hacktricks-cloud/tree/master/src/permission-categorizations); see [the synchronization guide](permission-categorization-sync.md).
 
 - **Critical:** direct or nearly self-sufficient privilege grants, identity takeover, credential minting or privileged execution. Examples include `iam:PassRole`, service-account token minting, administrator assignment and Kubernetes `bind`/`escalate`. A trivial lookup or target-dependent prerequisite can still exist; Critical does not promise that a call succeeds on every target.
 - **High:** protected data, stored secrets or private-key disclosure; code/configuration poisoning, traffic interception and escalation paths that depend on additional grants or target configuration.
