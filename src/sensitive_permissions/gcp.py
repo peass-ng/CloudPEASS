@@ -202,10 +202,14 @@ very_sensitive_combinations = [
     ["vmwareengine.privateClouds.setIamPolicy"],
     ["workflows.workflows.update"],
     ["workstations.workstations.setIamPolicy"],
+    # Documented grants absent from the prior stored catalog.
+    ["clouddeploy.deployPolicies.setIamPolicy"],
+    ["run.workerpools.setIamPolicy"],
 ]
 
 
 sensitive_combinations = [
+    ["appengine.versions.getFileContents"],
     # Credentials or identity-related changes that usually need more context.
     ["agentidentity.authProviders.retrieveCredentials"],
     ["agentidentity.authProviders.update"],
@@ -338,7 +342,6 @@ sensitive_combinations = [
     ["aiplatform.semanticGovernancePolicies.update"],
     ["alloydb.clusters.create"],
     ["alloydb.clusters.export"],
-    ["alloydb.clusters.restore"],
     ["alloydb.instances.create"],
     ["alloydb.instances.executeSqlReadOnly"],
     ["alloydb.instances.update"],
@@ -411,17 +414,13 @@ sensitive_combinations = [
     ["clouddeploy.releases.create"],
     ["clouddeploy.releases.get"],
     ["clouddeploy.rollouts.create"],
-    ["cloudfunctions.functions.generateUploadUrl"],
     ["cloudkms.autokeyConfigs.update"],
     ["cloudkms.cryptoKeyVersions.update"],
     ["cloudkms.cryptoKeyVersions.useToDecapsulate"],
     ["cloudkms.cryptoKeyVersions.useToDecrypt"],
     ["cloudkms.cryptoKeyVersions.useToDecryptViaDelegation"],
-    ["cloudkms.cryptoKeyVersions.useToEncrypt"],
     ["cloudkms.cryptoKeyVersions.useToSign"],
-    ["cloudkms.cryptoKeys.create"],
     ["cloudkms.keyHandles.create"],
-    ["cloudkms.keyRings.create"],
     ["cloudprivatecatalogproducer.products.update"],
     ["cloudscheduler.jobs.create"],
     ["cloudscheduler.jobs.run"],
@@ -482,16 +481,12 @@ sensitive_combinations = [
     ["connectors.actions.execute"],
     ["connectors.connections.executeSqlQuery"],
     ["contactcenterinsights.conversations.generateSignedAudio"],
-    ["container.clusterRoleBindings.create"],
     ["container.clusters.create"],
     ["container.clusters.update"],
     ["container.mutatingWebhookConfigurations.create"],
     ["container.mutatingWebhookConfigurations.update"],
-    ["container.nodePools.create"],
-    ["container.nodePools.update"],
     ["container.pods.create"],
     ["container.pods.update"],
-    ["container.roleBindings.create"],
     ["container.secrets.get"],
     ["container.secrets.list"],
     ["containeranalysis.notes.attachOccurrence"],
@@ -593,7 +588,6 @@ sensitive_combinations = [
     ["managedflink.deployments.create"],
     ["managedflink.jobs.create"],
     ["managedkafka.acls.create"],
-    ["mcp.tools.call"],
     ["modelarmor.floorSettings.update"],
     ["modelarmor.templates.update"],
     ["monitoring.alertPolicies.create"],
@@ -603,7 +597,6 @@ sensitive_combinations = [
     ["netapp.backups.useReadOnly"],
     ["netapp.volumes.create"],
     ["networkconnectivity.hubs.create"],
-    ["networkconnectivity.hubs.use"],
     ["networkconnectivity.policyBasedRoutes.create"],
     ["networkconnectivity.spokes.create"],
     ["networksecurity.addressGroups.update"],
@@ -689,7 +682,6 @@ sensitive_combinations = [
     ["servicedirectory.endpoints.update"],
     ["servicedirectory.networks.attach"],
     ["servicemanagement.services.update"],
-    ["serviceusage.services.use"],
     ["spanner.backups.create"],
     ["spanner.backups.restoreDatabase"],
     ["spanner.databases.create"],
@@ -706,6 +698,33 @@ sensitive_combinations = [
     ["vmmigration.migratingVms.create"],
     ["vpcaccess.connectors.create"],
     ["workstations.workstationConfigs.create"],
+    # Source-verified corrections from the comprehensive recheck.
+    ["aiplatform.ragCorpora.query"],
+    ["ces.conversations.get"],
+    ["clouddeploy.releases.list"],
+    # Content and prerequisite distinctions verified in the recheck.
+    ["logging.logEntries.list"],
+    ["logging.privateLogEntries.list"],
+    ["appengine.memcache.get"],
+    ["cloudsupport.techCases.get"],
+    ["contactcenterinsights.conversations.list"],
+    ["contactcenterinsights.datasetConversations.list"],
+    ["contactcenterinsights.analyses.get"],
+    ["contactcenterinsights.analyses.list"],
+    ["connectors.connections.listenEvent"],
+    ["livestream.channels.list"],
+    ["aiplatform.featureViews.searchNearestEntities"],
+    ["geminicloudassist.investigations.get"],
+    ["geminicloudassist.investigations.list"],
+    ["geminicloudassist.investigationRevisions.get"],
+    ["geminicloudassist.investigationRevisions.list"],
+    ["netapp.volumes.createCrossProjectBackup"],
+    ["logging.views.access"],
+    # Documented grants absent from the prior stored catalog.
+    ["managedkafka.connectors.create"],
+    ["managedkafka.connectors.update"],
+    ["parallelstore.instances.exportData"],
+    ["parallelstore.instances.importData"],
 ]
 
 
@@ -1395,4 +1414,50 @@ risk_documentation += (
     ('workflows.workflows.update', 'gcp-persistence/gcp-workflows-persistence.md'),
     ('workstations.workstationConfigs.create', 'gcp-privilege-escalation/gcp-cloud-workstations-privesc.md'),
     ('workstations.workstations.setIamPolicy', 'gcp-privilege-escalation/gcp-cloud-workstations-privesc.md'),
+)
+
+# Exact source evidence for rechecked content reads.
+risk_documentation += (
+    ('aiplatform.ragCorpora.query', 'gcp-post-exploitation/gcp-vertex-ai-post-exploitation.md'),
+    ('ces.conversations.get', 'gcp-post-exploitation/gcp-cx-agent-studio-post-exploitation.md'),
+    ('clouddeploy.releases.list', 'gcp-post-exploitation/gcp-cloud-deploy-post-exploitation.md'),
+)
+
+risk_documentation += (
+    ('appengine.versions.getFileContents', 'gcp-post-exploitation/gcp-app-engine-post-exploitation.md'),
+)
+
+risk_documentation += (
+    ('logging.logEntries.list', 'gcp-post-exploitation/gcp-dataproc-post-exploitation.md'),
+    ('logging.privateLogEntries.list', 'gcp-post-exploitation/gcp-app-engine-post-exploitation.md'),
+    ('appengine.memcache.get', 'gcp-post-exploitation/gcp-app-engine-post-exploitation.md'),
+    ('cloudsupport.techCases.get', 'gcp-post-exploitation/gcp-cloud-support-post-exploitation.md'),
+    ('contactcenterinsights.conversations.list', 'gcp-post-exploitation/gcp-contact-center-insights-post-exploitation.md'),
+    ('contactcenterinsights.datasetConversations.list', 'gcp-post-exploitation/gcp-contact-center-insights-post-exploitation.md'),
+    ('contactcenterinsights.analyses.get', 'gcp-post-exploitation/gcp-contact-center-insights-post-exploitation.md'),
+    ('contactcenterinsights.analyses.list', 'gcp-post-exploitation/gcp-contact-center-insights-post-exploitation.md'),
+    ('connectors.connections.listenEvent', 'gcp-post-exploitation/gcp-integration-connectors-post-exploitation.md'),
+    ('livestream.channels.list', 'gcp-post-exploitation/gcp-live-stream-post-exploitation.md'),
+    ('aiplatform.featureViews.searchNearestEntities', 'gcp-post-exploitation/gcp-vertex-ai-post-exploitation.md'),
+    ('geminicloudassist.investigations.get', 'gcp-post-exploitation/gcp-gemini-cloud-assist-post-exploitation.md'),
+    ('geminicloudassist.investigations.list', 'gcp-post-exploitation/gcp-gemini-cloud-assist-post-exploitation.md'),
+    ('geminicloudassist.investigationRevisions.get', 'gcp-post-exploitation/gcp-gemini-cloud-assist-post-exploitation.md'),
+    ('geminicloudassist.investigationRevisions.list', 'gcp-post-exploitation/gcp-gemini-cloud-assist-post-exploitation.md'),
+    ('netapp.volumes.createCrossProjectBackup', 'gcp-persistence/gcp-netapp-volumes-persistence.md'),
+)
+
+risk_documentation += (("logging.views.access", "gcp-post-exploitation/gcp-logging-post-exploitation.md"),)
+
+risk_documentation += (
+    ('agentidentity.authProviders.retrieveCredentials', 'gcp-to-workspace-pivoting/gcp-agent-identity-auth-manager-privesc.md'),
+    ('agentidentity.authProviders.update', 'gcp-privilege-escalation/gcp-agent-registry-privesc.md'),
+    ('clouddeploy.deployPolicies.setIamPolicy', 'gcp-privilege-escalation/gcp-cloud-deploy-privesc.md'),
+    ('contactcenterinsights.datasetConversations.list', 'gcp-post-exploitation/gcp-contact-center-insights-post-exploitation.md'),
+    ('geminicloudassist.investigationRevisions.list', 'gcp-post-exploitation/gcp-gemini-cloud-assist-post-exploitation.md'),
+    ('geminicloudassist.investigations.list', 'gcp-post-exploitation/gcp-gemini-cloud-assist-post-exploitation.md'),
+    ('managedkafka.connectors.create', 'gcp-persistence/gcp-managed-kafka-persistence.md'),
+    ('managedkafka.connectors.update', 'gcp-post-exploitation/gcp-managed-kafka-post-exploitation.md'),
+    ('parallelstore.instances.exportData', 'gcp-privilege-escalation/gcp-parallelstore-privesc.md'),
+    ('parallelstore.instances.importData', 'gcp-privilege-escalation/gcp-parallelstore-privesc.md'),
+    ('run.workerpools.setIamPolicy', 'gcp-privilege-escalation/gcp-run-privesc.md'),
 )

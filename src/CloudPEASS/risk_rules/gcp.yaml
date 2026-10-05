@@ -56,8 +56,6 @@ critical_exact:
 high_suffixes: []
 
 high_exact:
-  - agentidentity.authProviders.retrieveCredentials
-  - agentidentity.authProviders.update
   - aiplatform.pipelineJobs.get
   - aiplatform.pipelineJobs.list
   - apikeys.keys.create
@@ -225,14 +223,10 @@ high_exact:
   - managedkafka.clusters.connect
   - managedkafka.connectClusters.create
   - managedkafka.connectClusters.update
-  - managedkafka.connectors.create
-  - managedkafka.connectors.update
   # NetApp Volumes: export-policy tampering and snapshot/backup exfil-clone.
   - netapp.backups.create
-  - netapp.backups.createCrossProjectBackup
   - netapp.snapshots.create
   - netapp.storagePools.restoreVolume
-  - netapp.volumes.createCrossProjectBackup
   - netapp.volumes.restore
   - netapp.volumes.update
   # Network Security: TLS-policy downgrade to plaintext enables MITM/credential
@@ -248,8 +242,6 @@ high_exact:
   - networkservices.httpRoutes.create
   - networkservices.httpRoutes.update
   # Parallelstore: confused-deputy filesystem export (exfil) and import (poison).
-  - parallelstore.instances.exportData
-  - parallelstore.instances.importData
   # Transcoder: confused-deputy job reads a victim GCS input and writes output to
   # an attacker-reachable bucket.
   - transcoder.jobs.create
@@ -323,7 +315,6 @@ medium_exact:
   - iam.googleapis.com/oauthClientCredentials.create
   - iam.googleapis.com/oauthClientCredentials.update
   - iamconnectors.connectors.retrieveCredentials
-  - logging.views.access
   - managedidentities.domains.resetpassword
   - monitoring.dashboards.delete
   # Candidate SMB domain-join credential read; kept medium because the API may
@@ -466,6 +457,46 @@ sensitive_read_keywords: []
 
 # Audited against HackTricks Cloud master 45bcf7a7381a496d6dfd5b5d533681fff85c608d; see docs/permission-severity-audit.csv.
 severity_overrides:
+  agentidentity.authProviders.retrieveCredentials: high
+  agentidentity.authProviders.update: high
+  clouddeploy.deployPolicies.setIamPolicy: critical
+  contactcenterinsights.datasetConversations.list: high
+  geminicloudassist.investigationRevisions.list: high
+  geminicloudassist.investigations.list: high
+  managedkafka.connectors.create: high
+  managedkafka.connectors.update: high
+  parallelstore.instances.exportData: high
+  parallelstore.instances.importData: high
+  run.workerpools.setIamPolicy: critical
+  logging.views.access: high
+  aiplatform.featureViews.searchNearestEntities: high
+  appengine.memcache.get: high
+  cloudfunctions.functions.generateUploadUrl: medium
+  cloudkms.cryptoKeyVersions.useToEncrypt: medium
+  cloudkms.cryptoKeys.create: medium
+  cloudkms.keyRings.create: medium
+  cloudsupport.techCases.get: high
+  connectors.connections.listenEvent: high
+  contactcenterinsights.analyses.get: high
+  contactcenterinsights.analyses.list: high
+  contactcenterinsights.conversations.list: high
+  container.clusterRoleBindings.create: medium
+  container.clusterRoleBindings.update: medium
+  container.roleBindings.create: medium
+  container.roleBindings.update: medium
+  geminicloudassist.investigationRevisions.get: high
+  geminicloudassist.investigations.get: high
+  livestream.channels.list: high
+  logging.logEntries.list: high
+  logging.privateLogEntries.list: high
+  mcp.tools.call: low
+  netapp.volumes.createCrossProjectBackup: high
+  resourcemanager.projects.updateLiens: medium
+  serviceusage.services.use: low
+  appengine.versions.getFileContents: high
+  aiplatform.ragCorpora.query: high
+  ces.conversations.get: high
+  clouddeploy.releases.list: high
   accessapproval.requests.approve: high
   accessapproval.settings.delete: medium
   accessapproval.settings.update: high
@@ -499,7 +530,6 @@ severity_overrides:
   aiplatform.semanticGovernancePolicies.update: high
   alloydb.clusters.create: high
   alloydb.clusters.export: high
-  alloydb.clusters.restore: high
   alloydb.instances.create: high
   alloydb.instances.executeSql: medium
   alloydb.instances.executeSqlReadOnly: high
@@ -610,7 +640,6 @@ severity_overrides:
   clouddeploy.releases.create: high
   clouddeploy.releases.get: high
   clouddeploy.rollouts.create: high
-  cloudfunctions.functions.generateUploadUrl: high
   cloudkms.autokeyConfigs.update: high
   cloudkms.cryptoKeyVersions.destroy: medium
   cloudkms.cryptoKeyVersions.restore: medium
@@ -618,14 +647,11 @@ severity_overrides:
   cloudkms.cryptoKeyVersions.useToDecapsulate: high
   cloudkms.cryptoKeyVersions.useToDecrypt: high
   cloudkms.cryptoKeyVersions.useToDecryptViaDelegation: high
-  cloudkms.cryptoKeyVersions.useToEncrypt: high
   cloudkms.cryptoKeyVersions.useToEncryptViaDelegation: medium
   cloudkms.cryptoKeyVersions.useToSign: high
-  cloudkms.cryptoKeys.create: high
   cloudkms.cryptoKeys.setIamPolicy: critical
   cloudkms.cryptoKeys.update: medium
   cloudkms.keyHandles.create: high
-  cloudkms.keyRings.create: high
   cloudprivatecatalogproducer.products.update: high
   cloudquotas.quotas.get: low
   cloudscheduler.jobs.create: high
@@ -712,7 +738,6 @@ severity_overrides:
   connectors.connections.executeSqlQuery: high
   connectors.connections.setIamPolicy: critical
   contactcenterinsights.conversations.generateSignedAudio: high
-  container.clusterRoleBindings.create: high
   container.clusterRoles.bind: critical
   container.clusterRoles.escalate: critical
   container.clusters.create: high
@@ -720,11 +745,8 @@ severity_overrides:
   container.clusters.update: high
   container.mutatingWebhookConfigurations.create: high
   container.mutatingWebhookConfigurations.update: high
-  container.nodePools.create: high
-  container.nodePools.update: high
   container.pods.create: high
   container.pods.update: high
-  container.roleBindings.create: high
   container.roles.bind: critical
   container.roles.escalate: critical
   container.secrets.get: high
@@ -902,7 +924,6 @@ severity_overrides:
   managedkafka.topics.delete: medium
   managedkafka.topics.update: medium
   managedkafka.versions.delete: medium
-  mcp.tools.call: high
   metastore.services.setIamPolicy: critical
   modelarmor.floorSettings.update: high
   modelarmor.templates.update: high
@@ -931,7 +952,6 @@ severity_overrides:
   networkconnectivity.groups.setIamPolicy: critical
   networkconnectivity.hubs.create: high
   networkconnectivity.hubs.setIamPolicy: critical
-  networkconnectivity.hubs.use: high
   networkconnectivity.internalRanges.create: medium
   networkconnectivity.policyBasedRoutes.create: high
   networkconnectivity.spokes.create: high
@@ -1024,7 +1044,6 @@ severity_overrides:
   redis.instances.update: medium
   resourcemanager.folders.move: high
   resourcemanager.hierarchyNodes.createTagBinding: high
-  resourcemanager.projects.createLien: medium
   resourcemanager.projects.deletePolicyBinding: high
   resourcemanager.projects.move: high
   resourcemanager.projects.update: high
@@ -1091,7 +1110,6 @@ severity_overrides:
   servicemanagement.services.update: high
   serviceusage.mcppolicy.update: medium
   serviceusage.services.enable: medium
-  serviceusage.services.use: high
   source.repos.setIamPolicy: critical
   spanner.backups.create: high
   spanner.backups.restoreDatabase: high
@@ -1123,6 +1141,17 @@ severity_overrides:
 
 # Pure disruption/discovery decisions cannot be promoted by legacy lists.
 severity_caps:
+  - cloudfunctions.functions.generateUploadUrl
+  - cloudkms.cryptoKeyVersions.useToEncrypt
+  - cloudkms.cryptoKeys.create
+  - cloudkms.keyRings.create
+  - container.clusterRoleBindings.create
+  - container.clusterRoleBindings.update
+  - container.roleBindings.create
+  - container.roleBindings.update
+  - mcp.tools.call
+  - resourcemanager.projects.updateLiens
+  - serviceusage.services.use
   - accessapproval.settings.delete
   - advisorynotifications.settings.update
   - aiplatform.semanticGovernancePolicies.delete
@@ -1238,7 +1267,6 @@ severity_caps:
   - recommender.iamPolicyInsights.update
   - recommender.iamPolicyRecommendations.update
   - redis.instances.update
-  - resourcemanager.projects.createLien
   - run.jobs.delete
   - run.revisions.delete
   - run.services.delete
@@ -1268,3 +1296,18 @@ severity_caps:
   - storage.buckets.setIpFilter
   - storage.objects.setRetention
   - storagebatchoperations.jobs.create
+
+non_permission_identifiers:
+  - compute.instances.setiampolicy
+  - datastore.databases.getIamPolicy
+  - datastore.databases.setIamPolicy
+  - file.instances.setIamPolicy
+  - iam.serviceaccounts.actAs
+  - managedkafka.clusters.setIamPolicy
+  - networkconnectivity.hubs.use
+  - alloydb.clusters.restore
+  - container.nodePools.create
+  - container.nodePools.update
+  - netapp.backups.createCrossProjectBackup
+  - resourcemanager.projects.createLien
+  - resourcemanager.projects.deleteLien

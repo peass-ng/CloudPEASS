@@ -145,7 +145,6 @@ def test_data_plane_and_context_dependent_permissions_are_high(permission):
         "run.jobs.runWithOverrides",
         "storage.objects.update",
         "iam.roles.create",
-        "logging.views.access",
         "spanner.databases.read",
         "spanner.databases.select",
         "spanner.databases.write",
@@ -293,7 +292,7 @@ def test_cloud_sql_data_api_is_high_only_with_login_permission():
     assert result["sensitive_perms"] == complete
 
 
-def test_logging_data_access_is_high_only_with_list_and_view_permissions():
+def test_logging_content_access_is_high_for_container_and_view_grants():
     peass = CloudPEASS(
         very_sensitive_combinations,
         sensitive_combinations,
@@ -305,7 +304,7 @@ def test_logging_data_access_is_high_only_with_list_and_view_permissions():
         {"logging.views.access"},
     ):
         result = peass.analyze_sensitive_combinations(incomplete)
-        assert result["sensitive_perms"] == set()
+        assert result["sensitive_perms"] == incomplete
 
     complete = {"logging.logEntries.list", "logging.views.access"}
     result = peass.analyze_sensitive_combinations(complete)

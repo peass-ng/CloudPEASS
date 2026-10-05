@@ -88,7 +88,6 @@ LIVE_VALIDATED_HIGH_ACTIONS = {
     "dynamodb:GetItem",
     "dynamodb:Query",
     "dynamodb:Scan",
-    "dynamodb:TransactGetItems",
     "deadline:AssumeQueueRoleForRead",
     "deadline:AssumeQueueRoleForUser",
     "deadline:AssumeFleetRoleForRead",
