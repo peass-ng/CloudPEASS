@@ -902,13 +902,13 @@ _GRAPH_CRITICAL_EXACT = frozenset(
         "privilegedaccess.readwrite.azureresources",
         "rolemanagement.readwrite.directory",
         "userauthenticationmethod.readwrite.all",
-        "devicelocalcredential.read.all",
-        "bitlockerkey.read.all",
     }
 )
 
 _GRAPH_HIGH_EXACT = frozenset(
     {
+        "devicelocalcredential.read.all",
+        "bitlockerkey.read.all",
         "auditlog.read.all",
         "directory.accessasuser.all",
         "directory.read.all",
@@ -1662,8 +1662,6 @@ def _azure_graph_or_synthetic_level(permission: str) -> Optional[str]:
                 "/serviceprincipals/credentials/",
                 "/serviceprincipals/owners/update",
                 "/serviceprincipals/allproperties/alltasks",
-                "/groups/members/update",
-                "/groups/owners/update",
                 "/groups/allproperties/alltasks",
                 "/oauth2permissiongrants/",
                 "/roleassignments/",
@@ -1678,6 +1676,8 @@ def _azure_graph_or_synthetic_level(permission: str) -> Optional[str]:
             return "critical"
         if "/credentials/" in lower and last in {"create", "manage", "update"}:
             return "critical"
+        if any(marker in lower for marker in ("/groups/members/update", "/groups/owners/update")):
+            return "high"
         if "/users/authenticationmethods/" in lower:
             return "medium" if last == "read" else "critical"
         if "/groupsassignabletoroles/" in lower:
@@ -1704,7 +1704,7 @@ def _azure_graph_or_synthetic_level(permission: str) -> Optional[str]:
                 "managepasswordsinglesignoncredentials",
             )
         ):
-            return "critical"
+            return "high"
         if last == "read" and any(
             marker in lower
             for marker in (
@@ -1838,6 +1838,9 @@ def _azure_wildcard_level(permission: str, rules: AzureRules) -> Optional[str]:
     if lower == "*/read":
         return "medium"
     if lower in {"*/write", "*/action"}:
+        return "critical"
+    if lower == "microsoft.authorization/*/write":
+        # This grant includes roleAssignments/write, allowing self-assignment.
         return "critical"
     if lower == "*/delete":
         return "medium"
@@ -2010,6 +2013,22 @@ def azure_regex_classify(permission: str, rules: AzureRules) -> Optional[str]:
 
 
 @lru_cache(maxsize=None)
+def non_permission_identifiers(provider: str) -> frozenset[str]:
+    """Known policy keys and operation names that grant no permission themselves."""
+    return frozenset(p.casefold() if provider in {"aws", "azure"} else p for p in _load_yaml(provider).get("non_permission_identifiers", []))
+
+
+def is_non_permission(provider: str, permission: str) -> bool:
+    permission = permission.casefold() if provider in {"aws", "azure"} else permission
+    if provider == "gcp" and re.match(r"^(?:v\d+(?:alpha|beta)?\d*|projects|organizations|folders)\.", permission):
+        # RPC service names and REST resource paths are not IAM namespaces.
+        return True
+    if provider == "azure" and permission.startswith("microsoft.com/"):
+        return True
+    return permission in non_permission_identifiers(provider)
+
+
+@lru_cache(maxsize=None)
 def severity_overrides(provider: str) -> dict[str, str]:
     """Exact audited decisions take precedence over generic and legacy rules."""
     raw = _load_yaml(provider).get("severity_overrides", {})
@@ -2031,7 +2050,7 @@ def severity_caps(provider: str) -> frozenset[str]:
 
 def is_severity_capped(provider: str, permission: str) -> bool:
     permission = permission.casefold() if provider in {"aws", "azure"} else permission
-    return permission in severity_caps(provider)
+    return permission in severity_caps(provider) or is_non_permission(provider, permission)
 
 
 @lru_cache(maxsize=None)
@@ -2146,6 +2165,8 @@ def classify_permission(provider: str, permission: str, *, unknown_default: str 
     if not permission:
         return unknown_default
 
+    if is_non_permission(provider, permission):
+        return "low"
     override = severity_override(provider, permission)
     if override is not None:
         return override

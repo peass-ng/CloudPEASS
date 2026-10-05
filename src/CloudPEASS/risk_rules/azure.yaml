@@ -93,6 +93,56 @@ appinsights_exclude_keywords:
 
 # Audited against HackTricks Cloud master 45bcf7a7381a496d6dfd5b5d533681fff85c608d; see docs/permission-severity-audit.csv.
 severity_overrides:
+  AppRoleAssignment.ReadWrite.All: critical
+  Application.ReadWrite.All: critical
+  AuditLog.Read.All: high
+  DelegatedPermissionGrant.ReadWrite.All: critical
+  Directory.Read.All: high
+  Directory.ReadWrite.All: high
+  Files.ReadWrite.All: high
+  Group.ReadWrite.All: high
+  Mail.Read: high
+  Mail.Read.Shared: high
+  Mail.ReadWrite.Shared: high
+  Microsoft.ApiManagement/service/apiKeys/listSecrets/action: high
+  Microsoft.ApiManagement/service/workspaces/toolServers/listSecrets/action: high
+  Microsoft.App/agents/dataconnectors/listSecrets/action: high
+  Microsoft.App/agents/listSecrets/action: high
+  Microsoft.App/sandboxGroups/sandboxes/executeCommand/action: high
+  Microsoft.App/sandboxGroups/sandboxes/executeShellCommand/action: high
+  Microsoft.App/sandboxGroups/sandboxes/files/read: high
+  Microsoft.App/sandboxGroups/secrets/peek/action: high
+  Microsoft.HealthBot/healthBots/listSecrets/action: high
+  Microsoft.InferenceService/inferenceAccounts/listKeys/action: high
+  PrivilegedAccess.ReadWrite.AzureAD: critical
+  PrivilegedAccess.ReadWrite.AzureResources: critical
+  RoleManagement.Read.Directory: high
+  RoleManagement.ReadWrite.Directory: critical
+  Sites.ReadWrite.All: high
+  User.Read.All: high
+  User.ReadWrite.All: high
+  UserAuthenticationMethod.ReadWrite.All: critical
+  microsoft.directory/applications.myOrganization/credentials/update: critical
+  microsoft.directory/applications/credentials/update: critical
+  microsoft.directory/applications/owners/update: critical
+  microsoft.directory/bitlockerKeys/key/read: high
+  microsoft.directory/deviceLocalCredentials/password/read: high
+  microsoft.directory/groups/members/update: high
+  microsoft.directory/groups/owners/update: high
+  microsoft.directory/servicePrincipals/credentials/update: critical
+  microsoft.directory/servicePrincipals/owners/update: critical
+  microsoft.directory/users/password/update: critical
+  Microsoft.Cdn/profiles/securitypolicies/delete: medium
+  Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/write: medium
+  Microsoft.Network/frontdoorWebApplicationFirewallPolicies/write: medium
+  Microsoft.ServiceNetworking/trafficControllers/securityPolicies/delete: medium
+  Microsoft.Automation/automationAccounts/jobs/output/read: high
+  Microsoft.Automation/automationAccounts/jobs/streams/read: high
+  Microsoft.ContainerRegistry/registries/repositories/content/read: high
+  Microsoft.Search/searchServices/indexes/documents/read: high
+  Microsoft.Automation/automationAccounts/runbooks/content/read: high
+  Microsoft.OperationalInsights/workspaces/query/read: high
+  Microsoft.Web/sourcecontrols/read: high
   Microsoft.Resources/deployments/read: high
   Microsoft.Resources/subscriptions/resourcegroups/deployments/read: high
   ADSynchronization.ReadWrite.All: high
@@ -221,7 +271,6 @@ severity_overrides:
   Microsoft.Cdn/profiles/endpoints/origins/write: high
   Microsoft.Cdn/profiles/origingroups/origins/write: high
   Microsoft.Cdn/profiles/rulesets/rules/write: high
-  Microsoft.Cdn/profiles/securitypolicies/delete: high
   Microsoft.Chaos/experiments/cancel/action: medium
   Microsoft.Chaos/experiments/write: medium
   Microsoft.Chaos/targets/write: medium
@@ -492,7 +541,6 @@ severity_overrides:
   Microsoft.Management/managementGroups/write: high
   Microsoft.Maps/accounts/listSas/action: high
   Microsoft.NetApp/netAppAccounts/capacityPools/volumes/write: high
-  Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/write: high
   Microsoft.Network/applicationGateways/write: high
   Microsoft.Network/dnsForwardingRulesets/forwardingRules/write: high
   Microsoft.Network/dnszones/CNAME/write: high
@@ -502,7 +550,6 @@ severity_overrides:
   Microsoft.Network/firewallPolicies/ruleCollectionGroups/write: high
   Microsoft.Network/firewallPolicies/write: high
   Microsoft.Network/frontDoors/backendPools/write: high
-  Microsoft.Network/frontdoorWebApplicationFirewallPolicies/write: high
   Microsoft.Network/loadBalancers/backendAddressPools/write: high
   Microsoft.Network/loadBalancers/write: high
   Microsoft.Network/networkInterfaces/join/action: high
@@ -596,7 +643,6 @@ severity_overrides:
   Microsoft.ServiceFabric/managedClusters/write: high
   Microsoft.ServiceLinker/linkers/generateConfigurations/action: high
   Microsoft.ServiceLinker/linkers/listConfigurations/action: high
-  Microsoft.ServiceNetworking/trafficControllers/securityPolicies/delete: high
   Microsoft.SignalRService/SignalR/hub/send/action: medium
   Microsoft.SignalRService/SignalR/serverConnection/write: high
   Microsoft.SignalRService/SignalR/write: high
@@ -734,6 +780,10 @@ severity_overrides:
 
 # Pure disruption/discovery decisions cannot be promoted by legacy lists.
 severity_caps:
+  - Microsoft.Cdn/profiles/securitypolicies/delete
+  - Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/write
+  - Microsoft.Network/frontdoorWebApplicationFirewallPolicies/write
+  - Microsoft.ServiceNetworking/trafficControllers/securityPolicies/delete
   - AdministrativeUnit.ReadWrite.All
   - Group.Read.All
   - IdentityRiskyUser.ReadWrite.All

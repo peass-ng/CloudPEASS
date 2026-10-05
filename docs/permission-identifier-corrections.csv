@@ -1,0 +1,24 @@
+provider,identifier,kind,actual_permissions,reference
+aws,budgets:DeleteBudget,API operation,budgets:ModifyBudget,https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsbudgetservice.html
+aws,budgets:DeleteNotification,API operation,budgets:ModifyBudget,https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsbudgetservice.html
+aws,connect:MonitorCapabilities,condition key,,https://docs.aws.amazon.com/service-authorization/latest/reference/list_connect.html
+aws,dynamodb:TransactGetItems,API operation,dynamodb:GetItem,https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html
+aws,dynamodb:TransactWriteItems,API operation,dynamodb:PutItem; dynamodb:UpdateItem; dynamodb:DeleteItem; dynamodb:ConditionCheckItem,https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html
+aws,iam:PassedToService,condition key,,https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html
+aws,redshift:AllowWrites,condition key,,https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonredshift.html
+aws,sesv2:PutEmailIdentityPolicy,incorrect action name,ses:CreateEmailIdentityPolicy; ses:UpdateEmailIdentityPolicy; ses:PutIdentityPolicy,https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonses.html
+aws,sso-admin:CreateTrustedTokenIssuer,SDK namespace alias,sso:CreateTrustedTokenIssuer,https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsiamidentitycenter.html
+gcp,container.nodePools.create,API-name pseudo permission,container.clusters.update,https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters.nodePools/create
+gcp,container.nodePools.update,API-name pseudo permission,container.clusters.update,https://cloud.google.com/kubernetes-engine/docs/reference/rest/v1/projects.zones.clusters.nodePools/update
+gcp,alloydb.clusters.restore,API-name pseudo permission,alloydb.clusters.create; alloydb.backups.get,https://docs.cloud.google.com/alloydb/docs/reference/rest/v1/projects.locations.clusters/restore
+gcp,resourcemanager.projects.createLien,incorrect permission name,resourcemanager.projects.updateLiens,https://docs.cloud.google.com/resource-manager/reference/rest/v1/liens/create
+gcp,resourcemanager.projects.deleteLien,incorrect permission name,resourcemanager.projects.updateLiens,https://docs.cloud.google.com/resource-manager/reference/rest/v1/liens/delete
+gcp,netapp.backups.createCrossProjectBackup,incorrect resource namespace,netapp.volumes.createCrossProjectBackup,https://docs.cloud.google.com/iam/docs/roles-permissions/netapp
+aws,sso:GetRoleCredentials,"bearer-token Portal API, not an IAM action",,https://docs.aws.amazon.com/singlesignon/latest/PortalAPIReference/API_GetRoleCredentials.html
+gcp,compute.instances.setiampolicy,URL anchor or wrong case,compute.instances.setIamPolicy,https://docs.cloud.google.com/iam/docs/roles-permissions/compute
+gcp,iam.serviceaccounts.actAs,error-message spelling or wrong case,iam.serviceAccounts.actAs,https://docs.cloud.google.com/iam/docs/roles-permissions/iam
+gcp,datastore.databases.setIamPolicy,no database IAM policy,resourcemanager.projects.setIamPolicy,https://docs.cloud.google.com/firestore/native/docs/security/iam
+gcp,datastore.databases.getIamPolicy,no database IAM policy,,https://docs.cloud.google.com/firestore/native/docs/security/iam
+gcp,file.instances.setIamPolicy,no instance IAM policy,resourcemanager.projects.setIamPolicy,https://docs.cloud.google.com/filestore/docs/access-control
+gcp,managedkafka.clusters.setIamPolicy,no cluster IAM policy,resourcemanager.projects.setIamPolicy,https://docs.cloud.google.com/managed-service-for-apache-kafka/docs/access-control
+gcp,networkconnectivity.hubs.use,incorrect resource namespace,networkconnectivity.groups.use,https://docs.cloud.google.com/network-connectivity/docs/network-connectivity-center/concepts/access-control

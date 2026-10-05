@@ -26,7 +26,6 @@ critical_exact:
   - batch:SubmitJob
   - codebuild:StartCommandExecution
   - codeartifact:GetAuthorizationToken
-  - cognito-idp:AddUserPoolClientSecret
   - cognito-identity:UpdateIdentityPool
   - docdb-elastic:UpdateCluster
   - dsql:PutClusterPolicy
@@ -46,7 +45,6 @@ critical_exact:
   - es:UpdateDomainConfig
   - events:RetrieveConnectionCredentials
   - gamelift:GetComputeAccess
-  - gameliftstreams:CreateStreamSessionAdminShell
   - grafana:CreateWorkspaceApiKey
   - grafana:CreateWorkspaceServiceAccountToken
   - glue:RunStatement
@@ -55,7 +53,6 @@ critical_exact:
   - iam:PassRole
   - iot:OpenTunnel
   - iot:RotateTunnelAccessToken
-  - wickr:CreateDataRetentionBotChallenge
   - kms:CreateGrant
   - kms:Decrypt
   - kms:PutKeyPolicy
@@ -402,7 +399,6 @@ high_exact:
   - dynamodb:GetItem
   - dynamodb:Query
   - dynamodb:Scan
-  - dynamodb:TransactGetItems
   - deadline:AssumeQueueRoleForRead
   - deadline:AssumeQueueRoleForUser
   - deadline:AssumeFleetRoleForRead
@@ -415,8 +411,6 @@ high_exact:
   - ec2-instance-connect:OpenTunnel
   - ec2-instance-connect:SendSerialConsoleSSHPublicKey
   - elasticfilesystem:ClientMount
-  - elemental-inference:ExportDictionaryEntries
-  - elemental-inference:GetMetadata
   - ec2:DescribeLaunchTemplateVersions
   - ec2:DescribeInstanceAttribute
   - elasticache:ModifyUser
@@ -438,7 +432,6 @@ high_exact:
   - frauddetector:GetEvent
   - gameliftstreams:GetStreamSession
   - gameliftstreams:GetStreamUrl
-  - gameliftstreams:ListStreamUrls
   - gamelift:GetComputeAuthToken
   - globalaccelerator:UpdateEndpointGroup
   - execute-api:Invoke
@@ -593,7 +586,6 @@ high_exact:
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
   - wafv2:GetSampledRequests
-  - wickr:GetOidcInfo
   - wisdom:GetContent
 
 ## Evidence-backed corrections for stale upstream/cache entries. These take
@@ -675,13 +667,10 @@ high_override_exact:
   - dynamodb:GetItem
   - dynamodb:Query
   - dynamodb:Scan
-  - dynamodb:TransactGetItems
   - deadline:AssumeQueueRoleForRead
   - deadline:AssumeQueueRoleForUser
   - deadline:AssumeFleetRoleForRead
   - datazone:GetEnvironmentCredentials
-  - elemental-inference:ExportDictionaryEntries
-  - elemental-inference:GetMetadata
   - ec2:DescribeLaunchTemplateVersions
   - ec2:DescribeInstanceAttribute
   - ebs:GetSnapshotBlock
@@ -812,7 +801,6 @@ high_override_exact:
   - translate:GetTerminology
   - vpc-lattice-svcs:Invoke
   - wafv2:GetSampledRequests
-  - wickr:GetOidcInfo
 
 ## =====================
 ## MEDIUM RULES
@@ -866,11 +854,11 @@ benign_write_medium_action_regex:
 ## Exact action names that must always be classified as `low`.
 ## Useful for overriding generic heuristics.
 low_exact:
+  - amplifybackend:GetToken
   # Explicit overrides for read-only permissions that otherwise match
   # generic sensitive-read substrings (e.g. "Configuration", "Authorization")
   # or fall through to the unknown-default (e.g. BatchGet* verbs).
   - aoss:BatchGetCollection
-  - amplifybackend:GetToken
   - aoss:BatchGetLifecyclePolicy
   - appconfig:ListConfigurationProfiles
   - appconfig:ListHostedConfigurationVersions
@@ -1056,6 +1044,47 @@ resource_policy_prefixes: [Put, Set]
 
 # Audited against HackTricks Cloud master 45bcf7a7381a496d6dfd5b5d533681fff85c608d; see docs/permission-severity-audit.csv.
 severity_overrides:
+  acm:GetAcmeExternalAccountBindingCredentials: high
+  cloudwatch:GetSpaceCredentialsForOrganization: high
+  cognito-idp:AddUserPoolClientSecret: critical
+  elemental-inference:ExportDictionaryEntries: high
+  elemental-inference:GetMetadata: high
+  gameliftstreams:CreateStreamSessionAdminShell: critical
+  gameliftstreams:ListStreamUrls: high
+  wickr:CreateDataRetentionBotChallenge: critical
+  wickr:GetOidcInfo: high
+  aidevops:DisableOperatorApp: medium
+  apigateway:SetWebACL: medium
+  appsync:DisassociateWebACL: medium
+  appsync:SetWebACL: medium
+  elasticloadbalancing:CreateWebACLAssociation: medium
+  elasticloadbalancing:DeleteWebACLAssociation: medium
+  network-firewall:DeleteFirewall: medium
+  network-firewall:UpdateFirewallDeleteProtection: medium
+  network-firewall:UpdateFirewallPolicyChangeProtection: medium
+  network-firewall:UpdateSubnetChangeProtection: medium
+  wafv2:DisassociateWebACL: medium
+  glue:GetEntityRecords: high
+  invoicing:GetProcurementPortalPreference: high
+  s3tables:GetTableData: high
+  partnercentral:GetBenefitAllocation: high
+  securityagent:BatchGetFindings: high
+  redshift-data:GetStatementResult: high
+  snowball:GetJobUnlockCode: high
+  bedrock-agentcore:InvokeAgentRuntimeCommand: critical
+  budgets:ModifyBudget: medium
+  chime:GetAttendee: high
+  chime:ListAttendees: high
+  directconnect:DescribeRouterConfiguration: high
+  dynamodb:GetRecords: high
+  glue:GetConnections: high
+  glue:GetWorkflow: high
+  profile:BatchGetProfile: high
+  profile:ListProfileObjects: high
+  ses:CreateEmailIdentityPolicy: high
+  ses:UpdateEmailIdentityPolicy: high
+  sso:CreateTrustedTokenIssuer: high
+  workmailmessageflow:GetRawMessageContent: high
   account-access:CreateEntitlement: critical
   account:AcceptPrimaryEmailUpdate: high
   account:DisableRegion: medium
@@ -1068,7 +1097,6 @@ severity_overrides:
   agent-registry:UpdateRegistry: medium
   agent-registry:UpdateRegistryRecordStatus: medium
   aidevops:AssociateService: high
-  aidevops:DisableOperatorApp: high
   aidevops:EnableOperatorApp: high
   aidevops:UpdateAssociation: high
   aidevops:UpdatePrivateConnectionCertificate: high
@@ -1081,7 +1109,6 @@ severity_overrides:
   amplifyuibuilder:GetCodegenJob: high
   aoss:CreateAccessPolicy: critical
   apigateway:PublishPortal: high
-  apigateway:SetWebACL: high
   apigateway:UpdatePortal: high
   app-integrations:UpdateApplication: high
   appconfig:CreateConfigurationProfile: high
@@ -1110,8 +1137,6 @@ severity_overrides:
   appstream:UpdateStack: high
   appsync:CreateApiKey: high
   appsync:CreateDataSource: high
-  appsync:DisassociateWebACL: high
-  appsync:SetWebACL: high
   appsync:UpdateDataSource: high
   appsync:UpdateGraphqlApi: high
   aps:RemoteWrite: medium
@@ -1162,9 +1187,7 @@ severity_overrides:
   billing:UseSourceView: high
   braket:CreateJob: high
   budgets:CreateBudgetAction: high
-  budgets:DeleteBudget: medium
   budgets:DeleteBudgetAction: medium
-  budgets:DeleteNotification: medium
   budgets:ExecuteBudgetAction: high
   cases:TagResource: high
   cases:UntagResource: high
@@ -1302,7 +1325,6 @@ severity_overrides:
   connect:CreateIntegrationAssociation: high
   connect:CreateParticipant: high
   connect:CreateUser: high
-  connect:MonitorCapabilities: high
   connect:MonitorContact: high
   connect:StartContactMediaProcessing: high
   connect:StartContactStreaming: high
@@ -1353,7 +1375,6 @@ severity_overrides:
   dynamodb:EnableKinesisStreamingDestination: high
   dynamodb:RestoreTableFromAwsBackup: high
   dynamodb:RestoreTableToPointInTime: high
-  dynamodb:TransactWriteItems: high
   dynamodb:UpdateContinuousBackups: high
   dynamodb:UpdateTimeToLive: medium
   ec2:ApplySecurityGroupsToClientVpnTargetNetwork: high
@@ -1462,8 +1483,6 @@ severity_overrides:
   elasticfilesystem:ReplicationRead: high
   elasticfilesystem:ReplicationWrite: high
   elasticfilesystem:UpdateFileSystem: medium
-  elasticloadbalancing:CreateWebACLAssociation: high
-  elasticloadbalancing:DeleteWebACLAssociation: high
   elasticloadbalancing:ModifyLoadBalancerAttributes: high
   elasticmapreduce:CreateEditor: high
   elasticmapreduce:OpenEditorInConsole: medium
@@ -1576,7 +1595,6 @@ severity_overrides:
   iam:EnableOrganizationsRootSessions: high
   iam:GetRequestAuthorizationDetails: low
   iam:PassRole: critical
-  iam:PassedToService: high
   iam:SendDelegationToken: high
   iam:UpdateAccountEmailAddress: high
   iam:UpdateGroup: high
@@ -1721,13 +1739,9 @@ severity_overrides:
   mq:UpdateConfiguration: high
   network-firewall:AssociateFirewallPolicy: high
   network-firewall:CreateFirewallPolicy: high
-  network-firewall:DeleteFirewall: high
   network-firewall:DisassociateSubnets: high
-  network-firewall:UpdateFirewallDeleteProtection: high
   network-firewall:UpdateFirewallPolicy: high
-  network-firewall:UpdateFirewallPolicyChangeProtection: high
   network-firewall:UpdateLoggingConfiguration: medium
-  network-firewall:UpdateSubnetChangeProtection: high
   network-security-manager:DeleteAdminAccount: medium
   network-security-manager:DeleteDeployment: high
   network-security-manager:PutAdminAccount: high
@@ -1816,7 +1830,6 @@ severity_overrides:
   redshift-serverless:PutResourcePolicy: high
   redshift-serverless:UpdateNamespace: critical
   redshift-serverless:UpdateWorkgroup: high
-  redshift:AllowWrites: high
   redshift:AuthorizeDataShare: high
   redshift:AuthorizeEndpointAccess: high
   redshift:AuthorizeSnapshotAccess: high
@@ -1962,7 +1975,6 @@ severity_overrides:
   ses:SendRawEmail: medium
   ses:SendTemplatedEmail: medium
   ses:UpdateRuleSet: high
-  sesv2:PutEmailIdentityPolicy: high
   shield:DeleteProtection: medium
   shield:DeleteProtectionGroup: medium
   shield:DisableApplicationLayerAutomaticResponse: medium
@@ -2030,7 +2042,6 @@ severity_overrides:
   ssm:UpdateManagedInstanceRole: high
   ssm:UpdateServiceSetting: high
   ssmmessages:CreateControlChannel: high
-  sso-admin:CreateTrustedTokenIssuer: high
   sso-directory:CreateUser: high
   sso-directory:UpdatePassword: critical
   sso:CreatePermissionSet: high
@@ -2076,23 +2087,22 @@ severity_overrides:
   verifiedpermissions:UpdateIdentitySource: high
   vpc-lattice:CreateAccessLogSubscription: high
   vpc-lattice:CreateServiceNetworkVpcAssociation: high
-  wafv2:AssociateWebACL: high
-  wafv2:CreateIPSet: high
-  wafv2:CreateRegexPatternSet: high
-  wafv2:CreateRuleGroup: high
-  wafv2:CreateWebACL: high
+  wafv2:AssociateWebACL: medium
+  wafv2:CreateIPSet: medium
+  wafv2:CreateRegexPatternSet: medium
+  wafv2:CreateRuleGroup: medium
+  wafv2:CreateWebACL: medium
   wafv2:DeleteAPIKey: medium
-  wafv2:DeleteIPSet: high
+  wafv2:DeleteIPSet: medium
   wafv2:DeleteLoggingConfiguration: medium
-  wafv2:DeleteRegexPatternSet: high
-  wafv2:DeleteRuleGroup: high
-  wafv2:DeleteWebACL: high
-  wafv2:DisassociateWebACL: high
+  wafv2:DeleteRegexPatternSet: medium
+  wafv2:DeleteRuleGroup: medium
+  wafv2:DeleteWebACL: medium
   wafv2:PutLoggingConfiguration: medium
-  wafv2:UpdateIPSet: high
-  wafv2:UpdateRegexPatternSet: high
-  wafv2:UpdateRuleGroup: high
-  wafv2:UpdateWebACL: high
+  wafv2:UpdateIPSet: medium
+  wafv2:UpdateRegexPatternSet: medium
+  wafv2:UpdateRuleGroup: medium
+  wafv2:UpdateWebACL: medium
   wickr:GetOpentdfConfig: high
   wickr:ListUsers: high
   wisdom:CreateAIAgent: high
@@ -2120,6 +2130,31 @@ severity_overrides:
 
 # Pure disruption/discovery decisions cannot be promoted by legacy lists.
 severity_caps:
+  - wafv2:AssociateWebACL
+  - wafv2:CreateIPSet
+  - wafv2:CreateRegexPatternSet
+  - wafv2:CreateRuleGroup
+  - wafv2:CreateWebACL
+  - wafv2:DeleteIPSet
+  - wafv2:DeleteRegexPatternSet
+  - wafv2:DeleteRuleGroup
+  - wafv2:DeleteWebACL
+  - wafv2:UpdateIPSet
+  - wafv2:UpdateRegexPatternSet
+  - wafv2:UpdateRuleGroup
+  - wafv2:UpdateWebACL
+  - aidevops:DisableOperatorApp
+  - apigateway:SetWebACL
+  - appsync:DisassociateWebACL
+  - appsync:SetWebACL
+  - elasticloadbalancing:CreateWebACLAssociation
+  - elasticloadbalancing:DeleteWebACLAssociation
+  - network-firewall:DeleteFirewall
+  - network-firewall:UpdateFirewallDeleteProtection
+  - network-firewall:UpdateFirewallPolicyChangeProtection
+  - network-firewall:UpdateSubnetChangeProtection
+  - wafv2:DisassociateWebACL
+  - budgets:ModifyBudget
   - account:DisableRegion
   - account:EnableRegion
   - aco-automation:StartAutomationEvent
@@ -2138,9 +2173,7 @@ severity_caps:
   - bcm-pricing-calculator:CreateBillScenario
   - bedrock:DeleteModelInvocationLoggingConfiguration
   - bedrock:PutModelInvocationLoggingConfiguration
-  - budgets:DeleteBudget
   - budgets:DeleteBudgetAction
-  - budgets:DeleteNotification
   - ce:DeleteAnomalyMonitor
   - ce:DeleteAnomalySubscription
   - ce:UpdateAnomalyMonitor
@@ -2484,3 +2517,16 @@ severity_caps:
   - workmail:RegisterToWorkMail
   - workspaces-web:UpdateDataProtectionSettings
   - workspaces-web:UpdateSessionLogger
+
+# Confirmed condition keys, API operation names and incorrect IAM identifiers.
+non_permission_identifiers:
+  - sso:GetRoleCredentials
+  - budgets:DeleteBudget
+  - budgets:DeleteNotification
+  - connect:MonitorCapabilities
+  - dynamodb:TransactGetItems
+  - dynamodb:TransactWriteItems
+  - iam:PassedToService
+  - redshift:AllowWrites
+  - sesv2:PutEmailIdentityPolicy
+  - sso-admin:CreateTrustedTokenIssuer

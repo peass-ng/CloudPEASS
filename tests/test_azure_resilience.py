@@ -367,8 +367,8 @@ def test_search_elevated_read_requires_document_read_combination():
     assert elevated not in elevated_only["high"]
 
     documents_only = peas.analyze_group({documents}, [])["permissions_cat"]
-    assert documents in documents_only["low"]
-    assert documents not in documents_only["high"]
+    assert documents in documents_only["high"]
+    assert documents not in documents_only["critical"]
 
     pair = peas.analyze_group(set(combination), [])["permissions_cat"]
     assert set(pair["high"]) == set(combination)

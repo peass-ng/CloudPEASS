@@ -107,6 +107,9 @@ def classify_permission(key: PermissionKey) -> tuple[str, str]:
             return "medium", "Can read API-server metrics and operational metadata."
         return "low", f"Can access API-server path {key.non_resource_url}."
 
+    if full == "pods/log" and group in CORE_GROUPS and verb in READ_VERBS | {"*"}:
+        return "high", "Can read workload logs, including private application data and logged credentials."
+
     if resource == "*":
         if (verb in READ_VERBS or verb == "*") and group in CORE_GROUPS:
             return ("critical" if verb == "*" else "high"), "Can read every current and future API resource, including Secrets."

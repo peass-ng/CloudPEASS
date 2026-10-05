@@ -976,7 +976,7 @@ class AzureWildcardClassificationTest(unittest.TestCase):
             "critical",
         )
         self.assertEqual(
-            self.classify("microsoft.directory/bitlockerKeys/key/read"), "critical"
+            self.classify("microsoft.directory/bitlockerKeys/key/read"), "high"
         )
         self.assertEqual(
             self.classify(

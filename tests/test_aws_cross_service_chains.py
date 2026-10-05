@@ -691,7 +691,6 @@ def test_hacktricks_reconciliation_is_complete_and_evidenced():
         "secretsmanager:RotateSecret",
         "secretsmanager:ListSecrets",
         "ssm:GetParametersByPath",
-        "sso:GetRoleCredentials",
         "sts:GetDelegatedAccessToken",
     }
     assert hacktricks_reconciled_true_positive_actions == expected

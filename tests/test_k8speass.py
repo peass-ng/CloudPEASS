@@ -584,7 +584,7 @@ class PermissionModelTests(unittest.TestCase):
                     resource="applications",
                 ),
             ),
-            ("medium", PermissionKey("get", resource="pods", subresource="log")),
+            ("high", PermissionKey("get", resource="pods", subresource="log")),
             ("medium", PermissionKey("list", resource="pods")),
             ("medium", PermissionKey("patch", resource="leases")),
             (
