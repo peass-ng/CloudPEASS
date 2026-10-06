@@ -721,6 +721,7 @@ class AWSBruteForce():
             ("athena", "workgroup"): ("name", "list-work-groups", "WorkGroups"),
             ("cloudformation", "exportname"): ("name", "list-exports", "Exports"),
             ("cloudformation", "stackname"): ("stackname", "list-stacks", "StackSummaries"),
+            ("resource-explorer-2", "resourcearn"): ("arn", "list-indexes", "Indexes"),
         }
         special = aliases.get((service, field))
         if special:
@@ -736,7 +737,7 @@ class AWSBruteForce():
                 for field_key in field_keys
                 for value, source, path in fields.get(field_key, [])
             ]
-        if special and special[0] != field:
+        if special and special[0] == "name" and special[0] != field:
             candidates = [
                 item for item in candidates
                 if item[3] != special[0]
@@ -745,8 +746,11 @@ class AWSBruteForce():
         target_tokens = self._resource_tokens(command)
         candidates.sort(
             key=lambda item: (
-                bool(special and item[1] == special[1] and special[2] in item[2]),
                 item[0].startswith("arn:") and f":{self.region}:" in item[0],
+                service == "resource-explorer-2"
+                and field == "resourcearn"
+                and item[0].split(":", 5)[-1].startswith(("index/", "view/")),
+                bool(special and item[1] == special[1] and special[2] in item[2]),
                 item[3] == field,
                 len(target_tokens & self._resource_tokens(item[1])),
             ),

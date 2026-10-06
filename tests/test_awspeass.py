@@ -1173,6 +1173,21 @@ def test_same_region_arn_precedes_other_region_resources():
     instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
     local = "arn:aws:resource-explorer-2:us-east-1:123456789012:index/local"
     remote = "arn:aws:resource-explorer-2:us-west-2:123456789012:index/remote"
+    unrelated = "arn:aws:resource-explorer-2:us-west-2:123456789012:view/other"
+    instance._remember_identifiers(
+        "resource-explorer-2", "list-views",
+        json.dumps({"Views": [{"Arn": unrelated}]}).encode(),
+    )
+    instance._remember_identifiers(
+        "resource-explorer-2", "get-index",
+        json.dumps({"Arn": local}).encode(),
+    )
+    instance._remember_identifiers(
+        "resource-explorer-2", "list-resources",
+        json.dumps({"Resources": [{
+            "Arn": "arn:aws:resource-explorer-2:us-east-1:123456789012:artifact/other"
+        }]}).encode(),
+    )
     instance._remember_identifiers(
         "resource-explorer-2", "list-indexes",
         json.dumps({"Indexes": [{"Arn": local}, {"Arn": remote}]}).encode(),
