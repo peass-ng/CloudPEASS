@@ -1399,7 +1399,7 @@ class AWSPEASS(CloudPEASS):
             print(f"{Fore.YELLOW}[3/3] Live read-only probes skipped by --skip-bruteforce.")
         elif run_bruteforce:
             print(
-                f"{Fore.CYAN}[3/3] Trying live read-only List/Get/Describe probes. "
+                f"{Fore.CYAN}[3/3] Trying live read-only AWS API probes. "
                 "No create, update, delete, invoke, run, start, send, or execute operations are used."
             )
             bf_permissions = sorted(set(self.AWSBruteForce.brute_force_permissions()))

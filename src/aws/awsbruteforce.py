@@ -27,6 +27,46 @@ class AWSBruteForce():
     MAX_DISCOVERY_VALUES_PER_FIELD = 8
     MAX_DISCOVERY_TOTAL_VALUES_PER_FIELD = 64
     MAX_REAL_ID_PROBES_PER_COMMAND = 3
+    # Jawsome's prefix inventory contains writes too. These additional CLI
+    # operations are individually reviewed reads, not prefix-wide permissions.
+    ADDITIONAL_READ_COMMANDS = {
+        ("accessanalyzer", "check-no-new-access"),
+        ("accessanalyzer", "check-no-public-access"),
+        ("accessanalyzer", "validate-policy"),
+        ("cloudformation", "estimate-template-cost"),
+        ("cloudformation", "validate-template"),
+        ("configservice", "select-resource-config"),
+        ("configservice", "select-aggregate-resource-config"),
+        ("dynamodb", "scan"),
+        ("elastictranscoder", "read-job"),
+        ("elastictranscoder", "read-pipeline"),
+        ("elastictranscoder", "read-preset"),
+        ("events", "test-event-pattern"),
+        ("glue", "check-schema-version-validity"),
+        ("lightsail", "is-vpc-peered"),
+        ("logs", "filter-log-events"),
+        ("logs", "test-metric-filter"),
+        ("route53domains", "view-billing"),
+        ("servicecatalog", "scan-provisioned-products"),
+        ("servicediscovery", "discover-instances"),
+        ("servicediscovery", "discover-instances-revision"),
+        ("stepfunctions", "validate-state-machine-definition"),
+        ("wafv2", "check-capacity"),
+    }
+    READ_COMMAND_PREFIXES = (
+        "list", "ls", "describe", "get", "batch-get", "head", "lookup", "search"
+    )
+    PROBE_IDENTITY_POLICY = (
+        '{"Version":"2012-10-17","Statement":[{"Effect":"Allow",'
+        '"Action":"s3:ListBucket","Resource":"arn:aws:s3:::cloudpeass-probe"}]}'
+    )
+    PROBE_TEMPLATE = (
+        '{"AWSTemplateFormatVersion":"2010-09-09","Resources":'
+        '{"Probe":{"Type":"AWS::S3::Bucket"}}}'
+    )
+    PROBE_CONFIG_EXPRESSION = (
+        "SELECT resourceId WHERE resourceType = 'AWS::EC2::Instance'"
+    )
     BOUNDED_READ_ARGUMENTS = {
         ("ec2", "describe-images"): ("--max-results", "5"),
         ("ec2", "describe-snapshots"): ("--max-results", "5"),
@@ -35,6 +75,60 @@ class AWSBruteForce():
         ("rds", "describe-reserved-db-instances-offerings"): ("--max-records", "20"),
         ("rds", "describe-orderable-db-instance-options"): ("--max-records", "20"),
         ("cloudtrail", "lookup-events"): ("--max-results", "5"),
+        ("accessanalyzer", "check-no-new-access"): (
+            "--new-policy-document", PROBE_IDENTITY_POLICY,
+            "--existing-policy-document", PROBE_IDENTITY_POLICY,
+            "--policy-type", "IDENTITY_POLICY",
+        ),
+        ("accessanalyzer", "check-no-public-access"): (
+            "--policy-document", '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::cloudpeass-probe/*"}]}',
+            "--resource-type", "AWS::S3::Bucket",
+        ),
+        ("accessanalyzer", "validate-policy"): (
+            "--policy-document", '{"Version":"2012-10-17","Statement":[]}',
+            "--policy-type", "IDENTITY_POLICY", "--max-results", "1", "--no-paginate",
+        ),
+        ("cloudformation", "validate-template"): (
+            "--template-body", PROBE_TEMPLATE,
+        ),
+        ("cloudformation", "estimate-template-cost"): (
+            "--template-body", PROBE_TEMPLATE,
+        ),
+        ("configservice", "select-resource-config"): (
+            "--expression", PROBE_CONFIG_EXPRESSION,
+            "--limit", "1", "--no-paginate",
+        ),
+        ("configservice", "select-aggregate-resource-config"): (
+            "--expression", PROBE_CONFIG_EXPRESSION,
+            "--limit", "1", "--no-paginate",
+        ),
+        ("dynamodb", "scan"): ("--limit", "1", "--select", "COUNT", "--no-paginate"),
+        ("events", "test-event-pattern"): (
+            "--event-pattern", '{"source":["aws.ec2"]}',
+            "--event", (
+                '{"id":"00000000-0000-0000-0000-000000000000",'
+                '"account":"000000000000","source":"aws.ec2",'
+                '"time":"2020-01-01T00:00:00Z","region":"us-east-1",'
+                '"resources":[],"detail-type":"CloudPEASSProbe","detail":{}}'
+            ),
+        ),
+        ("glue", "check-schema-version-validity"): (
+            "--data-format", "AVRO",
+            "--schema-definition", '{"type":"record","name":"Probe","fields":[]}',
+        ),
+        ("logs", "filter-log-events"): ("--limit", "1", "--no-paginate"),
+        ("logs", "test-metric-filter"): (
+            "--filter-pattern", "?ERROR", "--log-event-messages", "CloudPEASS probe",
+        ),
+        ("route53domains", "view-billing"): ("--max-items", "1", "--no-paginate"),
+        ("servicecatalog", "scan-provisioned-products"): (
+            "--page-size", "1", "--no-paginate",
+        ),
+        ("servicediscovery", "discover-instances"): ("--max-results", "1"),
+        ("stepfunctions", "validate-state-machine-definition"): (
+            "--definition", '{"StartAt":"Done","States":{"Done":{"Type":"Succeed"}}}',
+        ),
+        ("wafv2", "check-capacity"): ("--scope", "REGIONAL", "--rules", "[]"),
     }
     OPTIONAL_RESOURCE_READS = {
         ("cloudformation", "describe-events"),
@@ -44,6 +138,7 @@ class AWSBruteForce():
         ("ec2", "describe-launch-template-versions"),
         ("logs", "describe-log-streams"),
         ("logs", "get-log-group-fields"),
+        ("logs", "filter-log-events"),
     }
     IDENTIFIER_FIELD_SUFFIXES = ("arn", "id", "identifier", "name")
     SENSITIVE_FIELD_PARTS = (
@@ -305,6 +400,12 @@ class AWSBruteForce():
         return (service, command) in cls.BLOCKED_COMMANDS or any(
             pattern.search(command) for pattern in cls.BLOCKED_COMMAND_PATTERNS
         )
+
+    @classmethod
+    def _is_read_command(cls, service, command):
+        return command.startswith(cls.READ_COMMAND_PREFIXES) or (
+            service, command
+        ) in cls.ADDITIONAL_READ_COMMANDS
 
     def _build_command(self, profile, region, service, command, extra):
         base = [
@@ -702,7 +803,11 @@ class AWSBruteForce():
         return {
             token.rstrip("s")
             for token in command.split("-")
-            if token not in {"get", "list", "describe", "batch", "head", "lookup", "search", "by", "for"}
+            if token not in {
+                "get", "list", "describe", "batch", "head", "lookup", "search",
+                "validate", "select", "scan", "read", "test", "is", "filter",
+                "view", "discover", "check", "by", "for",
+            }
         }
 
     def _real_values_for_option(self, service, command, option):
@@ -722,6 +827,8 @@ class AWSBruteForce():
             ("cloudformation", "exportname"): ("name", "list-exports", "Exports"),
             ("cloudformation", "stackname"): ("stackname", "list-stacks", "StackSummaries"),
             ("resource-explorer-2", "resourcearn"): ("arn", "list-indexes", "Indexes"),
+            ("servicediscovery", "namespacename"): ("name", "list-namespaces", "Namespaces"),
+            ("servicediscovery", "servicename"): ("name", "list-services", "Services"),
         }
         special = aliases.get((service, field))
         if special:
@@ -746,12 +853,12 @@ class AWSBruteForce():
         target_tokens = self._resource_tokens(command)
         candidates.sort(
             key=lambda item: (
+                item[3] == field,
                 item[0].startswith("arn:") and f":{self.region}:" in item[0],
                 service == "resource-explorer-2"
                 and field == "resourcearn"
                 and item[0].split(":", 5)[-1].startswith(("index/", "view/")),
                 bool(special and item[1] == special[1] and special[2] in item[2]),
-                item[3] == field,
                 len(target_tokens & self._resource_tokens(item[1])),
             ),
             reverse=True,
@@ -1037,8 +1144,9 @@ class AWSBruteForce():
     def _botocore_services():
         return boto3.Session().get_available_services()
 
-    @staticmethod
-    def _botocore_commands(service):
+    @classmethod
+    def _botocore_commands(cls, service):
+        cli_service = service
         service = AWSBruteForce.CLI_MODEL_ALIASES.get(service, service)
         try:
             model = boto3.Session()._session.get_service_model(service)
@@ -1046,9 +1154,9 @@ class AWSBruteForce():
             return []
         commands = []
         for operation in model.operation_names:
-            if operation.startswith(("List", "Describe", "Get", "BatchGet", "Head", "Lookup", "Search")):
-                command = re.sub(r"(.)([A-Z][a-z]+)", r"\1-\2", operation)
-                command = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", command).lower()
+            command = re.sub(r"(.)([A-Z][a-z]+)", r"\1-\2", operation)
+            command = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", command).lower()
+            if cls._is_read_command(cli_service, command):
                 commands.append(command)
         return commands
 
@@ -1059,7 +1167,7 @@ class AWSBruteForce():
     def get_commands_for_service(self, service):
         output = self._get_aws_help(service)
         commands = self._help_entries(output, "AVAILABLE COMMANDS")
-        commands = [c for c in commands if re.match(r'^(list|ls|describe|get|batch-get|head|lookup|search)', c)]
+        commands = [c for c in commands if self._is_read_command(service, c)]
         commands = commands or self._botocore_commands(service)
         return [command for command in commands if not self._is_blocked_command(service, command)]
 
