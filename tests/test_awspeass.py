@@ -891,9 +891,337 @@ def test_expired_cli_credentials_stop_remaining_probes(monkeypatch):
     monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
     instance.run_command(None, "us-east-1", "sts", "get-caller-identity")
     instance.run_command(None, "us-east-1", "s3api", "list-buckets")
-    assert len(calls) == 1
+    assert len(calls) == 2  # The second call verifies the credential error with STS.
     assert instance.stop_event.is_set()
     assert instance.probe_stats["credential_errors"] == 1
+
+
+def test_service_specific_credential_error_does_not_stop_valid_profile(monkeypatch):
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        if command[-6:-4] == ["sts", "get-caller-identity"]:
+            return SimpleNamespace(returncode=0, stdout=b"arn:aws:iam::123456789012:user/test", stderr=b"")
+        return SimpleNamespace(returncode=255, stdout=b"", stderr=b"UnrecognizedClientException")
+
+    monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
+    instance.run_command("example", "us-east-1", "ec2", "describe-instances")
+    assert len(calls) == 2
+    assert not instance.stop_event.is_set()
+    assert instance.probe_stats["credential_errors"] == 0
+
+
+def test_real_certificate_arn_confirms_read_and_is_redacted(monkeypatch, capsys):
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    arn = "arn:aws:acm:us-east-1:123456789012:certificate/example"
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        if command[-2:] == ["acm", "list-certificates"]:
+            body = {"CertificateSummaryList": [{"CertificateArn": arn, "DomainName": "example.org"}]}
+            return SimpleNamespace(returncode=0, stdout=json.dumps(body).encode(), stderr=b"")
+        if command[-2:] == ["acm", "describe-certificate"]:
+            return SimpleNamespace(returncode=2, stdout=b"", stderr=b"arguments are required: --certificate-arn")
+        if "--certificate-arn" in command:
+            value = command[command.index("--certificate-arn") + 1]
+            if value == arn:
+                return SimpleNamespace(returncode=0, stdout=b'{"Certificate":{}}', stderr=b"")
+        return SimpleNamespace(returncode=254, stdout=b"", stderr=b"ValidationException")
+
+    monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
+    assert instance.run_command("example", "us-east-1", "acm", "list-certificates") == "confirmed"
+    assert instance.run_command("example", "us-east-1", "acm", "describe-certificate") == "confirmed"
+    assert any(arn in command for command in calls)
+    assert "acm:DescribeCertificate" in instance.found_permissions
+    assert arn not in capsys.readouterr().out
+    assert instance.discovery_stats["real_id_confirmed"] == 1
+
+
+def test_optional_stack_name_uses_discovered_id_after_validation(monkeypatch, capsys):
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    stack = "arn:aws:cloudformation:us-east-1:123456789012:stack/example/id"
+    instance._remember_identifiers(
+        "cloudformation", "list-stacks",
+        json.dumps({"StackSummaries": [{"StackName": stack}]}).encode(),
+    )
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        if "--stack-name" in command:
+            return SimpleNamespace(returncode=0, stdout=b'{"TemplateBody":{}}', stderr=b"")
+        return SimpleNamespace(returncode=254, stdout=b"", stderr=b"ValidationError")
+
+    monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
+    assert instance.run_command("example", "us-east-1", "cloudformation", "get-template") == "confirmed"
+    assert any("--stack-name" in command for command in calls)
+    assert stack not in capsys.readouterr().out
+    assert instance.discovery_stats["real_id_confirmed"] == 1
+
+
+def test_optional_launch_template_id_handles_service_missing_parameter(monkeypatch):
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    instance._remember_identifiers(
+        "ec2", "describe-launch-templates",
+        json.dumps({"LaunchTemplates": [{"LaunchTemplateId": "lt-0123456789abcdef0"}]}).encode(),
+    )
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        if "--launch-template-id" in command:
+            return SimpleNamespace(returncode=0, stdout=b'{"LaunchTemplateVersions":[]}', stderr=b"")
+        return SimpleNamespace(returncode=254, stdout=b"", stderr=b"MissingParameter")
+
+    monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
+    assert instance.run_command(
+        "example", "us-east-1", "ec2", "describe-launch-template-versions"
+    ) == "confirmed"
+    assert len(calls) == 2
+    assert "--launch-template-id" in calls[1]
+
+
+def test_large_inventory_reads_use_validated_small_pages(monkeypatch):
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        return SimpleNamespace(returncode=0, stdout=b"{}", stderr=b"")
+
+    monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
+    instance.run_command("example", "us-east-1", "ec2", "describe-images")
+    instance.run_command("example", "us-east-1", "rds", "describe-reserved-db-instances-offerings")
+    instance.run_command("example", "us-east-1", "rds", "describe-orderable-db-instance-options")
+    instance.run_command("example", "us-east-1", "cloudtrail", "lookup-events")
+    assert calls[0][-2:] == ["--max-results", "5"]
+    assert calls[1][-2:] == ["--max-records", "20"]
+    assert calls[2][-2:] == ["--max-records", "20"]
+    assert calls[3][-2:] == ["--max-results", "5"]
+
+
+def test_discovery_keeps_only_bounded_non_secret_identifiers():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    payload = {
+        "CertificateSummaryList": [
+            {"CertificateArn": f"arn:aws:acm:us-east-1:123456789012:certificate/{i}"}
+            for i in range(20)
+        ],
+        "SecretString": "do-not-keep",
+        "AccessKeyId": "AKIADO-NOT-KEEP",
+        "SecretAccessKey": "do-not-keep",
+        "NextToken": "do-not-keep",
+    }
+    instance._remember_identifiers("acm", "list-certificates", json.dumps(payload).encode())
+    values = instance._real_values_for_option("acm", "describe-certificate", "--certificate-arn")
+    assert len(values) == instance.MAX_REAL_ID_PROBES_PER_COMMAND
+    assert all(value.startswith("arn:aws:acm:") for value in values)
+    assert "secretstring" not in instance.discovered_identifiers["acm"]
+    assert "accesskeyid" in instance.discovered_identifiers["acm"]
+    assert "secretaccesskey" not in instance.discovered_identifiers["acm"]
+    assert "nexttoken" not in instance.discovered_identifiers["acm"]
+
+
+def test_generic_names_keep_small_quotas_from_separate_read_sources():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance._remember_identifiers(
+        "ssm", "list-documents",
+        json.dumps({"DocumentIdentifiers": [{"Name": f"document-{i}"} for i in range(20)]}).encode(),
+    )
+    instance._remember_identifiers(
+        "ssm", "describe-parameters",
+        json.dumps({"Parameters": [{"Name": "/app/parameter"}]}).encode(),
+    )
+    assert len(instance.discovered_identifiers["ssm"]["name"]) == 9
+    assert instance._real_values_for_option("ssm", "get-parameter", "--name")[0] == "/app/parameter"
+
+
+def test_discovery_uses_string_list_arns_for_plural_resource_option():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    arn = "arn:aws:ecs:us-east-1:123456789012:cluster/example"
+    instance._remember_identifiers(
+        "ecs", "list-clusters", json.dumps({"clusterArns": [arn]}).encode()
+    )
+    assert instance._real_values_for_option("ecs", "describe-clusters", "--clusters") == [arn]
+
+
+def test_boto_models_put_list_before_parameterized_reads():
+    assert AWSBruteForce._has_no_required_input("acm", "list-certificates")
+    assert not AWSBruteForce._has_no_required_input("acm", "describe-certificate")
+    assert not AWSBruteForce._has_no_required_input("cloudformation", "describe-events")
+    assert not AWSBruteForce._has_no_required_input("ec2", "describe-launch-template-versions")
+
+
+def test_bruteforce_runs_resource_discovery_before_id_based_reads():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    instance.get_aws_services = lambda: ["acm"]
+    instance.get_commands_for_service = lambda service: [
+        "describe-certificate", "list-certificates"
+    ]
+    calls = []
+    instance.run_command = lambda *args: calls.append(args[3])
+    assert instance.brute_force_permissions() == []
+    assert calls == ["list-certificates", "describe-certificate"]
+
+
+def test_bruteforce_runs_parameterized_lists_before_gets():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    instance.get_aws_services = lambda: ["codecommit"]
+    instance.get_commands_for_service = lambda service: [
+        "get-repository", "list-branches", "list-repositories"
+    ]
+    calls = []
+    instance.run_command = lambda *args: calls.append(args[3])
+    assert instance.brute_force_permissions() == []
+    assert calls == ["list-repositories", "list-branches", "get-repository"]
+
+
+def test_optional_stack_reads_wait_for_stack_inventory():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    instance.get_aws_services = lambda: ["cloudformation"]
+    instance.get_commands_for_service = lambda service: ["describe-events", "list-stacks"]
+    calls = []
+    instance.run_command = lambda *args: calls.append(args[3])
+    assert instance.brute_force_permissions() == []
+    assert calls == ["list-stacks", "describe-events"]
+
+
+def test_real_id_failure_keeps_original_not_found_fallback(monkeypatch):
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    arn = "arn:aws:acm:us-east-1:123456789012:certificate/example"
+    instance._remember_identifiers(
+        "acm", "list-certificates",
+        json.dumps({"CertificateSummaryList": [{"CertificateArn": arn}]}).encode(),
+    )
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        if "--certificate-arn" not in command:
+            return SimpleNamespace(returncode=2, stdout=b"", stderr=b"arguments are required: --certificate-arn")
+        if arn in command:
+            return SimpleNamespace(returncode=254, stdout=b"", stderr=b"ValidationException")
+        return SimpleNamespace(returncode=254, stdout=b"", stderr=b"ResourceNotFoundException")
+
+    monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
+    assert instance.run_command("example", "us-east-1", "acm", "describe-certificate") == "likely"
+    assert len(calls) == 3
+    assert "acm:DescribeCertificate" in instance.found_permissions
+
+
+def test_s3_bucket_name_comes_from_bucket_list_not_account_owner():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance._remember_identifiers(
+        "s3api", "list-buckets",
+        json.dumps({
+            "Buckets": [{"Name": "real-bucket"}],
+            "Owner": {"DisplayName": "account-owner"},
+        }).encode(),
+    )
+    assert instance._real_values_for_option("s3api", "get-bucket-acl", "--bucket") == ["real-bucket"]
+
+
+def test_export_name_and_service_code_feed_required_reads():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance._remember_identifiers(
+        "cloudformation", "list-exports",
+        json.dumps({"Exports": [{"Name": "shared-vpc"}]}).encode(),
+    )
+    instance._remember_identifiers(
+        "service-quotas", "list-services",
+        json.dumps({"Services": [{"ServiceCode": "ec2"}]}).encode(),
+    )
+    assert instance._real_values_for_option(
+        "cloudformation", "list-imports", "--export-name"
+    ) == ["shared-vpc"]
+    assert instance._real_values_for_option(
+        "service-quotas", "list-service-quotas", "--service-code"
+    ) == ["ec2"]
+
+
+def test_lens_alias_and_connector_type_feed_required_reads():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance._remember_identifiers(
+        "wellarchitected", "list-lenses",
+        json.dumps({"LensSummaries": [{"LensAlias": "wellarchitected"}]}).encode(),
+    )
+    instance._remember_identifiers(
+        "appflow", "list-connectors",
+        json.dumps({"connectors": [{"connectorType": "Salesforce"}]}).encode(),
+    )
+    assert instance._real_values_for_option(
+        "wellarchitected", "get-lens", "--lens-alias"
+    ) == ["wellarchitected"]
+    assert instance._real_values_for_option(
+        "appflow", "describe-connector", "--connector-type"
+    ) == ["Salesforce"]
+
+
+def test_same_region_arn_precedes_other_region_resources():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    local = "arn:aws:resource-explorer-2:us-east-1:123456789012:index/local"
+    remote = "arn:aws:resource-explorer-2:us-west-2:123456789012:index/remote"
+    unrelated = "arn:aws:resource-explorer-2:us-west-2:123456789012:view/other"
+    instance._remember_identifiers(
+        "resource-explorer-2", "list-views",
+        json.dumps({"Views": [{"Arn": unrelated}]}).encode(),
+    )
+    instance._remember_identifiers(
+        "resource-explorer-2", "get-index",
+        json.dumps({"Arn": local}).encode(),
+    )
+    instance._remember_identifiers(
+        "resource-explorer-2", "list-resources",
+        json.dumps({"Resources": [{
+            "Arn": "arn:aws:resource-explorer-2:us-east-1:123456789012:artifact/other"
+        }]}).encode(),
+    )
+    instance._remember_identifiers(
+        "resource-explorer-2", "list-indexes",
+        json.dumps({"Indexes": [{"Arn": local}, {"Arn": remote}]}).encode(),
+    )
+    assert instance._real_values_for_option(
+        "resource-explorer-2", "list-tags-for-resource", "--resource-arn"
+    )[0] == local
+
+
+def test_active_stack_list_takes_priority_for_stack_reads():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance._remember_identifiers(
+        "cloudformation", "list-stack-events",
+        json.dumps({"StackEvents": [{"StackName": "deleted-stack"}]}).encode(),
+    )
+    instance._remember_identifiers(
+        "cloudformation", "list-stacks",
+        json.dumps({"StackSummaries": [{"StackName": "active-stack"}]}).encode(),
+    )
+    assert instance._real_values_for_option(
+        "cloudformation", "describe-events", "--stack-name"
+    )[0] == "active-stack"
+
+
+def test_display_command_hides_response_derived_resource_ids():
+    command = [
+        "/usr/bin/aws", "--profile", "chosen", "--region", "us-east-1",
+        "acm", "describe-certificate", "--certificate-arn",
+        "arn:aws:acm:us-east-1:123456789012:certificate/private",
+    ]
+    displayed = AWSBruteForce._display_command(command)
+    assert "acm describe-certificate" in displayed
+    assert "certificate/private" not in displayed
+    assert "<resource>" in displayed
 
 
 def test_workmail_deleted_organization_state_proves_authorized_lookup(

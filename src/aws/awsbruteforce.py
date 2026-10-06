@@ -18,9 +18,44 @@ from colorama import Fore, init
 class AWSBruteForce():
 
     CLI_MODEL_ALIASES = {
+        "configservice": "config",
         "deploy": "codedeploy",
         "s3api": "s3",
     }
+
+    MAX_DISCOVERY_RESPONSE_BYTES = 1_000_000
+    MAX_DISCOVERY_VALUES_PER_FIELD = 8
+    MAX_DISCOVERY_TOTAL_VALUES_PER_FIELD = 64
+    MAX_REAL_ID_PROBES_PER_COMMAND = 3
+    BOUNDED_READ_ARGUMENTS = {
+        ("ec2", "describe-images"): ("--max-results", "5"),
+        ("ec2", "describe-snapshots"): ("--max-results", "5"),
+        ("ec2", "describe-reserved-instances-offerings"): ("--max-results", "5"),
+        ("ec2", "describe-spot-price-history"): ("--max-results", "5"),
+        ("rds", "describe-reserved-db-instances-offerings"): ("--max-records", "20"),
+        ("rds", "describe-orderable-db-instance-options"): ("--max-records", "20"),
+        ("cloudtrail", "lookup-events"): ("--max-results", "5"),
+    }
+    OPTIONAL_RESOURCE_READS = {
+        ("cloudformation", "describe-events"),
+        ("cloudformation", "describe-stack-resources"),
+        ("cloudformation", "get-template"),
+        ("cloudformation", "get-template-summary"),
+        ("ec2", "describe-launch-template-versions"),
+        ("logs", "describe-log-streams"),
+        ("logs", "get-log-group-fields"),
+    }
+    IDENTIFIER_FIELD_SUFFIXES = ("arn", "id", "identifier", "name")
+    SENSITIVE_FIELD_PARTS = (
+        "accesskey", "credential", "password", "secretstring", "secretbinary",
+        "token", "privatekey", "publickey", "certificatebody", "content",
+    )
+    CREDENTIAL_ERROR_RE = re.compile(
+        r"ExpiredToken|InvalidClientTokenId|UnrecognizedClientException|"
+        r"InvalidSignatureException|SignatureDoesNotMatch|RequestExpired|"
+        r"TokenRefreshRequired|Unable to locate credentials|SSO session .*expired",
+        re.I,
+    )
 
     # CloudTrail can preserve resource identifiers after list access is lost or
     # after a resource is deleted. Only use formats validated for these EUC
@@ -127,6 +162,9 @@ class AWSBruteForce():
         self.history_lock = threading.Lock()
         self.history_cache = {}
         self.historical_values_used = set()
+        self.discovered_identifiers = {}
+        self.discovery_lock = threading.Lock()
+        self.discovery_stats = {"values": 0, "real_id_probes": 0, "real_id_confirmed": 0}
 
         self.aws_cli = shutil.which("aws")
 
@@ -240,10 +278,15 @@ class AWSBruteForce():
 
     @classmethod
     @lru_cache(maxsize=None)
-    def _operation_map(cls, service):
+    def _service_model(cls, service):
         model_service = cls.CLI_MODEL_ALIASES.get(service, service)
+        return boto3.Session()._session.get_service_model(model_service)
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _operation_map(cls, service):
         try:
-            model = boto3.Session()._session.get_service_model(model_service)
+            model = cls._service_model(service)
         except Exception:
             return {}
         result = {}
@@ -285,6 +328,7 @@ class AWSBruteForce():
         env["AWS_PAGER"] = ""
         env["AWS_CLI_AUTO_PROMPT"] = "off"
         env["AWS_MAX_ATTEMPTS"] = "2"
+        env["AWS_DEFAULT_OUTPUT"] = "json"
         # --profile must not silently probe as unrelated ambient credentials,
         # except when its source chain explicitly uses credential_source=Environment.
         if not (profile and self.profile_uses_environment_credentials):
@@ -375,7 +419,17 @@ class AWSBruteForce():
 
     @staticmethod
     def _display_command(command):
-        return shlex.join(command)
+        # Successful probes can now use real resource identifiers. Keep those
+        # identifiers out of terminal output and logs.
+        safe = list(command)
+        visible_options = {
+            "--cli-connect-timeout", "--cli-read-timeout", "--profile", "--region",
+            "--output", "--query", "--max-results", "--max-items", "--no-paginate",
+        }
+        for index, item in enumerate(safe[:-1]):
+            if item.startswith("--") and item not in visible_options and not safe[index + 1].startswith("--"):
+                safe[index + 1] = "<resource>"
+        return shlex.join(safe)
 
     @staticmethod
     def _placeholder_for(option, service=None, command=None):
@@ -554,6 +608,206 @@ class AWSBruteForce():
             options.extend(re.findall(r"--[a-zA-Z0-9][a-zA-Z0-9-]*", match))
         return list(dict.fromkeys(options))
 
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _has_no_required_input(cls, service, command):
+        """Use the SDK model to run resource-listing calls before ID-based calls."""
+        if (service, command) in cls.OPTIONAL_RESOURCE_READS:
+            return False
+        operation = cls._operation_map(service).get(command)
+        if not operation:
+            return False
+        try:
+            model = cls._service_model(service)
+            shape = model.operation_model(operation).input_shape
+            return shape is None or not shape.required_members
+        except Exception:
+            return False
+
+    @staticmethod
+    def _identifier_key(field):
+        key = re.sub(r"[^a-z0-9]", "", str(field).casefold())
+        if key in {"accesskeyid", "serialnumber"}:
+            return key
+        if not key or any(part in key for part in AWSBruteForce.SENSITIVE_FIELD_PARTS):
+            return None
+        if key.endswith(("arns", "ids", "identifiers", "names", "queueurls")):
+            key = key[:-1]
+        if key in {
+            "bucket", "queueurl", "engine", "dbparametergroupfamily", "servicecode",
+            "lensalias", "connectortype", "connectorlabel"
+        } or key.endswith(
+            AWSBruteForce.IDENTIFIER_FIELD_SUFFIXES
+        ):
+            return key
+        return None
+
+    def _remember_identifiers(self, service, command, output):
+        """Keep only bounded, non-secret identifiers from a successful read response."""
+        if not output or len(output) > self.MAX_DISCOVERY_RESPONSE_BYTES:
+            return
+        try:
+            payload = json.loads(output)
+        except (TypeError, ValueError, UnicodeError):
+            return
+        pending = [(payload, "", 0)]
+        examined = 0
+        found = []
+        while pending and examined < 1000:
+            node, path, depth = pending.pop()
+            examined += 1
+            if depth > 6:
+                continue
+            if isinstance(node, dict):
+                for field, value in list(node.items())[:100]:
+                    field_key = self._identifier_key(field)
+                    if field_key:
+                        scalar_values = (
+                            value[: self.MAX_DISCOVERY_VALUES_PER_FIELD]
+                            if isinstance(value, list) else [value]
+                        )
+                        for scalar in scalar_values:
+                            if not isinstance(scalar, str):
+                                continue
+                            scalar = scalar.strip()
+                            if (
+                                1 <= len(scalar) <= 512
+                                and not any(ord(char) < 32 for char in scalar)
+                                and "CloudPEASSProbe" not in scalar
+                                and (not field_key.endswith("arn") or scalar.startswith("arn:"))
+                            ):
+                                found.append((field_key, scalar, command, path))
+                    if isinstance(value, (dict, list)):
+                        pending.append((value, f"{path}/{field}", depth + 1))
+            elif isinstance(node, list):
+                for value in node[:20]:
+                    if isinstance(value, (dict, list)):
+                        pending.append((value, path, depth + 1))
+        if not found:
+            return
+        with self.discovery_lock:
+            fields = self.discovered_identifiers.setdefault(service, {})
+            for field_key, value, source, path in found:
+                values = fields.setdefault(field_key, [])
+                if len(values) >= self.MAX_DISCOVERY_TOTAL_VALUES_PER_FIELD or sum(
+                    item[1] == source for item in values
+                ) >= self.MAX_DISCOVERY_VALUES_PER_FIELD:
+                    continue
+                if not any(item[0] == value for item in values):
+                    values.append((value, source, path))
+                    self.discovery_stats["values"] += 1
+
+    @staticmethod
+    def _resource_tokens(command):
+        return {
+            token.rstrip("s")
+            for token in command.split("-")
+            if token not in {"get", "list", "describe", "batch", "head", "lookup", "search", "by", "for"}
+        }
+
+    def _real_values_for_option(self, service, command, option):
+        field = re.sub(r"[^a-z0-9]", "", option.lstrip("-").casefold())
+        field_keys = [field]
+        if field.endswith("s"):
+            field_keys.append(field[:-1])
+        stem = field_keys[-1]
+        if stem.endswith(("name", "id", "arn")):
+            stem = re.sub(r"(?:name|id|arn)$", "", stem)
+        if len(stem) >= 4:
+            field_keys.extend(stem + suffix for suffix in ("arn", "id", "name"))
+        aliases = {
+            ("s3api", "bucket"): ("name", "list-buckets", "Buckets"),
+            ("ssm", "documentname"): ("name", "list-documents", "DocumentIdentifiers"),
+            ("athena", "workgroup"): ("name", "list-work-groups", "WorkGroups"),
+            ("cloudformation", "exportname"): ("name", "list-exports", "Exports"),
+            ("cloudformation", "stackname"): ("stackname", "list-stacks", "StackSummaries"),
+            ("resource-explorer-2", "resourcearn"): ("arn", "list-indexes", "Indexes"),
+        }
+        special = aliases.get((service, field))
+        if special:
+            field_keys.append(special[0])
+        if field == "resourcearn":
+            field_keys.append("arn")
+        if field == "resourceid":
+            field_keys.append("id")
+        with self.discovery_lock:
+            fields = self.discovered_identifiers.get(service, {})
+            candidates = [
+                (value, source, path, field_key)
+                for field_key in field_keys
+                for value, source, path in fields.get(field_key, [])
+            ]
+        if special and special[0] == "name" and special[0] != field:
+            candidates = [
+                item for item in candidates
+                if item[3] != special[0]
+                or (item[1] == special[1] and special[2] in item[2])
+            ]
+        target_tokens = self._resource_tokens(command)
+        candidates.sort(
+            key=lambda item: (
+                item[0].startswith("arn:") and f":{self.region}:" in item[0],
+                service == "resource-explorer-2"
+                and field == "resourcearn"
+                and item[0].split(":", 5)[-1].startswith(("index/", "view/")),
+                bool(special and item[1] == special[1] and special[2] in item[2]),
+                item[3] == field,
+                len(target_tokens & self._resource_tokens(item[1])),
+            ),
+            reverse=True,
+        )
+        return list(dict.fromkeys(item[0] for item in candidates))[
+            : self.MAX_REAL_ID_PROBES_PER_COMMAND
+        ]
+
+    def _real_argument_sets(self, service, command, required_options, extra):
+        missing = [option for option in required_options if option not in extra]
+        values_by_option = {
+            option: self._real_values_for_option(service, command, option)
+            for option in missing
+        }
+        if not any(values_by_option.values()):
+            return []
+        attempts = []
+        for index in range(self.MAX_REAL_ID_PROBES_PER_COMMAND):
+            args = list(extra)
+            for option in missing:
+                values = values_by_option[option]
+                value = values[index % len(values)] if values else self._placeholder_for(
+                    option, service, command
+                )
+                args.extend([option, value])
+            if args not in attempts:
+                attempts.append(args)
+        return attempts
+
+    def _optional_real_argument_sets(self, service, command, extra):
+        """Retry an invalid read with one optional, response-derived ID."""
+        operation = self._operation_map(service).get(command)
+        if not operation:
+            return []
+        try:
+            shape = self._service_model(service).operation_model(operation).input_shape
+        except Exception:
+            return []
+        if shape is None:
+            return []
+        attempts = []
+        for member, member_shape in shape.members.items():
+            if member in shape.required_members or member_shape.type_name != "string":
+                continue
+            option = "--" + re.sub(
+                r"([a-z0-9])([A-Z])", r"\1-\2",
+                re.sub(r"(.)([A-Z][a-z]+)", r"\1-\2", member),
+            ).lower()
+            if option in extra:
+                continue
+            for value in self._real_values_for_option(service, command, option):
+                attempts.append(list(extra) + [option, value])
+                if len(attempts) >= self.MAX_REAL_ID_PROBES_PER_COMMAND:
+                    return attempts
+        return attempts
+
     def _caller_account_id(self, profile, region):
         """Return the caller account for probes that reject fabricated IDs."""
         command = self._build_command(
@@ -579,8 +833,10 @@ class AWSBruteForce():
 
     def run_command(self, profile, region, service, command, extra=None, cont=0):
         if getattr(self, "stop_event", None) and self.stop_event.is_set():
-            return
+            return None
         extra = list(extra or [])
+        if cont == 0 and not extra:
+            extra.extend(self.BOUNDED_READ_ARGUMENTS.get((service, command), ()))
         full_command = self._build_command(profile, region, service, command, extra)
         display_command = self._display_command(full_command)
         env = self._build_env(profile)
@@ -610,19 +866,38 @@ class AWSBruteForce():
                 
                 with self.lock:
                     self.found_permissions.append(perm_command)
+                if result.returncode == 0:
+                    self._remember_identifiers(service, command, result.stdout)
+                    return "confirmed"
+                return "likely"
 
-            elif re.search(
-                r"ExpiredToken|InvalidClientTokenId|UnrecognizedClientException|"
-                r"InvalidSignatureException|SignatureDoesNotMatch|RequestExpired|"
-                r"TokenRefreshRequired|Unable to locate credentials|SSO session .*expired",
-                output,
-                re.I,
-            ):
-                with self.lock:
-                    self.probe_stats["credential_errors"] += 1
-                    self.stop_event.set()
-                if self.debug:
-                    print(f"[DEBUG] Credentials became unusable while running: {display_command}")
+            elif self.CREDENTIAL_ERROR_RE.search(output):
+                # Some service endpoints return UnrecognizedClientException to
+                # valid credentials. Stop only if STS rejects the same profile.
+                identity_command = self._build_command(
+                    profile, region, "sts", "get-caller-identity",
+                    ["--query", "Arn", "--output", "text"],
+                )
+                try:
+                    identity = subprocess.run(
+                        identity_command, capture_output=True, timeout=10, env=env
+                    )
+                    invalid = identity.returncode != 0 and bool(
+                        self.CREDENTIAL_ERROR_RE.search(
+                            identity.stdout.decode(errors="replace")
+                            + identity.stderr.decode(errors="replace")
+                        )
+                    )
+                except (OSError, subprocess.TimeoutExpired):
+                    invalid = False
+                if invalid:
+                    with self.lock:
+                        self.probe_stats["credential_errors"] += 1
+                        self.stop_event.set()
+                    if self.debug:
+                        print(f"[DEBUG] Credentials became unusable while running: {display_command}")
+                elif self.debug:
+                    print(f"[DEBUG] Service-specific credential error: {service} {command}")
 
             elif re.search(
                 r"AccessDenied|Forbidden|Unauthorized|NotAuthorized|AuthFailure|"
@@ -635,8 +910,22 @@ class AWSBruteForce():
 
             elif self._required_options(output):
                 if cont < 3:
+                    required = self._required_options(output)
+                    if cont == 0:
+                        for real_args in self._real_argument_sets(
+                            service, command, required, extra
+                        ):
+                            with self.discovery_lock:
+                                self.discovery_stats["real_id_probes"] += 1
+                            outcome = self.run_command(
+                                profile, region, service, command, real_args, cont + 1
+                            )
+                            if outcome == "confirmed":
+                                with self.discovery_lock:
+                                    self.discovery_stats["real_id_confirmed"] += 1
+                                return outcome
                     added = False
-                    for required_arg in self._required_options(output):
+                    for required_arg in required:
                         if required_arg not in extra:
                             placeholder = self._probe_value_for(
                                 required_arg,
@@ -661,13 +950,26 @@ class AWSBruteForce():
                             )
                             added = True
                     if added:
-                        self.run_command(profile, region, service, command, extra, cont + 1)
+                        return self.run_command(profile, region, service, command, extra, cont + 1)
                     elif self.debug:
                         print(f"[DEBUG] Required CLI arguments made no progress for: {command}")
                 elif self.debug:
                     print(f"[DEBUG] Stopped adding required args for: {command}\n{output.strip()}")
 
             elif re.search(r'ValidationException|ValidationError|InvalidArnException|InvalidRequestException|InvalidParameterValueException|InvalidARNFault|Invalid ARN|InvalidIpamScopeId.Malformed|InvalidParameterException|invalid literal for', output, re.I):
+                if cont == 0:
+                    for real_args in self._optional_real_argument_sets(
+                        service, command, extra
+                    ):
+                        with self.discovery_lock:
+                            self.discovery_stats["real_id_probes"] += 1
+                        outcome = self.run_command(
+                            profile, region, service, command, real_args, cont + 1
+                        )
+                        if outcome == "confirmed":
+                            with self.discovery_lock:
+                                self.discovery_stats["real_id_confirmed"] += 1
+                            return outcome
                 if self.debug:
                     print(f"[DEBUG] Validation error for: {display_command}")
 
@@ -676,6 +978,19 @@ class AWSBruteForce():
                     print(f"[DEBUG] Could not connect to endpoint: {display_command}")
 
             elif re.search(r'Unknown options|MissingParameter|InvalidInputException|error: argument', output, re.I):
+                if cont == 0 and "MissingParameter" in output:
+                    for real_args in self._optional_real_argument_sets(
+                        service, command, extra
+                    ):
+                        with self.discovery_lock:
+                            self.discovery_stats["real_id_probes"] += 1
+                        outcome = self.run_command(
+                            profile, region, service, command, real_args, cont + 1
+                        )
+                        if outcome == "confirmed":
+                            with self.discovery_lock:
+                                self.discovery_stats["real_id_confirmed"] += 1
+                            return outcome
                 if self.debug:
                     print(f"[DEBUG] Option error for: {display_command}")
 
@@ -752,6 +1067,8 @@ class AWSBruteForce():
         self.found_permissions = []
         self.probe_stats = {"timeouts": 0, "os_errors": 0, "credential_errors": 0}
         self.historical_values_used = set()
+        self.discovered_identifiers = {}
+        self.discovery_stats = {"values": 0, "real_id_probes": 0, "real_id_confirmed": 0}
         if not getattr(self, "stop_event", None):
             self.stop_event = threading.Event()
         else:
@@ -808,14 +1125,38 @@ class AWSBruteForce():
             )
             return []
 
-        with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
-            futures = [executor.submit(self.run_command, *args) for args in commands_to_run]
-            pbar = tqdm(total=len(futures), desc="Running commands")
-            for future in as_completed(futures):
-                pbar.update(1)
-            pbar.close()
+        discovery_commands = [
+            args for args in commands_to_run
+            if self._has_no_required_input(args[2], args[3])
+        ]
+        discovery_set = set(discovery_commands)
+        remaining_commands = [args for args in commands_to_run if args not in discovery_set]
+        nested_discovery_commands = [
+            args for args in remaining_commands if args[3].startswith("list-")
+        ]
+        nested_discovery_set = set(nested_discovery_commands)
+        remaining_commands = [
+            args for args in remaining_commands if args not in nested_discovery_set
+        ]
+        for phase, commands in (
+            ("Discovering resource IDs", discovery_commands),
+            ("Discovering nested resource IDs", nested_discovery_commands),
+            ("Running ID-based probes", remaining_commands),
+        ):
+            with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
+                futures = [executor.submit(self.run_command, *args) for args in commands]
+                pbar = tqdm(total=len(futures), desc=phase)
+                for future in as_completed(futures):
+                    pbar.update(1)
+                pbar.close()
 
         print("\n[+] Permission enumeration completed.")
+        if self.discovery_stats["real_id_probes"]:
+            print(
+                f"{Fore.BLUE}Response-derived IDs confirmed "
+                f"{self.discovery_stats['real_id_confirmed']} read probe(s) "
+                f"in {self.discovery_stats['real_id_probes']} bounded attempt(s)."
+            )
         if self.historical_values_used:
             print(
                 f"{Fore.BLUE}Used {len(self.historical_values_used)} validated resource "
