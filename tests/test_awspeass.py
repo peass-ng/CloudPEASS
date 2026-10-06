@@ -1000,10 +1000,12 @@ def test_large_inventory_reads_use_validated_small_pages(monkeypatch):
     monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
     instance.run_command("example", "us-east-1", "ec2", "describe-images")
     instance.run_command("example", "us-east-1", "rds", "describe-reserved-db-instances-offerings")
+    instance.run_command("example", "us-east-1", "rds", "describe-orderable-db-instance-options")
     instance.run_command("example", "us-east-1", "cloudtrail", "lookup-events")
     assert calls[0][-2:] == ["--max-results", "5"]
     assert calls[1][-2:] == ["--max-records", "20"]
-    assert calls[2][-2:] == ["--max-results", "5"]
+    assert calls[2][-2:] == ["--max-records", "20"]
+    assert calls[3][-2:] == ["--max-results", "5"]
 
 
 def test_discovery_keeps_only_bounded_non_secret_identifiers():
@@ -1165,6 +1167,19 @@ def test_lens_alias_and_connector_type_feed_required_reads():
     assert instance._real_values_for_option(
         "appflow", "describe-connector", "--connector-type"
     ) == ["Salesforce"]
+
+
+def test_same_region_arn_precedes_other_region_resources():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    local = "arn:aws:resource-explorer-2:us-east-1:123456789012:index/local"
+    remote = "arn:aws:resource-explorer-2:us-west-2:123456789012:index/remote"
+    instance._remember_identifiers(
+        "resource-explorer-2", "list-indexes",
+        json.dumps({"Indexes": [{"Arn": local}, {"Arn": remote}]}).encode(),
+    )
+    assert instance._real_values_for_option(
+        "resource-explorer-2", "list-tags-for-resource", "--resource-arn"
+    )[0] == local
 
 
 def test_active_stack_list_takes_priority_for_stack_reads():

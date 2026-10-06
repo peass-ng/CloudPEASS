@@ -33,6 +33,7 @@ class AWSBruteForce():
         ("ec2", "describe-reserved-instances-offerings"): ("--max-results", "5"),
         ("ec2", "describe-spot-price-history"): ("--max-results", "5"),
         ("rds", "describe-reserved-db-instances-offerings"): ("--max-records", "20"),
+        ("rds", "describe-orderable-db-instance-options"): ("--max-records", "20"),
         ("cloudtrail", "lookup-events"): ("--max-results", "5"),
     }
     OPTIONAL_RESOURCE_READS = {
@@ -745,6 +746,7 @@ class AWSBruteForce():
         candidates.sort(
             key=lambda item: (
                 bool(special and item[1] == special[1] and special[2] in item[2]),
+                item[0].startswith("arn:") and f":{self.region}:" in item[0],
                 item[3] == field,
                 len(target_tokens & self._resource_tokens(item[1])),
             ),
