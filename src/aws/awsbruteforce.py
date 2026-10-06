@@ -25,7 +25,25 @@ class AWSBruteForce():
 
     MAX_DISCOVERY_RESPONSE_BYTES = 1_000_000
     MAX_DISCOVERY_VALUES_PER_FIELD = 8
+    MAX_DISCOVERY_TOTAL_VALUES_PER_FIELD = 64
     MAX_REAL_ID_PROBES_PER_COMMAND = 3
+    BOUNDED_READ_ARGUMENTS = {
+        ("ec2", "describe-images"): ("--max-results", "5"),
+        ("ec2", "describe-snapshots"): ("--max-results", "5"),
+        ("ec2", "describe-reserved-instances-offerings"): ("--max-results", "5"),
+        ("ec2", "describe-spot-price-history"): ("--max-results", "5"),
+        ("rds", "describe-reserved-db-instances-offerings"): ("--max-records", "20"),
+        ("cloudtrail", "lookup-events"): ("--max-results", "5"),
+    }
+    OPTIONAL_RESOURCE_READS = {
+        ("cloudformation", "describe-events"),
+        ("cloudformation", "describe-stack-resources"),
+        ("cloudformation", "get-template"),
+        ("cloudformation", "get-template-summary"),
+        ("ec2", "describe-launch-template-versions"),
+        ("logs", "describe-log-streams"),
+        ("logs", "get-log-group-fields"),
+    }
     IDENTIFIER_FIELD_SUFFIXES = ("arn", "id", "identifier", "name")
     SENSITIVE_FIELD_PARTS = (
         "accesskey", "credential", "password", "secretstring", "secretbinary",
@@ -593,6 +611,8 @@ class AWSBruteForce():
     @lru_cache(maxsize=None)
     def _has_no_required_input(cls, service, command):
         """Use the SDK model to run resource-listing calls before ID-based calls."""
+        if (service, command) in cls.OPTIONAL_RESOURCE_READS:
+            return False
         operation = cls._operation_map(service).get(command)
         if not operation:
             return False
@@ -606,11 +626,16 @@ class AWSBruteForce():
     @staticmethod
     def _identifier_key(field):
         key = re.sub(r"[^a-z0-9]", "", str(field).casefold())
+        if key in {"accesskeyid", "serialnumber"}:
+            return key
         if not key or any(part in key for part in AWSBruteForce.SENSITIVE_FIELD_PARTS):
             return None
         if key.endswith(("arns", "ids", "identifiers", "names", "queueurls")):
             key = key[:-1]
-        if key == "bucket" or key == "queueurl" or key.endswith(
+        if key in {
+            "bucket", "queueurl", "engine", "dbparametergroupfamily", "servicecode",
+            "lensalias", "connectortype", "connectorlabel"
+        } or key.endswith(
             AWSBruteForce.IDENTIFIER_FIELD_SUFFIXES
         ):
             return key
@@ -663,7 +688,9 @@ class AWSBruteForce():
             fields = self.discovered_identifiers.setdefault(service, {})
             for field_key, value, source, path in found:
                 values = fields.setdefault(field_key, [])
-                if len(values) >= self.MAX_DISCOVERY_VALUES_PER_FIELD:
+                if len(values) >= self.MAX_DISCOVERY_TOTAL_VALUES_PER_FIELD or sum(
+                    item[1] == source for item in values
+                ) >= self.MAX_DISCOVERY_VALUES_PER_FIELD:
                     continue
                 if not any(item[0] == value for item in values):
                     values.append((value, source, path))
@@ -691,6 +718,8 @@ class AWSBruteForce():
             ("s3api", "bucket"): ("name", "list-buckets", "Buckets"),
             ("ssm", "documentname"): ("name", "list-documents", "DocumentIdentifiers"),
             ("athena", "workgroup"): ("name", "list-work-groups", "WorkGroups"),
+            ("cloudformation", "exportname"): ("name", "list-exports", "Exports"),
+            ("cloudformation", "stackname"): ("stackname", "list-stacks", "StackSummaries"),
         }
         special = aliases.get((service, field))
         if special:
@@ -706,7 +735,7 @@ class AWSBruteForce():
                 for field_key in field_keys
                 for value, source, path in fields.get(field_key, [])
             ]
-        if special:
+        if special and special[0] != field:
             candidates = [
                 item for item in candidates
                 if item[3] != special[0]
@@ -715,6 +744,7 @@ class AWSBruteForce():
         target_tokens = self._resource_tokens(command)
         candidates.sort(
             key=lambda item: (
+                bool(special and item[1] == special[1] and special[2] in item[2]),
                 item[3] == field,
                 len(target_tokens & self._resource_tokens(item[1])),
             ),
@@ -745,6 +775,33 @@ class AWSBruteForce():
                 attempts.append(args)
         return attempts
 
+    def _optional_real_argument_sets(self, service, command, extra):
+        """Retry an invalid read with one optional, response-derived ID."""
+        operation = self._operation_map(service).get(command)
+        if not operation:
+            return []
+        try:
+            shape = self._service_model(service).operation_model(operation).input_shape
+        except Exception:
+            return []
+        if shape is None:
+            return []
+        attempts = []
+        for member, member_shape in shape.members.items():
+            if member in shape.required_members or member_shape.type_name != "string":
+                continue
+            option = "--" + re.sub(
+                r"([a-z0-9])([A-Z])", r"\1-\2",
+                re.sub(r"(.)([A-Z][a-z]+)", r"\1-\2", member),
+            ).lower()
+            if option in extra:
+                continue
+            for value in self._real_values_for_option(service, command, option):
+                attempts.append(list(extra) + [option, value])
+                if len(attempts) >= self.MAX_REAL_ID_PROBES_PER_COMMAND:
+                    return attempts
+        return attempts
+
     def _caller_account_id(self, profile, region):
         """Return the caller account for probes that reject fabricated IDs."""
         command = self._build_command(
@@ -772,6 +829,8 @@ class AWSBruteForce():
         if getattr(self, "stop_event", None) and self.stop_event.is_set():
             return None
         extra = list(extra or [])
+        if cont == 0 and not extra:
+            extra.extend(self.BOUNDED_READ_ARGUMENTS.get((service, command), ()))
         full_command = self._build_command(profile, region, service, command, extra)
         display_command = self._display_command(full_command)
         env = self._build_env(profile)
@@ -892,6 +951,19 @@ class AWSBruteForce():
                     print(f"[DEBUG] Stopped adding required args for: {command}\n{output.strip()}")
 
             elif re.search(r'ValidationException|ValidationError|InvalidArnException|InvalidRequestException|InvalidParameterValueException|InvalidARNFault|Invalid ARN|InvalidIpamScopeId.Malformed|InvalidParameterException|invalid literal for', output, re.I):
+                if cont == 0:
+                    for real_args in self._optional_real_argument_sets(
+                        service, command, extra
+                    ):
+                        with self.discovery_lock:
+                            self.discovery_stats["real_id_probes"] += 1
+                        outcome = self.run_command(
+                            profile, region, service, command, real_args, cont + 1
+                        )
+                        if outcome == "confirmed":
+                            with self.discovery_lock:
+                                self.discovery_stats["real_id_confirmed"] += 1
+                            return outcome
                 if self.debug:
                     print(f"[DEBUG] Validation error for: {display_command}")
 
@@ -900,6 +972,19 @@ class AWSBruteForce():
                     print(f"[DEBUG] Could not connect to endpoint: {display_command}")
 
             elif re.search(r'Unknown options|MissingParameter|InvalidInputException|error: argument', output, re.I):
+                if cont == 0 and "MissingParameter" in output:
+                    for real_args in self._optional_real_argument_sets(
+                        service, command, extra
+                    ):
+                        with self.discovery_lock:
+                            self.discovery_stats["real_id_probes"] += 1
+                        outcome = self.run_command(
+                            profile, region, service, command, real_args, cont + 1
+                        )
+                        if outcome == "confirmed":
+                            with self.discovery_lock:
+                                self.discovery_stats["real_id_confirmed"] += 1
+                            return outcome
                 if self.debug:
                     print(f"[DEBUG] Option error for: {display_command}")
 
