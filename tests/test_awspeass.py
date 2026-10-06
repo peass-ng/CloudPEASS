@@ -758,6 +758,37 @@ def test_simulator_stops_repeated_pagination_marker_as_partial():
     assert not complete
 
 
+def test_simulator_access_denial_stops_after_first_batch(capsys):
+    denied = ClientError(
+        {"Error": {"Code": "AccessDenied", "Message": "not authorized"}},
+        "SimulatePrincipalPolicy",
+    )
+
+    class IAM:
+        def __init__(self):
+            self.calls = 0
+
+        def simulate_principal_policy(self, **kwargs):
+            self.calls += 1
+            raise denied
+
+    instance = bare_awspeass()
+    instance.iam_client = IAM()
+    instance.principal_type = "user"
+    instance.entity_arn = "arn:aws:iam::123456789012:user/alice"
+    instance.num_threads = 4
+    instance.debug = False
+    instance._paginate_iam = lambda *args, **kwargs: ([], False)
+    instance._all_actions = lambda: {"iam:GetUser", "s3:GetObject", "s3:PutObject"}
+
+    permissions, complete = instance.simulate_permissions(batch_size=1)
+
+    assert permissions == []
+    assert not complete
+    assert instance.iam_client.calls == 1
+    assert "IAM simulation is not authorized (AccessDenied)" in capsys.readouterr().out
+
+
 def test_secretsmanager_resources_are_discovered_for_scoped_simulation():
     class Paginator:
         @staticmethod
@@ -1083,6 +1114,60 @@ def test_static_admin_is_validated_by_simulator_instead_of_ending_early():
 
     assert calls == ["simulate"]
     assert any(resource.is_admin and resource.extra_fields["evidence"] == "IAM policy simulator" for resource in resources)
+
+
+def test_partial_iam_visibility_prompts_before_fallbacks(monkeypatch, capsys):
+    instance = bare_awspeass()
+    instance.identity = {"Account": "123456789012"}
+    instance.principal_arn = "arn:aws:iam::123456789012:user/alice"
+    instance.principal_type = "user"
+    instance.principal_name = "alice"
+    instance.is_session_principal = False
+    instance.get_caller_identity = lambda: instance.principal_arn
+    instance.get_principal_permissions = lambda: {
+        "allow": ["s3:GetObject"],
+        "deny": [],
+        "scopes": {},
+        "unrestricted_admin": False,
+        "complete": False,
+        "documents_found": 1,
+    }
+    instance.simulate_permissions = lambda: (_ for _ in ()).throw(
+        AssertionError("simulation should have been skipped")
+    )
+    instance.AWSBruteForce = type("BF", (), {
+        "brute_force_permissions": lambda self: (_ for _ in ()).throw(
+            AssertionError("live probes should have been skipped")
+        )
+    })()
+    instance.skip_iam_policies = False
+    instance.skip_simulation = False
+    instance.skip_bruteforce = False
+    instance.bruteforce_always = False
+    instance.skip_managed_policies_guess = True
+    instance.no_ask = False
+    instance.iam_visibility = "partial"
+    instance.iam_errors = [{
+        "operation": "list_groups_for_user",
+        "code": "AccessDenied",
+        "message": "not authorized",
+    }]
+    instance.principal_info = {}
+    prompts = []
+    monkeypatch.setattr(
+        "builtins.input",
+        lambda prompt: prompts.append(prompt) or "n",
+    )
+
+    resources = instance.get_resources_and_permissions()
+
+    assert resources == []
+    assert len(prompts) == 1
+    assert "Continue with fallback permission discovery" in prompts[0]
+    output = capsys.readouterr().out
+    assert "ListGroupsForUser (AccessDenied)" in output
+    assert "IAM simulation skipped by user choice" in output
+    assert "Live read-only probes skipped by user choice" in output
 
 
 def test_assumed_role_session_uses_live_probe_even_after_base_role_simulation():

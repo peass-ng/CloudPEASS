@@ -13,7 +13,7 @@ from typing import Optional
 
 
 from colorama import Fore, Style, init, Back
-from .permission_risk_classifier import classify_all, classify_permission
+from .permission_risk_classifier import classify_all, classify_permission, is_severity_capped
 
 init(autoreset=True)
 faulthandler.enable()
@@ -240,6 +240,11 @@ class CloudPEASS:
         except Exception as e:
             print(f"{Fore.YELLOW}Warning: Couldn't classify permissions with risk classifier: {e}")
 
+        # Audited disruption/discovery permissions must not be re-promoted by legacy combinations.
+        cloud_id = self.cloud_provider.lower().strip()
+        capped = {p for p in permissions if cloud_id in {"aws", "gcp", "azure"} and is_severity_capped(cloud_id, p)}
+        found_very_sensitive -= capped
+        found_sensitive -= capped
         found_sensitive -= found_very_sensitive  # Avoid duplicates
 
         return {
@@ -434,9 +439,9 @@ class CloudPEASS:
         # Clearly Print the results with the requested color formatting
         print(f"{Fore.YELLOW}\nDetailed Analysis Results:\n")
         print(f"{Fore.BLUE}Legend:")
-        print(f"{Fore.RED}  {Back.YELLOW}Critical Permissions{Style.RESET_ALL} - Very dangerous permissions that often allow privilege escalation or access to secrets/credentials.")
-        print(f"{Fore.RED}  High Permissions{Style.RESET_ALL} - Sensitive permissions that can enable attacks depending on context.")
-        print(f"{Fore.YELLOW}  Medium Permissions{Style.RESET_ALL} - Interesting permissions that can support attacks in some scenarios.")
+        print(f"{Fore.RED}  {Back.YELLOW}Critical Permissions{Style.RESET_ALL} - Direct or nearly self-sufficient privilege grants, identity takeover or privileged execution.")
+        print(f"{Fore.RED}  High Permissions{Style.RESET_ALL} - Sensitive data/secret access or attacks that depend on additional grants or target context.")
+        print(f"{Fore.YELLOW}  Medium Permissions{Style.RESET_ALL} - Availability/integrity disruption, telemetry tampering, operational changes or incomplete prerequisites.")
         print(f"{Fore.WHITE}  Low/Other Permissions{Style.RESET_ALL} - Less interesting permissions.")
         if self.cloud_provider.lower().strip() == "azure":
             print(

@@ -1,6 +1,7 @@
 
 
 very_sensitive_combinations = [
+
     # Microsoft Graph application/delegated permissions exposed in token claims.
     ["AppRoleAssignment.ReadWrite.All"],
     ["Application.ReadWrite.All"],
@@ -18,11 +19,7 @@ very_sensitive_combinations = [
     ["microsoft.directory/servicePrincipals/synchronizationCredentials/manage"],
     ["microsoft.directory/servicePrincipals/owners/update"],
     ["microsoft.directory/servicePrincipals/getPasswordSingleSignOnCredentials", "microsoft.directory/servicePrincipals/managePasswordSingleSignOnCredentials"],
-    ["microsoft.directory/groups/owners/update"],
-    ["microsoft.directory/groups/members/update"],
     ["microsoft.directory/users/password/update"],
-    ["microsoft.directory/deviceLocalCredentials/password/read"],
-    ["microsoft.directory/bitlockerKeys/key/read"],
 
 
     ["Microsoft.Authorization/roleAssignments/write"],
@@ -48,6 +45,40 @@ very_sensitive_combinations = [
     # attacker-selected dormant program while site/config reads and a sibling
     # config write remained denied. This is direct workload execution.
     ["Microsoft.Web/sites/config/write"],
+    # The slot-specific operation was validated independently: only the target
+    # slot recycled into the attacker-selected program; production and a
+    # sibling slot remained outside the exact role's scope.
+    ["Microsoft.Web/sites/slots/config/write"],
+    # Live exact-role validation restored an attacker-controlled App Service
+    # backup from a private Blob SAS into one production app. The caller could
+    # not read the site/config or restore a sibling. The restored code ran as
+    # the target's preserved system identity and returned a Key Vault canary.
+    # The similarly named sites/restore/write alias only reached 404/405 legacy
+    # routes and is deliberately not promoted.
+    ["Microsoft.Web/sites/restoreFromBackupBlob/action"],
+    # Live exact-role validation installed an attacker-supplied NuGet package
+    # through the otherwise bodyless site-extension route. Its install.cmd
+    # wrote attacker ASPX into wwwroot; that code ran as the app's preserved
+    # system identity and returned a Key Vault-only canary.
+    ["Microsoft.Web/sites/siteextensions/write"],
+    # Live exact-role validation invoked the OneDeploy extension with an
+    # attacker-controlled private-Blob ZIP. The replacement application ran
+    # as the target's preserved identity and returned the protected canary.
+    ["Microsoft.Web/sites/extensions/write"],
+    # Live exact-role validation replaced one known Function's files and HTTP
+    # binding. No site/function read or trigger-sync permission was present;
+    # the next request ran the injected code as the Function managed identity
+    # and returned a protected ARM canary.
+    ["Microsoft.Web/sites/functions/write"],
+    # Live minimum-role validation against the Azure Files share backing a
+    # Function App: file write alone could not issue an Entra FileREST request,
+    # and backup intent alone lacked write. The exact pair blindly replaced
+    # index.js; the next key-protected request ran it as the Function managed
+    # identity and returned the ARM-only canary without a restart.
+    [
+        "Microsoft.Storage/storageAccounts/fileServices/fileshares/files/write",
+        "Microsoft.Storage/storageAccounts/fileServices/writeFileBackupSemantics/action",
+    ],
 
     ["Microsoft.Automation/automationAccounts/runbooks/draft/write", "Microsoft.Automation/automationAccounts/runbooks/draft/content/write", "Microsoft.Automation/automationAccounts/runbooks/draft/testJob/write"],
     ["Microsoft.Automation/automationAccounts/runbooks/draft/write", "Microsoft.Automation/automationAccounts/runbooks/draft/content/write", "Microsoft.Automation/automationAccounts/runbooks/publish/action", "Microsoft.Automation/automationAccounts/jobs/write"],
@@ -77,7 +108,6 @@ very_sensitive_combinations = [
         "Microsoft.Storage/storageAccounts/listKeys/action",
     ],
 
-    ["Microsoft.ContainerRegistry/registries/listCredentials/action"],
     ["Microsoft.ContainerRegistry/registries/regenerateCredential/action"],
     ["Microsoft.ContainerRegistry/registries/generateCredentials/action"],
     ["Microsoft.ContainerInstance/containerGroups/containers/exec/action"],
@@ -86,11 +116,7 @@ very_sensitive_combinations = [
     ["Microsoft.Web/sites/slots/publishxml/action"],
     ["Microsoft.Web/sites/slots/config/list/action"],
     ["Microsoft.App/jobs/start/action"],
-    ["Microsoft.App/jobs/listSecrets/action"],
-    ["Microsoft.App/managedEnvironments/daprComponents/listSecrets/action"],
     ["Microsoft.App/sessionPools/fetchMCPServerCredentials/action"],
-    ["Microsoft.Devices/provisioningServices/listkeys/action"],
-    ["Microsoft.Devices/provisioningServices/keys/listkeys/action"],
     ["Microsoft.App/containerApps/getAuthToken/action", "Microsoft.App/containerApps/exec/action"],
     ["Microsoft.App/containerApps/getAuthToken/action", "Microsoft.App/containerApps/debug/action"],
 
@@ -98,7 +124,6 @@ very_sensitive_combinations = [
     ["Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions/write", "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments/write"],
     ["Microsoft.DocumentDB/databaseAccounts/mongodbRoleDefinitions/write", "Microsoft.DocumentDB/databaseAccounts/mongodbUserDefinitions/write"],
 
-    ["Microsoft.DocumentDB/databaseAccounts/listKeys/action"],
     ["Microsoft.DocumentDB/databaseAccounts/listConnectionStrings/action"],
     ["Microsoft.DocumentDB/mongoClusters/write"],
 
@@ -118,65 +143,38 @@ very_sensitive_combinations = [
     ["Microsoft.DBforPostgreSQL/flexibleServers/write", "Microsoft.DBforPostgreSQL/flexibleServers/backups/read"],
     ["Microsoft.DBforPostgreSQL/flexibleServers/administrators/write"],
 
-    ["Microsoft.Web/staticSites/listSecrets/action"],
 
-    ["Microsoft.MachineLearningServices/workspaces/listKeys/action"],
-    ["Microsoft.MachineLearningServices/workspaces/listStorageAccountKeys/action"],
-    ["Microsoft.MachineLearningServices/workspaces/connections/listsecrets/action"],
-    ["Microsoft.MachineLearningServices/workspaces/datastores/listsecrets/action"],
-    ["Microsoft.CognitiveServices/accounts/connections/listsecrets/action"],
-    ["Microsoft.CognitiveServices/accounts/projects/connections/listsecrets/action"],
     ["Microsoft.ApiManagement/service/namedValues/listValue/action"],
-    ["Microsoft.ApiManagement/service/backends/read"],
-    ["Microsoft.ApiManagement/service/authorizationServers/listSecrets/action"],
-    ["Microsoft.ApiManagement/service/openidConnectProviders/listSecrets/action"],
-    ["Microsoft.ApiManagement/service/identityProviders/listSecrets/action"],
-    ["Microsoft.ApiManagement/service/tenant/listSecrets/action"],
     ["Microsoft.ApiManagement/service/gateways/generateToken/action"],
 
-    ["Microsoft.Storage/storageAccounts/listkeys/action"],
-    ["Microsoft.Storage/storageAccounts/regenerateKey/action"],
     ["Microsoft.Storage/storageAccounts/fileServices/takeOwnership/action"],
     ["Microsoft.Storage/storageAccounts/fileServices/fileshares/files/modifypermissions/action"],
     ["Microsoft.Storage/storageAccounts/fileServices/fileshares/files/actassuperuser/action"],
-    ["Microsoft.Storage/storageAccounts/localusers/write"],
     ["Microsoft.Storage/storageAccounts/localusers/regeneratePassword/action"],
 
     ["Microsoft.ApiManagement/service/users/token/action"],
-    ["Microsoft.AppConfiguration/configurationStores/ListKeys/action"],
     ["Microsoft.AppConfiguration/configurationStores/RegenerateKey/action"],
-    ["Microsoft.Automation/automationAccounts/listKeys/action"],
-    ["Microsoft.Batch/batchAccounts/listkeys/action"],
     ["Microsoft.Batch/batchAccounts/regeneratekeys/action"],
-    ["Microsoft.Cache/redis/listKeys/action"],
-    ["Microsoft.Cache/redisEnterprise/databases/listKeys/action"],
     ["Microsoft.Cache/redisEnterprise/databases/regenerateKey/action"],
-    ["Microsoft.CognitiveServices/accounts/listKeys/action"],
     ["Microsoft.CognitiveServices/accounts/regenerateKey/action"],
-    ["Microsoft.DataFactory/datafactories/gateways/listauthkeys/action"],
-    ["Microsoft.DataFactory/factories/integrationruntimes/listauthkeys/action"],
-    ["Microsoft.EventHub/namespaces/disasterRecoveryConfigs/authorizationRules/listkeys/action"],
-    ["Microsoft.ServiceBus/namespaces/disasterRecoveryConfigs/authorizationRules/listkeys/action"],
-    ["Microsoft.FluidRelay/fluidRelayServers/listKeys/action"],
     ["Microsoft.FluidRelay/fluidRelayServers/regenerateKey/action"],
-    ["Microsoft.Quantum/Workspaces/listKeys/action"],
     ["Microsoft.Quantum/Workspaces/regenerateKey/action"],
-    ["Microsoft.Devices/IotHubs/listkeys/action"],
-    ["Microsoft.Devices/IotHubs/iotHubKeys/listkeys/action"],
     ["Microsoft.KeyVault/vaults/accessPolicies/write"],
+    ["Microsoft.Kusto/clusters/databases/principalAssignments/write"],
+    ["Microsoft.Kusto/clusters/principalAssignments/write"],
     ["Microsoft.KeyVault/vaults/deploy/action", "Microsoft.Resources/deployments/write"],
-    ["Microsoft.Search/searchServices/listAdminKeys/action"],
+    # Live exact-role validation: templateSpecs/versions/write alone (scoped to one
+    # spec, no RG read, no Microsoft.Authorization) overwrote a template-spec version;
+    # the next authorized deployment consuming it created an attacker role assignment
+    # under the deployer's identity (supply-chain privesc).
     ["Microsoft.Search/searchServices/regenerateAdminKey/action"],
     ["Microsoft.Storage/storageAccounts/listAccountSas/action"],
     ["Microsoft.Storage/storageAccounts/listServiceSas/action"],
     # Live exact-role validation on an HNS account: runAsSuperUser alone
     # changed POSIX permissions and read the protected blob canary.
     ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/runAsSuperUser/action"],
-    ["Microsoft.NotificationHubs/Namespaces/authorizationRules/listkeys/action"],
     ["Microsoft.NotificationHubs/Namespaces/authorizationRules/regenerateKeys/action"],
-    ["Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/listkeys/action"],
     ["Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/regenerateKeys/action"],
-    ["Microsoft.App/containerApps/listSecrets/action"],
 
     ["Microsoft.ContainerService/managedClusters/listClusterAdminCredential/action"],
     ["Microsoft.HybridContainerService/provisionedClusters/listClusterAdminCredential/action"],
@@ -187,25 +185,54 @@ very_sensitive_combinations = [
 
     ["Microsoft.Sql/servers/write"],
     ["Microsoft.Sql/servers/administrators/write"],
-    ["Microsoft.Sql/servers/azureADOnlyAuthentications/write"],
-    ["Microsoft.Sql/servers/databases/dataMaskingPolicies/write"],
     
-    ["Microsoft.DesktopVirtualization/hostPools/retrieveRegistrationToken/action"],
 
     ["Microsoft.Compute/virtualMachines/extensions/write"],
     ["Microsoft.Compute/virtualMachines/runCommand/action"],
     ["Microsoft.Compute/virtualMachines/loginAsAdmin/action"],
 
-    ["Microsoft.KeyVault/vaults/secrets/getSecret/action"],
 
+    # Latest documented permission severity audit.
+    ["Application.ReadWrite.OwnedBy"],
+    ["EntitlementManagement.ReadWrite.All"],
+    ["GroupMember.ReadWrite.All"],
+    ["Microsoft.Authorization/roleAssignmentScheduleRequests/write"],
+    ["Microsoft.Authorization/roleEligibilityScheduleRequests/write"],
+    ["Microsoft.Cache/redis/accessPolicyAssignments/write"],
+    ["Microsoft.ContainerService/managedClusters/runCommand/action"],
+    ["Microsoft.ContainerService/managedClusters/write"],
+    ["Microsoft.Databricks/workspaces/assignWorkspaceAdmin/action"],
+    ["Microsoft.DevTestLab/labs/virtualMachines/applyArtifacts/action"],
+    ["Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments/write"],
+    ["Microsoft.HDInsight/clusters/executeScriptActions/action"],
+    ["Microsoft.HDInsight/clusters/updateGatewaySettings/action"],
+    ["Microsoft.Kusto/Clusters/Databases/AddPrincipals/action"],
+    ["Microsoft.Purview/accounts/addrootcollectionadmin/action"],
+    ["Microsoft.Sql/managedInstances/administrators/write"],
+    ["PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup"],
 ]
 
 sensitive_combinations = [
+    # Deployment history can retain plaintext secret outputs and templates.
+    ["Microsoft.Resources/deployments/read"],
+    ["Microsoft.Resources/subscriptions/resourcegroups/deployments/read"],
     ["AuditLog.Read.All"],
     # Exact target-scoped API connection write redirected the next unchanged
     # Logic workflow output to an attacker-selected Blob sink without read or
     # workflow permissions. Impact requires a future privileged consumer.
     ["Microsoft.Web/connections/write"],
+    # Exact access-policy write on a V2 API connection authorized an otherwise
+    # forbidden Workflow Standard identity to use the connection's unreadable
+    # credentials after its attacker-controlled runtime refreshed.
+    ["Microsoft.Web/connections/accessPolicies/Write"],
+    # An exact map-scoped write blindly replaced an XSLT used by an unchanged
+    # Logic workflow. Its next protected input disclosed the selected secret
+    # field despite denied map/workflow reads and denied sibling writes.
+    ["Microsoft.Logic/integrationAccounts/maps/write"],
+    # A blind Dapr component update supplied a replacement state-store
+    # destination and credentials. A later unchanged managed-identity workload
+    # wrote its Key Vault-only canary there without component read/listSecrets.
+    ["Microsoft.App/managedEnvironments/daprComponents/write"],
     # Exact ARM Action and data-plane DataAction tests independently poisoned
     # a write-only secret consumed by a privileged scheduled workload. Impact
     # depends on an unversioned downstream consumer, so these are High.
@@ -225,7 +252,17 @@ sensitive_combinations = [
     ["microsoft.directory/devices/registeredUsers/update"],
     ["Microsoft.Authorization/roleDefinitions/Write"],
     ["Microsoft.ManagedIdentity/userAssignedIdentities/assign/action"],
-    ["Microsoft.Automation/automationAccounts/schedules/write", "Microsoft.Automation/automationAccounts/jobSchedules/write"],
+    # Live exact-role validation at one job-schedule child proved that this
+    # singleton can blindly attach a known published, identity-bearing runbook
+    # to an existing enabled schedule with attacker-selected parameters. The
+    # next platform-owned tick exfiltrated the runbook MI's protected canary;
+    # schedule/runbook/job reads and direct job start remained denied.
+    ["Microsoft.Automation/automationAccounts/jobSchedules/write"],
+    # Exact module-scoped write replaced a classic dependency without module,
+    # runbook, job, account, or source-Blob read. The next unchanged scheduled
+    # runbook loaded it and exfiltrated its MI-only ARM canary. This remains
+    # workload-conditional High because a compatible future consumer is needed.
+    ["Microsoft.Automation/automationAccounts/modules/write"],
     ["Microsoft.Automation/automationAccounts/sourceControls/write"],
     # Live validated with exact roles. Job streams exposed output, error,
     # warning, and verbose canaries; variable reads exposed an unencrypted
@@ -318,6 +355,16 @@ sensitive_combinations = [
     ["Microsoft.ContainerRegistry/registries/importImage/action"],
     ["Microsoft.ContainerRegistry/registries/tasks/listDetails/action"],
     ["Microsoft.ContainerRegistry/registries/taskruns/listDetails/action"],
+    # Live validated on an ABAC-enabled registry. content/write alone received
+    # push but ACR rejected the manifest replacement because pull was also
+    # required. The exact read+write pair retagged an existing attacker image
+    # as a mutable tag; a later legitimate Container App revision restart
+    # pulled it and exposed a managed-identity-only ARM canary. Metadata write,
+    # registry ARM read, and listCredentials were not required.
+    [
+        "Microsoft.ContainerRegistry/registries/repositories/content/read",
+        "Microsoft.ContainerRegistry/registries/repositories/content/write",
+    ],
     # Live validated with an exact DataAction: code submitted under a known
     # session identifier read a retained file created by a different caller.
     ["Microsoft.App/sessionPools/executions/action"],
@@ -403,6 +450,31 @@ sensitive_combinations = [
     # signature and invalidated the prior primary-signed callback.
     ["Microsoft.Logic/workflows/accessKeys/list/action"],
     ["Microsoft.DataFactory/factories/pipelines/createRun/action"],
+    # Live exact-role validation blindly replaced a known sink linked service
+    # with an attacker-keyed private Storage destination. The next unchanged
+    # pipeline run copied its protected canary to that destination; linked-
+    # service/pipeline reads, createRun, and a sibling write remained denied.
+    ["Microsoft.DataFactory/factories/linkedservices/write"],
+    # Live exact-role validation at one dataset resource blindly replaced its
+    # known sink linked-service/path. The next unchanged owner-started pipeline
+    # copied a private source canary only to the attacker-readable sink, while
+    # dataset/pipeline reads, createRun, sibling write, and source Blob read
+    # remained denied. This is workload-conditional High, not Critical.
+    ["Microsoft.DataFactory/factories/datasets/write"],
+    # Live exact-role validation blindly replaced a factory global URL
+    # parameter. The next unchanged owner-started pipeline sent its protected
+    # managed-identity ARM result to the attacker receiver; parameter/pipeline
+    # reads, createRun, and a sibling factory write stayed denied.
+    ["Microsoft.DataFactory/factories/globalParameters/write"],
+    # An enabled schedule trigger rejects mutation. Live minimum-role testing
+    # proved that Stop + Write changed only the known trigger's pipeline URL
+    # parameter, Start was separately enforced, and the next scheduled run
+    # sent a protected factory-MI result to the attacker receiver.
+    [
+        "Microsoft.DataFactory/factories/triggers/stop/action",
+        "Microsoft.DataFactory/factories/triggers/write",
+        "Microsoft.DataFactory/factories/triggers/start/action",
+    ],
     # Live exact-role validation recovered a plaintext secret-like pipeline
     # parameter from a known completed run. Parameters declared SecureString
     # remained redacted in this representation.
@@ -429,6 +501,30 @@ sensitive_combinations = [
         "Microsoft.StreamAnalytics/streamingjobs/inputs/Sample/action",
         "Microsoft.StreamAnalytics/streamingjobs/inputs/OperationResults/read",
     ],
+    # Live minimum-role validation against an active Stream Analytics job:
+    # output write alone reached the service but could not mutate an active
+    # job. Stop + output write redirected its existing Blob sink to an
+    # attacker-keyed private account, and Start resumed the unchanged query.
+    # The next private input event appeared only at the replacement sink.
+    [
+        "Microsoft.StreamAnalytics/streamingjobs/Stop/action",
+        "Microsoft.StreamAnalytics/streamingjobs/outputs/Write",
+        "Microsoft.StreamAnalytics/streamingjobs/Start/action",
+    ],
+    # Live minimum-role validation against an existing Azure SQL Elastic Job:
+    # step write alone was linked-authorized against both the stored credential
+    # and target group. Exact read on those two linked resources (the credential
+    # response exposed only its username) allowed a blind T-SQL replacement.
+    # The separately enforced executions/write operation then started that
+    # version via PUT /executions/{uuid}; it copied a protected database canary
+    # using the stored SQL credential. Every singleton and a sibling job stayed
+    # denied, so this is a workload-conditional High chain rather than Critical.
+    [
+        "Microsoft.Sql/servers/jobAgents/jobs/steps/write",
+        "Microsoft.Sql/servers/jobAgents/credentials/read",
+        "Microsoft.Sql/servers/jobAgents/targetGroups/read",
+        "Microsoft.Sql/servers/jobAgents/jobs/executions/write",
+    ],
     # Live minimum-role validation: the action passed ARM alone but Databricks
     # bootstrap stayed 403. Adding only workspace read placed the user in the
     # workspace admins group and enabled the admin-only SCIM user list.
@@ -447,6 +543,12 @@ sensitive_combinations = [
     # to another Azure Storage queue additionally required the destination
     # account's Microsoft.Storage/storageAccounts/write permission.
     ["Microsoft.EventGrid/eventSubscriptions/write"],
+    # The namespace-topic alias was independently live validated. An exact
+    # event-subscription-scoped role replaced an existing push destination
+    # with an attacker Logic webhook. The next private CloudEvent arrived
+    # only at the replacement consumer; GET and a sibling-topic write stayed
+    # denied. This is not inferred from the classic generic alias above.
+    ["Microsoft.EventGrid/namespaces/topics/eventSubscriptions/write"],
     # Live exact-role validation replaced the receiver of an existing Action
     # Group with an attacker-controlled HTTPS webhook. The caller could not
     # read the group or write its sibling; a pre-existing Activity Log alert
@@ -454,6 +556,16 @@ sensitive_combinations = [
     # to the replacement endpoint. Impact requires an active alert/receiver
     # consumer, so this is conditional High rather than Critical.
     ["Microsoft.Insights/ActionGroups/Write"],
+    # Live minimum-role validation changed an existing Storage metric alert
+    # from an inert threshold to a matching one. Azure linked-authorized both
+    # the monitored resource and Action Group, so the write required these two
+    # exact reads at their respective scopes. The next evaluation invoked an
+    # unchanged Logic playbook whose MI disclosed the ARM-protected canary.
+    [
+        "Microsoft.Insights/metricAlerts/write",
+        "Microsoft.Storage/storageAccounts/read",
+        "Microsoft.Insights/actionGroups/read",
+    ],
     # Exact receive-only DataAction recovered the full seeded CloudEvent and
     # its delivery lock token while ARM namespace read remained denied.
     ["Microsoft.EventGrid/events/receive/action"],
@@ -511,6 +623,16 @@ sensitive_combinations = [
     ],
     ["Microsoft.ServiceBus/namespaces/messages/receive/action"],
     ["Microsoft.ServiceBus/namespaces/messages/send/action"],
+    # Live exact DataAction validation injected a base64-encoded command into
+    # one known Storage Queue. The caller could not peek the target, access the
+    # account, or add to a sibling queue. An existing unchanged queue-triggered
+    # Function consumed it and used its managed identity to disclose an ARM-
+    # protected canary. A wrong command was consumed without disclosure.
+    # Independently live validated at one known Table entity. Both the broad
+    # write and narrower update-only action changed an unreadable TargetUri;
+    # the next unchanged Function invocation followed it with its managed
+    # identity and disclosed the ARM-only canary. Entity read, account read,
+    # and sibling-table updates remained denied.
     # Shared-access rules may be Listen-, Send-, or Manage-scoped, so their
     # credentials are High but not inherently subscription/tenant takeover.
     ["Microsoft.EventHub/namespaces/authorizationRules/listkeys/action"],
@@ -576,6 +698,13 @@ sensitive_combinations = [
     # send the Search managed-identity token to an unrelated HTTPS endpoint.
     # The captured token then read a separately Entra-protected canary API.
     ["Microsoft.Search/searchServices/skillsets/write"],
+    # Live exact-role validation showed each singleton can redirect data that
+    # the Search managed identity can read into an independently readable
+    # index, without Search-object reads or direct access to the source Blob.
+    # dataSources/write needs a later existing indexer run; indexers/write both
+    # auto-runs a new indexer and authorizes its Search data-plane run/reset.
+    ["Microsoft.Search/searchServices/dataSources/write"],
+    ["Microsoft.Search/searchServices/indexers/write"],
     ["Microsoft.Search/searchServices/createQueryKey/action"],
     ["Microsoft.Search/searchServices/listQueryKeys/action"],
     ["Microsoft.EventGrid/topics/listKeys/action"],
@@ -588,7 +717,6 @@ sensitive_combinations = [
     ["Microsoft.EventGrid/namespaces/topics/regenerateKey/action"],
     ["Microsoft.EventGrid/partnerNamespaces/listKeys/action"],
     ["Microsoft.EventGrid/partnerNamespaces/regenerateKey/action"],
-    ["Microsoft.OperationalInsights/workspaces/listKeys/action"],
     ["Microsoft.OperationalInsights/workspaces/regenerateSharedKey/action"],
     ["Microsoft.OperationalInsights/workspaces/sharedKeys/action"],
     ["Microsoft.OperationalInsights/workspaces/sharedKeys/read"],
@@ -615,6 +743,18 @@ sensitive_combinations = [
     ["Microsoft.SignalRService/SignalR/auth/accessKey/action"],
     ["Microsoft.SignalRService/SignalR/clientConnection/send/action"],
     ["Microsoft.SignalRService/WebPubSub/clientConnection/send/action"],
+    # A blind exact hub update redirected future authenticated user events,
+    # including their bodies and identity/connection metadata, to an
+    # attacker-controlled HTTPS handler without hub or parent read access.
+    ["Microsoft.SignalRService/WebPubSub/hubs/write"],
+    # Live exact-role validation: a principal holding ONLY experiments/start/action
+    # (no experiment read, no permission on the target) started a pre-configured
+    # Chaos experiment whose system-assigned identity was Key Vault Contributor.
+    # The DenyAccess fault ran under that identity and flipped the target vault's
+    # firewall Allow->Deny (no-role start was 403). This is availability/disruption
+    # (DoS) via a more-privileged experiment identity, not attacker-chosen privesc,
+    # so it is Medium and conditional on an existing configured experiment/target.
+    ["Microsoft.Chaos/experiments/start/action"],
     # Web PubSub token generation alone could not connect; adding only the
     # handshake permission produced a usable resource-and-hub-bound JWT.
     [
@@ -703,4 +843,430 @@ sensitive_combinations = [
         "Microsoft.Storage/storageAccounts/tableServices/generateUserDelegationKey/action",
         "Microsoft.Storage/storageAccounts/tableServices/tables/entities/read",
     ],
+    # Latest documented permission severity audit.
+    ["ADSynchronization.ReadWrite.All"],
+    ["BitlockerKey.Read.All"],
+    ["CustomSecAttributeAssignment.ReadWrite.All"],
+    ["DeviceLocalCredential.Read.All"],
+    ["DeviceManagementApps.ReadWrite.All"],
+    ["DeviceManagementConfiguration.Read.All"],
+    ["DeviceManagementConfiguration.ReadWrite.All"],
+    ["DeviceManagementScripts.Read.All"],
+    ["DeviceManagementScripts.ReadWrite.All"],
+    ["Domain.ReadWrite.All"],
+    ["Mail.ReadWrite.All"],
+    ["Microsoft.ADHybridHealthService/services/write"],
+    ["Microsoft.AVS/privateClouds/addOns/write"],
+    ["Microsoft.AVS/privateClouds/authorizations/write"],
+    ["Microsoft.AVS/privateClouds/listAdminCredentials/action"],
+    ["Microsoft.AVS/privateClouds/rotateNsxtCloudAdminPassword/action"],
+    ["Microsoft.AVS/privateClouds/rotateNsxtPassword/action"],
+    ["Microsoft.AVS/privateClouds/rotateVcenterPassword/action"],
+    ["Microsoft.AVS/privateClouds/scriptExecutions/write"],
+    ["Microsoft.AnalysisServices/servers/write"],
+    ["Microsoft.ApiCenter/services/workspaces/apis/versions/securityRequirements/getCredentials/action"],
+    ["Microsoft.ApiManagement/service/apis/policies/write"],
+    ["Microsoft.ApiManagement/service/applynetworkconfigurationupdates/action"],
+    ["Microsoft.ApiManagement/service/authorizationServers/listSecrets/action"],
+    ["Microsoft.ApiManagement/service/backends/listSecrets/action"],
+    ["Microsoft.ApiManagement/service/backends/read"],
+    ["Microsoft.ApiManagement/service/backends/write"],
+    ["Microsoft.ApiManagement/service/backup/action"],
+    ["Microsoft.ApiManagement/service/gateways/getConfiguration/action"],
+    ["Microsoft.ApiManagement/service/gateways/listDebugCredentials/action"],
+    ["Microsoft.ApiManagement/service/gateways/listKeys/action"],
+    ["Microsoft.ApiManagement/service/identityProviders/listSecrets/action"],
+    ["Microsoft.ApiManagement/service/openidConnectProviders/listSecrets/action"],
+    ["Microsoft.ApiManagement/service/policies/write"],
+    ["Microsoft.ApiManagement/service/tenant/listSecrets/action"],
+    ["Microsoft.ApiManagement/service/workspaces/backends/listSecrets/action"],
+    ["Microsoft.ApiManagement/service/write"],
+    ["Microsoft.App/agents/dataconnectors/write"],
+    ["Microsoft.App/agents/memory/write"],
+    ["Microsoft.App/agents/scheduledtasks/write"],
+    ["Microsoft.App/agents/threads/approve/action"],
+    ["Microsoft.App/agents/threads/write"],
+    ["Microsoft.App/agents/write"],
+    ["Microsoft.App/builds/listAuthToken/action"],
+    ["Microsoft.App/containerApps/authConfigs/write"],
+    ["Microsoft.App/containerApps/listSecrets/action"],
+    ["Microsoft.App/containerApps/revisions/restart/action"],
+    ["Microsoft.App/containerApps/sourcecontrols/write"],
+    ["Microsoft.App/containerApps/start/action"],
+    ["Microsoft.App/containerApps/write"],
+    ["Microsoft.App/jobs/listSecrets/action"],
+    ["Microsoft.App/managedEnvironments/daprComponents/listSecrets/action"],
+    ["Microsoft.App/managedEnvironments/join/action"],
+    ["Microsoft.App/managedEnvironments/storages/write"],
+    ["Microsoft.AppConfiguration/configurationStores/ListKeys/action"],
+    ["Microsoft.AppConfiguration/configurationStores/write"],
+    ["Microsoft.AppPlatform/Spring/apms/listSecretKeys/action"],
+    ["Microsoft.AppPlatform/Spring/apps/deployments/write"],
+    ["Microsoft.AppPlatform/Spring/apps/getResourceUploadUrl/action"],
+    ["Microsoft.AppPlatform/Spring/configServers/write"],
+    ["Microsoft.AppPlatform/Spring/listTestKeys/action"],
+    ["Microsoft.AppPlatform/Spring/regenerateTestKey/action"],
+    ["Microsoft.Authorization/policyAssignments/delete"],
+    ["Microsoft.Authorization/policyDefinitions/write"],
+    ["Microsoft.Authorization/policyExemptions/write"],
+    ["Microsoft.Authorization/roleManagementPolicies/write"],
+    ["Microsoft.Automation/automationAccounts/configurations/write"],
+    ["Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/write"],
+    ["Microsoft.Automation/automationAccounts/listKeys/action"],
+    ["Microsoft.Automation/automationAccounts/python3Packages/write"],
+    ["Microsoft.Automation/automationAccounts/runbooks/write"],
+    ["Microsoft.Automation/automationAccounts/schedules/write"],
+    ["Microsoft.Automation/automationAccounts/variables/write"],
+    ["Microsoft.Automation/automationAccounts/watchers/start/action"],
+    ["Microsoft.Automation/automationAccounts/watchers/write"],
+    ["Microsoft.Automation/automationAccounts/webhooks/action"],
+    ["Microsoft.Automation/automationAccounts/write"],
+    ["Microsoft.Batch/batchAccounts/applications/versions/write"],
+    ["Microsoft.Batch/batchAccounts/applications/write"],
+    ["Microsoft.Batch/batchAccounts/listkeys/action"],
+    ["Microsoft.Batch/batchAccounts/pools/write"],
+    ["Microsoft.Batch/batchAccounts/write"],
+    ["Microsoft.BotService/botServices/channels/regeneratekeys/action"],
+    ["Microsoft.Cache/redis/accessPolicies/write"],
+    ["Microsoft.Cache/redis/export/action"],
+    ["Microsoft.Cache/redis/firewallRules/write"],
+    ["Microsoft.Cache/redis/linkedServers/write"],
+    ["Microsoft.Cache/redis/listKeys/action"],
+    ["Microsoft.Cache/redis/regenerateKey/action"],
+    ["Microsoft.Cache/redis/write"],
+    ["Microsoft.Cache/redisEnterprise/databases/export/action"],
+    ["Microsoft.Cache/redisEnterprise/databases/listKeys/action"],
+    ["Microsoft.Cdn/profiles/endpoints/origins/write"],
+    ["Microsoft.Cdn/profiles/origingroups/origins/write"],
+    ["Microsoft.Cdn/profiles/rulesets/rules/write"],
+    ["Microsoft.CodeSigning/certificateProfiles/Sign/action"],
+    ["Microsoft.CodeSigning/codeSigningAccounts/certificateProfiles/write"],
+    ["Microsoft.CognitiveServices/accounts/AIServices/agents/write"],
+    ["Microsoft.CognitiveServices/accounts/OpenAI/fine-tunes/write"],
+    ["Microsoft.CognitiveServices/accounts/connections/listsecrets/action"],
+    ["Microsoft.CognitiveServices/accounts/listKeys/action"],
+    ["Microsoft.CognitiveServices/accounts/projects/connections/listsecrets/action"],
+    ["Microsoft.CognitiveServices/accounts/raiPolicies/write"],
+    ["Microsoft.CognitiveServices/accounts/write"],
+    ["Microsoft.Communication/CommunicationServices/EventGridFilters/Write"],
+    ["Microsoft.Communication/CommunicationServices/LinkNotificationHub/action"],
+    ["Microsoft.Communication/EmailServices/Domains/write"],
+    ["Microsoft.Communication/EmailServices/verifiedExchangeOnlineDomains/action"],
+    ["Microsoft.Compute/disks/write"],
+    ["Microsoft.Compute/galleries/applications/write"],
+    ["Microsoft.Compute/galleries/images/versions/write"],
+    ["Microsoft.Compute/galleries/share/action"],
+    ["Microsoft.Compute/galleries/write"],
+    ["Microsoft.Compute/images/write"],
+    ["Microsoft.Compute/virtualMachineScaleSets/write"],
+    ["Microsoft.Compute/virtualMachines/capture/action"],
+    ["Microsoft.Compute/virtualMachines/reimage/action"],
+    ["Microsoft.Compute/virtualMachines/retrieveBootDiagnosticsData/action"],
+    ["Microsoft.Compute/virtualMachines/write"],
+    ["Microsoft.ConfidentialLedger/ledgers/write"],
+    ["Microsoft.ContainerInstance/containerGroups/restart/action"],
+    ["Microsoft.ContainerInstance/containerGroups/start/action"],
+    ["Microsoft.ContainerRegistry/registries/cacheRules/write"],
+    ["Microsoft.ContainerRegistry/registries/credentialSets/write"],
+    ["Microsoft.ContainerRegistry/registries/listCredentials/action"],
+    ["Microsoft.ContainerRegistry/registries/pull/read"],
+    ["Microsoft.ContainerRegistry/registries/webhooks/write"],
+    ["Microsoft.ContainerRegistry/registries/write"],
+    ["Microsoft.ContainerService/fleets/listCredentials/action"],
+    ["Microsoft.ContainerService/managedClusters/accessProfiles/listCredential/action"],
+    ["Microsoft.ContainerService/managedClusters/listClusterMonitoringUserCredential/action"],
+    ["Microsoft.ContainerService/managedClusters/managedNamespaces/listCredential/action"],
+    ["Microsoft.ContainerService/managedClusters/resetAADProfile/action"],
+    ["Microsoft.ContainerService/managedClusters/trustedAccessRoleBindings/write"],
+    ["Microsoft.DBforMySQL/flexibleServers/backupAndExport/action"],
+    ["Microsoft.DBforMySQL/flexibleServers/firewallRules/write"],
+    ["Microsoft.DBforMySQL/flexibleServers/privateEndpointConnections/write"],
+    ["Microsoft.DBforMySQL/flexibleServers/privateEndpointConnectionsApproval/action"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/configurations/write"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/firewallRules/write"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/ltrBackup/action"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/ltrPreBackup/action"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/migrations/write"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/privateEndpointConnections/write"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/privateEndpointConnectionsApproval/action"],
+    ["Microsoft.DBforPostgreSQL/flexibleServers/startLtrBackup/action"],
+    ["Microsoft.Dashboard/grafana/ActAsGrafanaEditor/action"],
+    ["Microsoft.Dashboard/grafana/managedPrivateEndpoints/write"],
+    ["Microsoft.Dashboard/grafana/write"],
+    ["Microsoft.DataFactory/datafactories/gateways/listauthkeys/action"],
+    ["Microsoft.DataFactory/factories/createdataflowdebugsession/action"],
+    ["Microsoft.DataFactory/factories/getDataPlaneAccess/action"],
+    ["Microsoft.DataFactory/factories/getGitHubAccessToken/action"],
+    ["Microsoft.DataFactory/factories/integrationruntimes/listauthkeys/action"],
+    ["Microsoft.DataFactory/factories/integrationruntimes/regenerateauthkey/action"],
+    ["Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints/write"],
+    ["Microsoft.DataFactory/factories/pipelines/sandbox/create/action"],
+    ["Microsoft.DataFactory/factories/pipelines/sandbox/run/action"],
+    ["Microsoft.DataMigration/sqlMigrationServices/listAuthKeys/action"],
+    ["Microsoft.DataShare/accounts/shares/synchronizationSettings/write"],
+    ["Microsoft.DataShare/accounts/write"],
+    ["Microsoft.Databricks/accessConnectors/write"],
+    ["Microsoft.DesktopVirtualization/hostPools/retrieveRegistrationToken/action"],
+    ["Microsoft.DesktopVirtualization/hostpools/write"],
+    ["Microsoft.DevCenter/projects/users/devboxes/userWrite/action"],
+    ["Microsoft.DevCenter/projects/users/environments/userWrite/action"],
+    ["Microsoft.DevOpsInfrastructure/pools/write"],
+    ["Microsoft.DevTestLab/labs/artifactSources/write"],
+    ["Microsoft.DevTestLab/labs/claimAnyVm/action"],
+    ["Microsoft.DevTestLab/labs/customImages/write"],
+    ["Microsoft.DevTestLab/labs/formulas/write"],
+    ["Microsoft.DevTestLab/labs/policySets/policies/write"],
+    ["Microsoft.DevTestLab/labs/schedules/write"],
+    ["Microsoft.DevTestLab/labs/secrets/write"],
+    ["Microsoft.DevTestLab/labs/users/secrets/write"],
+    ["Microsoft.DevTestLab/labs/virtualMachines/claim/action"],
+    ["Microsoft.DevTestLab/labs/virtualMachines/write"],
+    ["Microsoft.DevTestLab/labs/write"],
+    ["Microsoft.Devices/IotHubs/iotHubKeys/listkeys/action"],
+    ["Microsoft.Devices/IotHubs/listkeys/action"],
+    ["Microsoft.Devices/iotHubs/certificates/Write"],
+    ["Microsoft.Devices/iotHubs/eventHubEndpoints/consumerGroups/Write"],
+    ["Microsoft.Devices/provisioningServices/Write"],
+    ["Microsoft.Devices/provisioningServices/certificates/Write"],
+    ["Microsoft.Devices/provisioningServices/keys/listkeys/action"],
+    ["Microsoft.Devices/provisioningServices/listkeys/action"],
+    ["Microsoft.DigitalTwins/digitalTwinsInstances/endpoints/write"],
+    ["Microsoft.DigitalTwins/digitalTwinsInstances/write"],
+    ["Microsoft.DigitalTwins/eventroutes/write"],
+    ["Microsoft.DigitalTwins/jobs/imports/write"],
+    ["Microsoft.DocumentDB/databaseAccounts/cassandraRoleDefinitions/write"],
+    ["Microsoft.DocumentDB/databaseAccounts/dataTransferJobs/write"],
+    ["Microsoft.DocumentDB/databaseAccounts/listKeys/action"],
+    ["Microsoft.DocumentDB/databaseAccounts/write"],
+    ["Microsoft.DocumentDB/locations/restorableDatabaseAccounts/restore/action"],
+    ["Microsoft.DocumentDB/mongoClusters/firewallRules/write"],
+    ["Microsoft.DocumentDB/mongoClusters/listConnectionStrings/action"],
+    ["Microsoft.DocumentDB/mongoClusters/users/write"],
+    ["Microsoft.DomainRegistration/domains/transferOut/write"],
+    ["Microsoft.ElasticSan/elasticSans/volumeGroups/snapshots/beginGetAccess/action"],
+    ["Microsoft.ElasticSan/elasticSans/volumeGroups/snapshots/write"],
+    ["Microsoft.ElasticSan/elasticSans/volumeGroups/volumes/write"],
+    ["Microsoft.EventGrid/domains/write"],
+    ["Microsoft.EventGrid/namespaces/caCertificates/write"],
+    ["Microsoft.EventGrid/namespaces/clientGroups/write"],
+    ["Microsoft.EventGrid/namespaces/clients/write"],
+    ["Microsoft.EventGrid/namespaces/permissionBindings/write"],
+    ["Microsoft.EventGrid/namespaces/topicSpaces/write"],
+    ["Microsoft.EventGrid/namespaces/write"],
+    ["Microsoft.EventGrid/systemTopics/eventSubscriptions/write"],
+    ["Microsoft.EventGrid/systemTopics/write"],
+    ["Microsoft.EventGrid/topics/write"],
+    ["Microsoft.EventHub/namespaces/disasterRecoveryConfigs/authorizationRules/listkeys/action"],
+    ["Microsoft.EventHub/namespaces/disasterRecoveryConfigs/write"],
+    ["Microsoft.EventHub/namespaces/eventHubs/consumergroups/write"],
+    ["Microsoft.EventHub/namespaces/networkrulesets/write"],
+    ["Microsoft.EventHub/namespaces/write"],
+    ["Microsoft.FluidRelay/fluidRelayServers/listKeys/action"],
+    ["Microsoft.GuestConfiguration/guestConfigurationAssignments/write"],
+    ["Microsoft.HDInsight/clusters/applications/write"],
+    ["Microsoft.HDInsight/clusters/getGatewaySettings/action"],
+    ["Microsoft.HDInsight/clusters/write"],
+    ["Microsoft.HybridCompute/machines/write"],
+    ["Microsoft.HybridConnectivity/endpoints/listCredentials/action"],
+    ["Microsoft.InferenceService/inferenceAccounts/regenerateKeys/action"],
+    ["Microsoft.Insights/autoscaleSettings/write"],
+    ["Microsoft.Insights/dataCollectionRuleAssociations/write"],
+    ["Microsoft.Insights/dataCollectionRules/write"],
+    ["Microsoft.Insights/scheduledQueryRules/write"],
+    ["Microsoft.KeyVault/managedHSMs/write"],
+    ["Microsoft.KeyVault/vaults/certificates/create/action"],
+    ["Microsoft.KeyVault/vaults/keys/decrypt/action"],
+    ["Microsoft.KeyVault/vaults/keys/import/action"],
+    ["Microsoft.KeyVault/vaults/keys/recover/action"],
+    ["Microsoft.KeyVault/vaults/keys/sign/action"],
+    ["Microsoft.KeyVault/vaults/keys/unwrapKey/action"],
+    ["Microsoft.KeyVault/vaults/privateEndpointConnectionsApproval/action"],
+    ["Microsoft.KeyVault/vaults/secrets/backup/action"],
+    ["Microsoft.KeyVault/vaults/secrets/getSecret/action"],
+    ["Microsoft.KeyVault/vaults/secrets/restore/action"],
+    ["Microsoft.KeyVault/vaults/write"],
+    ["Microsoft.KubernetesConfiguration/extensions/write"],
+    ["Microsoft.KubernetesConfiguration/fluxConfigurations/write"],
+    ["Microsoft.KubernetesConfiguration/namespaces/listUserCredential/action"],
+    ["Microsoft.Kusto/Clusters/AddCalloutPolicies/action"],
+    ["Microsoft.Kusto/Clusters/AttachedDatabaseConfigurations/write"],
+    ["Microsoft.LoadTestService/loadtests/write"],
+    ["Microsoft.Logic/integrationAccounts/agreements/listSecrets/action"],
+    ["Microsoft.Logic/integrationAccounts/partners/write"],
+    ["Microsoft.Logic/integrationAccounts/regenerateAccessKey/action"],
+    ["Microsoft.MachineLearningServices/workspaces/computes/listKeys/action"],
+    ["Microsoft.MachineLearningServices/workspaces/computes/write"],
+    ["Microsoft.MachineLearningServices/workspaces/connections/listsecrets/action"],
+    ["Microsoft.MachineLearningServices/workspaces/datastores/listSecrets/action"],
+    ["Microsoft.MachineLearningServices/workspaces/hubs/write"],
+    ["Microsoft.MachineLearningServices/workspaces/jobs/write"],
+    ["Microsoft.MachineLearningServices/workspaces/listKeys/action"],
+    ["Microsoft.MachineLearningServices/workspaces/listStorageAccountKeys/action"],
+    ["Microsoft.MachineLearningServices/workspaces/onlineEndpoints/deployments/write"],
+    ["Microsoft.MachineLearningServices/workspaces/onlineEndpoints/write"],
+    ["Microsoft.MachineLearningServices/workspaces/write"],
+    ["Microsoft.ManagedIdentity/userAssignedIdentities/write"],
+    ["Microsoft.Management/managementGroups/subscriptions/write"],
+    ["Microsoft.Management/managementGroups/write"],
+    ["Microsoft.Maps/accounts/listSas/action"],
+    ["Microsoft.NetApp/netAppAccounts/capacityPools/volumes/write"],
+    ["Microsoft.Network/applicationGateways/write"],
+    ["Microsoft.Network/dnsForwardingRulesets/forwardingRules/write"],
+    ["Microsoft.Network/dnszones/CNAME/write"],
+    ["Microsoft.Network/dnszones/MX/write"],
+    ["Microsoft.Network/dnszones/NS/write"],
+    ["Microsoft.Network/dnszones/TXT/write"],
+    ["Microsoft.Network/firewallPolicies/ruleCollectionGroups/write"],
+    ["Microsoft.Network/firewallPolicies/write"],
+    ["Microsoft.Network/frontDoors/backendPools/write"],
+    ["Microsoft.Network/loadBalancers/backendAddressPools/write"],
+    ["Microsoft.Network/loadBalancers/write"],
+    ["Microsoft.Network/networkInterfaces/join/action"],
+    ["Microsoft.Network/networkInterfaces/write"],
+    ["Microsoft.Network/networkManagers/commit/action"],
+    ["Microsoft.Network/networkManagers/connectivityConfigurations/write"],
+    ["Microsoft.Network/networkManagers/securityAdminConfigurations/write"],
+    ["Microsoft.Network/networkSecurityGroups/join/action"],
+    ["Microsoft.Network/networkSecurityGroups/securityRules/write"],
+    ["Microsoft.Network/networkSecurityGroups/write"],
+    ["Microsoft.Network/networkWatchers/packetCaptures/write"],
+    ["Microsoft.Network/privateDnsZones/A/write"],
+    ["Microsoft.Network/publicIPAddresses/join/action"],
+    ["Microsoft.Network/publicIPAddresses/write"],
+    ["Microsoft.Network/routeTables/routes/write"],
+    ["Microsoft.Network/trafficManagerProfiles/externalEndpoints/write"],
+    ["Microsoft.Network/virtualNetworkGateways/write"],
+    ["Microsoft.Network/virtualNetworks/subnets/join/action"],
+    ["Microsoft.Network/vpnServerConfigurations/write"],
+    ["Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/listkeys/action"],
+    ["Microsoft.NotificationHubs/Namespaces/NotificationHubs/authorizationRules/write"],
+    ["Microsoft.NotificationHubs/Namespaces/NotificationHubs/write"],
+    ["Microsoft.NotificationHubs/Namespaces/authorizationRules/listkeys/action"],
+    ["Microsoft.OperationalInsights/workspaces/dataExports/write"],
+    ["Microsoft.OperationalInsights/workspaces/linkedServices/write"],
+    ["Microsoft.OperationalInsights/workspaces/searchJobs/write"],
+    ["Microsoft.PolicyInsights/remediations/write"],
+    ["Microsoft.Purview/accounts/kafkaConfigurations/write"],
+    ["Microsoft.Purview/accounts/write"],
+    ["Microsoft.Purview/policyElements/write"],
+    ["Microsoft.Quantum/Workspaces/listKeys/action"],
+    ["Microsoft.RecoveryServices/Vaults/backupCrossTenantVaultMappings/write"],
+    ["Microsoft.RecoveryServices/Vaults/backupFabrics/protectionContainers/protectedItems/recoveryPoints/restore/action"],
+    ["Microsoft.RecoveryServices/Vaults/backupResourceGuardProxies/delete"],
+    ["Microsoft.RecoveryServices/locations/backupCrossRegionRestore/action"],
+    ["Microsoft.RedHatOpenShift/openShiftClusters/listCredentials/action"],
+    ["Microsoft.Relay/namespaces/HybridConnections/write"],
+    ["Microsoft.Relay/namespaces/authorizationRules/write"],
+    ["Microsoft.ResourceConnector/appliances/listClusterUserCredential/action"],
+    ["Microsoft.ResourceConnector/appliances/listKeys/action"],
+    ["Microsoft.Resources/templateSpecs/versions/write"],
+    ["Microsoft.Search/searchServices/debugSessions/execute/action"],
+    ["Microsoft.Search/searchServices/debugSessions/write"],
+    ["Microsoft.Search/searchServices/indexes/write"],
+    ["Microsoft.Search/searchServices/listAdminKeys/action"],
+    ["Microsoft.Search/searchServices/write"],
+    ["Microsoft.Security/automations/write"],
+    ["Microsoft.SecurityInsights/automationRules/write"],
+    ["Microsoft.SerialConsole/serialPorts/connect/action"],
+    ["Microsoft.ServiceBus/namespaces/authorizationRules/write"],
+    ["Microsoft.ServiceBus/namespaces/disasterRecoveryConfigs/authorizationRules/listkeys/action"],
+    ["Microsoft.ServiceBus/namespaces/networkRuleSets/write"],
+    ["Microsoft.ServiceBus/namespaces/write"],
+    ["Microsoft.ServiceFabric/clusters/applications/write"],
+    ["Microsoft.ServiceFabric/clusters/write"],
+    ["Microsoft.ServiceFabric/managedClusters/applicationTypes/write"],
+    ["Microsoft.ServiceFabric/managedClusters/write"],
+    ["Microsoft.ServiceLinker/linkers/generateConfigurations/action"],
+    ["Microsoft.ServiceLinker/linkers/listConfigurations/action"],
+    ["Microsoft.SignalRService/SignalR/serverConnection/write"],
+    ["Microsoft.SignalRService/SignalR/write"],
+    ["Microsoft.SignalRService/WebPubSub/auth/accessKey/action"],
+    ["Microsoft.SignalRService/WebPubSub/write"],
+    ["Microsoft.Solutions/applicationDefinitions/write"],
+    ["Microsoft.Solutions/applications/listTokens/action"],
+    ["Microsoft.Solutions/applications/write"],
+    ["Microsoft.Solutions/jitRequests/write"],
+    ["Microsoft.Solutions/register/action"],
+    ["Microsoft.Sql/servers/azureADOnlyAuthentications/write"],
+    ["Microsoft.Sql/servers/databases/dataMaskingPolicies/write"],
+    ["Microsoft.Sql/servers/databases/export/action"],
+    ["Microsoft.Sql/servers/databases/replicationLinks/write"],
+    ["Microsoft.Sql/servers/databases/write"],
+    ["Microsoft.Sql/servers/dnsAliases/acquire/action"],
+    ["Microsoft.Sql/servers/dnsAliases/write"],
+    ["Microsoft.Sql/servers/failoverGroups/write"],
+    ["Microsoft.Sql/servers/firewallRules/write"],
+    ["Microsoft.Sql/servers/ipv6FirewallRules/write"],
+    ["Microsoft.Sql/servers/outboundFirewallRules/delete"],
+    ["Microsoft.Sql/servers/outboundFirewallRules/write"],
+    ["Microsoft.Sql/servers/virtualNetworkRules/write"],
+    ["Microsoft.Storage/storageAccounts/blobServices/containers/immutabilityPolicies/delete"],
+    ["Microsoft.Storage/storageAccounts/blobServices/containers/immutabilityPolicies/write"],
+    ["Microsoft.Storage/storageAccounts/blobServices/write"],
+    ["Microsoft.Storage/storageAccounts/fileServices/shares/restore/action"],
+    ["Microsoft.Storage/storageAccounts/inventoryPolicies/write"],
+    ["Microsoft.Storage/storageAccounts/listKeys/action"],
+    ["Microsoft.Storage/storageAccounts/localUsers/write"],
+    ["Microsoft.Storage/storageAccounts/objectReplicationPolicies/write"],
+    ["Microsoft.Storage/storageAccounts/queueServices/queues/setAcl/action"],
+    ["Microsoft.Storage/storageAccounts/regenerateKey/action"],
+    ["Microsoft.StorageMover/storageMovers/endpoints/write"],
+    ["Microsoft.StreamAnalytics/locations/SampleInput/action"],
+    ["Microsoft.StreamAnalytics/streamingjobs/Write"],
+    ["Microsoft.StreamAnalytics/streamingjobs/functions/Write"],
+    ["Microsoft.StreamAnalytics/streamingjobs/inputs/Write"],
+    ["Microsoft.Synapse/workspaces/bigDataPools/write"],
+    ["Microsoft.Synapse/workspaces/firewallRules/write"],
+    ["Microsoft.Synapse/workspaces/integrationRuntimes/listAuthKeys/action"],
+    ["Microsoft.Synapse/workspaces/managedIdentitySqlControlSettings/write"],
+    ["Microsoft.Synapse/workspaces/replaceAllIpFirewallRules/action"],
+    ["Microsoft.Synapse/workspaces/write"],
+    ["Microsoft.VideoIndexer/accounts/generateExtensionAccessToken/action"],
+    ["Microsoft.VideoIndexer/accounts/generateExtensionRestrictedViewerAccessToken/action"],
+    ["Microsoft.VirtualMachineImages/imageTemplates/write"],
+    ["Microsoft.Web/connections/confirmConsentCode/action"],
+    ["Microsoft.Web/connections/listConnectionKeys/action"],
+    ["Microsoft.Web/connections/listConsentLinks/action"],
+    ["Microsoft.Web/publishingUsers/write"],
+    ["Microsoft.Web/sites/applySlotConfig/action"],
+    ["Microsoft.Web/sites/backup/action"],
+    ["Microsoft.Web/sites/basicPublishingCredentialsPolicies/write"],
+    ["Microsoft.Web/sites/hostruntime/vfs/write"],
+    ["Microsoft.Web/sites/hostruntime/webhooks/api/workflows/triggers/listCallbackUrl/action"],
+    ["Microsoft.Web/sites/hybridConnectionNamespaces/relays/write"],
+    ["Microsoft.Web/sites/networkConfig/write"],
+    ["Microsoft.Web/sites/slots/functions/listsecrets/action"],
+    ["Microsoft.Web/sites/slotsswap/action"],
+    ["Microsoft.Web/staticSites/config/write"],
+    ["Microsoft.Web/staticSites/listSecrets/action"],
+    ["Microsoft.Web/staticSites/resetapikey/action"],
+    ["Microsoft.Web/staticSites/snippets/write"],
+    ["Microsoft.Web/staticSites/write"],
+    ["Policy.ReadWrite.AuthenticationFlows"],
+    ["Policy.ReadWrite.AuthenticationMethod"],
+    ["RoleManagementPolicy.ReadWrite.AzureADGroup"],
+    ["RoleManagementPolicy.ReadWrite.Directory"],
+    ["Sites.Read.All"],
+    ["Synchronization.ReadWrite.All"],
+    ["microsoft.directory/applications.myOrganization/allProperties/update"],
+    ["microsoft.directory/groups/allProperties/update"],
+    ["microsoft.directory/users/basic/update"],
+    ["microsoft.network/virtualnetworkgateways/generatevpnprofile/action"],
+    # Source-verified corrections from the comprehensive recheck.
+    ["Microsoft.Web/sourcecontrols/read"],
+    ["Microsoft.OperationalInsights/workspaces/query/read"],
+    ["Microsoft.Automation/automationAccounts/runbooks/content/read"],
+    # Content and prerequisite distinctions verified in the recheck.
+    ["Microsoft.ContainerRegistry/registries/repositories/content/read"],
+    ["Microsoft.Search/searchServices/indexes/documents/read"],
+    ["Microsoft.Automation/automationAccounts/jobs/output/read"],
+    # Documented grants absent from the prior stored catalog.
+    ["Files.ReadWrite.All"],
+    ["Mail.Read.Shared"],
+    ["Mail.ReadWrite.Shared"],
+    ["microsoft.directory/bitlockerKeys/key/read"],
+    ["microsoft.directory/deviceLocalCredentials/password/read"],
+    ["microsoft.directory/groups/members/update"],
+    ["microsoft.directory/groups/owners/update"],
+    ["Sites.ReadWrite.All"],
 ]

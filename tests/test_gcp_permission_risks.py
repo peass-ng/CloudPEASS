@@ -26,13 +26,11 @@ from src.sensitive_permissions.gcp import (
         "iam.googleapis.com/workloadIdentityPoolProviders.update",
         "iam.googleapis.com/workloadIdentityPools.undelete",
         "iam.googleapis.com/workloadIdentityPools.update",
-        "integrations.authConfigs.get",
         "container.pods.exec",
         "container.nodes.proxy",
         "container.serviceAccounts.createToken",
         "cloudbuild.builds.create",
         "composer.environments.executeAirflowCommand",
-        "secretmanager.versions.access",
     ],
 )
 def test_direct_compromise_permissions_are_critical(permission):
@@ -42,6 +40,9 @@ def test_direct_compromise_permissions_are_critical(permission):
 @pytest.mark.parametrize(
     "permission",
     [
+        "integrations.authConfigs.get",
+        "secretmanager.versions.access",
+        "secretmanager.secrets.update",
         "agentidentity.authProviders.retrieveCredentials",
         "agentidentity.authProviders.update",
         "aiplatform.pipelineJobs.get",
@@ -62,7 +63,6 @@ def test_direct_compromise_permissions_are_critical(permission):
         "pubsub.subscriptions.consume",
         "run.routes.invoke",
         "secretmanager.versions.add",
-        "secretmanager.versions.destroy",
         "container.clusters.getCredentials",
         "container.pods.attach",
         "container.pods.getLogs",
@@ -92,7 +92,6 @@ def test_direct_compromise_permissions_are_critical(permission):
         "healthcare.hl7V2Messages.get",
         "healthcare.hl7V2Messages.ingest",
         "iam.serviceAccounts.getOpenIdToken",
-        "cloudkms.cryptoKeyVersions.destroy",
         "artifactregistry.repositories.uploadArtifacts",
         "datastore.entities.create",
         "datastore.entities.delete",
@@ -128,6 +127,8 @@ def test_data_plane_and_context_dependent_permissions_are_high(permission):
 @pytest.mark.parametrize(
     "permission",
     [
+        "secretmanager.versions.destroy",
+        "cloudkms.cryptoKeyVersions.destroy",
         "compute.disks.create",
         "compute.disks.update",
         "monitoring.dashboards.update",
@@ -142,10 +143,8 @@ def test_data_plane_and_context_dependent_permissions_are_high(permission):
         "monitoring.dashboards.delete",
         "run.jobs.run",
         "run.jobs.runWithOverrides",
-        "secretmanager.secrets.update",
         "storage.objects.update",
         "iam.roles.create",
-        "logging.views.access",
         "spanner.databases.read",
         "spanner.databases.select",
         "spanner.databases.write",
@@ -293,7 +292,7 @@ def test_cloud_sql_data_api_is_high_only_with_login_permission():
     assert result["sensitive_perms"] == complete
 
 
-def test_logging_data_access_is_high_only_with_list_and_view_permissions():
+def test_logging_content_access_is_high_for_container_and_view_grants():
     peass = CloudPEASS(
         very_sensitive_combinations,
         sensitive_combinations,
@@ -305,7 +304,7 @@ def test_logging_data_access_is_high_only_with_list_and_view_permissions():
         {"logging.views.access"},
     ):
         result = peass.analyze_sensitive_combinations(incomplete)
-        assert result["sensitive_perms"] == set()
+        assert result["sensitive_perms"] == incomplete
 
     complete = {"logging.logEntries.list", "logging.views.access"}
     result = peass.analyze_sensitive_combinations(complete)
@@ -416,6 +415,132 @@ def test_every_high_or_critical_rule_has_hacktricks_evidence():
                 "gcp-privilege-escalation/",
                 "gcp-post-exploitation/",
                 "gcp-to-workspace-pivoting/",
+                "gcp-persistence/",
+                # Some newer services document their abuse on the service enum
+                # page rather than a dedicated privesc/post-exploitation page.
+                "gcp-services/",
             )
         )
         assert document.endswith(".md")
+
+
+@pytest.mark.parametrize(
+    "permission",
+    [
+        # Config Controller / KCC: KRM API host IAM takeover -> owner-level KCC.
+        "krmapihosting.krmApiHosts.setIamPolicy",
+    ],
+)
+def test_newer_service_takeovers_are_critical(permission):
+    assert classify_permission("gcp", permission) == "critical"
+
+
+@pytest.mark.parametrize(
+    "permission",
+    [
+        # Bare Metal Solution host code execution / data exposure.
+        "baremetalsolution.sshKeys.create",
+        "baremetalsolution.instances.enableInteractiveSerialConsole",
+        "baremetalsolution.nfsshares.update",
+        # BigLake storage-location repointing (data poisoning / read-MITM).
+        "biglake.tables.update",
+        "biglake.catalogs.update",
+        # BigQuery connection read-through and credential repointing.
+        "bigquery.connections.create",
+        "bigquery.connections.use",
+        "bigquery.connections.update",
+        # Cloud KMS EKM MITM over external key material.
+        "cloudkms.ekmConnections.update",
+        "cloudkms.ekmConfigs.update",
+        # Cloud Trace / Error Reporting secret leakage.
+        "cloudtrace.traces.get",
+        "cloudtrace.traces.list",
+        "errorreporting.groups.list",
+        "errorreporting.errorEvents.list",
+        # Contact Center AI Insights confused-deputy reads and PII disclosure.
+        "contactcenterinsights.conversations.get",
+        "contactcenterinsights.conversations.export",
+        # Cloud Domains hijack / auth-code disclosure.
+        "domains.registrations.configureDns",
+        "domains.registrations.update",
+        "domains.registrations.configureManagement",
+        "domains.registrations.configureContact",
+        # Vertex AI Search corpus exfil and RAG poisoning.
+        "discoveryengine.documents.get",
+        "discoveryengine.documents.import",
+        "discoveryengine.servingConfigs.search",
+        "discoveryengine.servingConfigs.answer",
+        "discoveryengine.targetSites.create",
+        # Live Stream confused-deputy storage and ingest-URI disclosure.
+        "livestream.channels.create",
+        "livestream.inputs.get",
+        "livestream.inputs.list",
+        # Looker export redirection / SSO hijack.
+        "looker.instances.export",
+        "looker.instances.update",
+        # Managed Kafka data-plane and Secret Manager disclosure.
+        "managedkafka.clusters.connect",
+        "managedkafka.connectors.create",
+        "managedkafka.connectClusters.create",
+        "managedkafka.connectClusters.update",
+        # NetApp Volumes export tampering and exfil-clone.
+        "netapp.volumes.update",
+        "netapp.snapshots.create",
+        "netapp.volumes.restore",
+        "netapp.storagePools.restoreVolume",
+        # Network Security TLS downgrade MITM.
+        "networksecurity.serverTlsPolicies.update",
+        "networksecurity.clientTlsPolicies.create",
+        # Network Services mesh route/endpoint hijack.
+        "networkservices.httpRoutes.create",
+        "networkservices.endpointPolicies.update",
+        # Parallelstore confused-deputy export/import.
+        "parallelstore.instances.exportData",
+        "parallelstore.instances.importData",
+        # Transcoder confused-deputy job.
+        "transcoder.jobs.create",
+        # VM Migration whole-VM disk exfil.
+        "vmmigration.cloneJobs.create",
+        "vmmigration.cutoverJobs.create",
+        "vmmigration.migratingVms.update",
+        "vmmigration.targets.create",
+        # VMware Engine (GCVE) cleartext admin credential return.
+        "vmwareengine.privateClouds.showVcenterCredentials",
+        "vmwareengine.privateClouds.showNsxCredentials",
+        "vmwareengine.privateClouds.resetVcenterCredentials",
+        "vmwareengine.privateClouds.resetNsxCredentials",
+    ],
+)
+def test_newer_service_attack_permissions_are_high(permission):
+    assert classify_permission("gcp", permission) == "high"
+
+
+@pytest.mark.parametrize(
+    "permission",
+    [
+        # Candidate SMB domain-join credential read; may be redacted by the API.
+        "netapp.activeDirectories.get",
+    ],
+)
+def test_speculative_credential_reads_are_medium(permission):
+    assert classify_permission("gcp", permission, unknown_default="medium") == "medium"
+
+
+def test_migration_center_discovery_client_is_critical_only_with_actas():
+    peass = CloudPEASS(
+        very_sensitive_combinations,
+        sensitive_combinations,
+        "GCP",
+        1,
+    )
+    incomplete = peass.analyze_sensitive_combinations(
+        {"migrationcenter.discoveryClients.create"}
+    )
+    assert incomplete["very_sensitive_perms"] == set()
+
+    complete = {
+        "migrationcenter.discoveryClients.create",
+        "iam.serviceAccounts.actAs",
+    }
+    result = peass.analyze_sensitive_combinations(complete)
+    assert complete <= result["very_sensitive_perms"]

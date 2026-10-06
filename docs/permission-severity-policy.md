@@ -1,0 +1,22 @@
+# Permission severity policy
+
+Both CloudPEASS and Blue-CloudPEASS use these levels for AWS, GCP, Azure and Kubernetes. The canonical files live in [HackTricks Cloud](https://github.com/HackTricks-wiki/hacktricks-cloud/tree/master/src/permission-categorizations); see [the synchronization guide](permission-categorization-sync.md).
+
+- **Critical:** direct or nearly self-sufficient privilege grants, identity takeover, credential minting or privileged execution. Examples include `iam:PassRole`, service-account token minting, administrator assignment and Kubernetes `bind`/`escalate`. A trivial lookup or target-dependent prerequisite can still exist; Critical does not promise that a call succeeds on every target.
+- **High:** protected data, stored secrets or private-key disclosure; code/configuration poisoning, traffic interception and escalation paths that depend on additional grants or target configuration.
+- **Medium:** availability/integrity disruption (DoS/Break), telemetry tampering and ordinary operational changes. A prerequisite without the complete permission chain stays at its standalone level.
+- **Low:** discovery and ordinary metadata reads without protected content.
+
+The audit uses HackTricks Cloud master **45bcf7a7381a496d6dfd5b5d533681fff85c608d**. `permission-severity-audit.csv` records exact provider decisions and source links. It is a documentation-based classification review; existing live validation records retain their original provenance.
+
+Exact `severity_overrides` precede generic naming rules. `severity_caps` prevent legacy combination lists from raising pure disruption or discovery above its audited level. Other prerequisites can be raised when their complete documented combination is present. Both runtime reports and stored catalogs use the same engine. Bundled rules are authoritative; a stale network/cache copy cannot silently change a shipped audit.
+
+Kubernetes classification includes the API group, resource, subresource, verb and available name/selector constraints. Reading Secrets and workload logs is High; minting a ServiceAccount token is Critical. Legacy status mutations whose only demonstrated effect is deletion or failed rollout availability are Medium. Ordinary RBAC writes respect Kubernetes escalation checks.
+
+Condition keys, API operation names and SDK namespaces must not be treated as IAM grants. Confirmed identifier corrections are recorded in `permission-identifier-corrections.csv`. The classifier treats these known non-permission tokens as Low (no grant), including when a separate wildcard grant is present. Missing entries in a provider reference are reviewed against the API documentation; absence alone does not invalidate preview or certificate-policy actions.
+
+The comprehensive recheck inventories qualified identifiers across all three cloud sections, including Graph scopes and Entra role actions, in `hacktricks-permission-inventory.csv`. Regenerate it with `scripts/audit_hacktricks_permissions.py --book-root <clean-book-checkout>/src/pentesting-cloud --output docs/hacktricks-permission-inventory.csv`. This is source coverage, not proof of standalone execution: abbreviated action names, wildcard families, API paths and negative examples require contextual review. Blue's parity check includes this inventory as well as its full catalogs, complete/incomplete combinations and the Kubernetes matrix.
+
+The recheck examined weak heading evidence and Low-rated content-read candidates, retained existing tested authorization dependencies, and corrected protected reads, pure filter disruption, helper permissions and false identifiers. GCP RPC names (`v1.*`, `v2.*`) and REST resource-method paths are not IAM grants. The central AWS/GCP reference catalogs are review aids; newer officially documented Functions v2 upload, Cloud Run image-export and DLP content-policy permissions are retained. AWS IoT certificate-policy actions also have a different authorization surface from the IAM action catalog.
+
+Google's current Logging `entries.list` REST reference allows container or specific-view authorization with one or more of `logging.logEntries.list`, `logging.privateLogEntries.list` and `logging.views.access`. Those grants are High for protected content; the resource scope and view filters still apply. This resolves conflicting wording in book pages without asserting a new live test. Amplify Studio token recovery retains its existing `amplify:GetApp` combination dependency.

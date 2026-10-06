@@ -387,9 +387,9 @@ class PermissionModelTests(unittest.TestCase):
 
     def test_permission_risk_matrix_covers_offensive_control_paths(self):
         cases = [
-            ("critical", PermissionKey("get", resource="*")),
+            ("high", PermissionKey("get", resource="*")),
             ("high", PermissionKey("create", resource="*")),
-            ("critical", PermissionKey("list", resource="secrets")),
+            ("high", PermissionKey("list", resource="secrets")),
             ("high", PermissionKey("patch", resource="secrets")),
             (
                 "critical",
@@ -463,13 +463,13 @@ class PermissionModelTests(unittest.TestCase):
             ("high", PermissionKey("get", resource="services", subresource="proxy")),
             ("high", PermissionKey("patch", resource="nodes", subresource="status")),
             (
-                "high",
+                "medium",
                 PermissionKey(
                     "patch", group="apps", resource="daemonsets", subresource="status"
                 ),
             ),
             (
-                "high",
+                "medium",
                 PermissionKey(
                     "patch",
                     group="policy",
@@ -478,7 +478,7 @@ class PermissionModelTests(unittest.TestCase):
                 ),
             ),
             (
-                "high",
+                "medium",
                 PermissionKey(
                     "patch",
                     group="apiextensions.k8s.io",
@@ -487,7 +487,7 @@ class PermissionModelTests(unittest.TestCase):
                 ),
             ),
             (
-                "high",
+                "medium",
                 PermissionKey(
                     "patch", group="apps", resource="replicasets", subresource="status"
                 ),
@@ -584,7 +584,7 @@ class PermissionModelTests(unittest.TestCase):
                     resource="applications",
                 ),
             ),
-            ("medium", PermissionKey("get", resource="pods", subresource="log")),
+            ("high", PermissionKey("get", resource="pods", subresource="log")),
             ("medium", PermissionKey("list", resource="pods")),
             ("medium", PermissionKey("patch", resource="leases")),
             (
@@ -698,7 +698,7 @@ class PermissionModelTests(unittest.TestCase):
         for key in cases:
             with self.subTest(permission=key.human()):
                 severity, _ = classify_permission(key)
-                self.assertEqual(severity, "high")
+                self.assertEqual(severity, "medium" if key.resource in {"daemonsets", "poddisruptionbudgets", "customresourcedefinitions", "replicasets"} and key.subresource == "status" else "high")
 
     def test_untested_route_update_verb_is_not_promoted_to_high(self):
         for group, resource in (
@@ -869,8 +869,8 @@ class PermissionModelTests(unittest.TestCase):
         all_groups_wildcard, _ = classify_permission(
             PermissionKey("get", group="*", resource="*")
         )
-        self.assertEqual(core_wildcard, "critical")
-        self.assertEqual(all_groups_wildcard, "critical")
+        self.assertEqual(core_wildcard, "high")
+        self.assertEqual(all_groups_wildcard, "high")
 
     def test_constrained_impersonation_virtual_resources_survive_discovery(self):
         for key in (
