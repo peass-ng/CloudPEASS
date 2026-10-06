@@ -354,6 +354,79 @@ def test_token_minting_get_commands_are_never_probed(monkeypatch):
     assert instance.get_commands_for_service("sts") == ["get-caller-identity"]
 
 
+def test_extra_read_operations_are_explicitly_selected_from_cli_and_models():
+    instance = object.__new__(AWSBruteForce)
+    instance._get_aws_help = lambda service: [
+        "AVAILABLE COMMANDS", "o list-tables", "o scan", "o update-table", "SEE ALSO",
+    ]
+    assert instance.get_commands_for_service("dynamodb") == ["list-tables", "scan"]
+    assert "scan" in AWSBruteForce._botocore_commands("dynamodb")
+    assert "filter-log-events" in AWSBruteForce._botocore_commands("logs")
+    assert "select-resource-config" in AWSBruteForce._botocore_commands("configservice")
+    assert "check-in-license" not in AWSBruteForce._botocore_commands("license-manager")
+    assert "test-failover" not in AWSBruteForce._botocore_commands("elasticache")
+    assert "retrieve-and-generate" not in AWSBruteForce._botocore_commands("bedrock-agent-runtime")
+
+
+def test_new_scans_have_one_item_limit_and_disable_cli_pagination(monkeypatch):
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance.aws_cli = "/usr/bin/aws"
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        return SimpleNamespace(returncode=0, stdout=b"{}", stderr=b"")
+
+    monkeypatch.setattr("src.aws.awsbruteforce.subprocess.run", run)
+    for service, command in (
+        ("dynamodb", "scan"), ("logs", "filter-log-events"),
+        ("servicecatalog", "scan-provisioned-products"),
+    ):
+        instance.run_command("example", "us-east-1", service, command)
+    assert all("--no-paginate" in call for call in calls)
+    assert calls[0][calls[0].index("--limit") + 1] == "1"
+    assert calls[0][calls[0].index("--select") + 1] == "COUNT"
+    assert calls[1][calls[1].index("--limit") + 1] == "1"
+    assert calls[2][calls[2].index("--page-size") + 1] == "1"
+
+
+def test_new_read_operations_use_response_derived_identifiers():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance._remember_identifiers(
+        "dynamodb", "list-tables", b'{"TableNames":["example-table"]}'
+    )
+    instance._remember_identifiers(
+        "servicediscovery", "list-namespaces",
+        b'{"Namespaces":[{"Name":"internal.example"}]}',
+    )
+    instance._remember_identifiers(
+        "servicediscovery", "list-services", b'{"Services":[{"Name":"api"}]}'
+    )
+    assert instance._real_values_for_option("dynamodb", "scan", "--table-name") == [
+        "example-table"
+    ]
+    assert instance._real_values_for_option(
+        "servicediscovery", "discover-instances", "--namespace-name"
+    ) == ["internal.example"]
+    assert instance._real_values_for_option(
+        "servicediscovery", "discover-instances", "--service-name"
+    ) == ["api"]
+
+
+def test_exact_log_group_name_precedes_its_arn_for_filtering():
+    instance = AWSBruteForce(False, "us-east-1", "example", [], 1)
+    instance._remember_identifiers(
+        "logs", "describe-log-groups",
+        json.dumps({"logGroups": [{
+            "logGroupName": "/aws/lambda/example",
+            "logGroupArn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/example",
+        }]}).encode(),
+    )
+    assert instance._real_values_for_option(
+        "logs", "filter-log-events", "--log-group-name"
+    )[0] == "/aws/lambda/example"
+
+
 def test_cli_command_is_an_argv_list_not_a_shell_string():
     instance = object.__new__(AWSBruteForce)
     instance.aws_cli = "/usr/bin/aws"
