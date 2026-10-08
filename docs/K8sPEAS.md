@@ -1,6 +1,6 @@
-# K8sPEASS
+# K8sPEAS
 
-K8sPEASS enumerates the effective permissions of the current Kubernetes
+K8sPEAS enumerates the effective permissions of the current Kubernetes
 identity and explains the dangerous ones. Runtime requests are strictly
 read-only: HTTP `GET` plus the three non-persisted self-review APIs
 (`SelfSubjectReview`, `SelfSubjectRulesReview`, and
@@ -9,25 +9,25 @@ resource and never uses exec, attach, port-forward, workload proxying,
 TokenRequest, CSR, or dry-run write probes.
 
 The severity taxonomy and complete critical/high permission families are
-documented in [K8sPEASS permission risk model](K8sPEASS-risk-model.md).
+documented in [K8sPEAS permission risk model](K8sPEAS-risk-model.md).
 
 ## Quick start
 
 ```bash
-python3 K8sPEASS.py --context my-context
+python3 K8sPEAS.py --context my-context
 
 # A bearer token can be kept out of the process list.
-K8S_TOKEN='ey...' python3 K8sPEASS.py \
+K8S_TOKEN='ey...' python3 K8sPEAS.py \
   --server https://10.0.0.1:6443 \
   --certificate-authority /path/to/ca.crt
 
 # Automation: do not prompt and skip the slow exhaustive phase.
-python3 K8sPEASS.py --no-ask --skip-bruteforce \
-  --out-json-path /tmp/k8speass.json
+python3 K8sPEAS.py --no-ask --skip-bruteforce \
+  --out-json-path /tmp/k8speas.json
 ```
 
 The official Python Kubernetes client is preferred. If it is unavailable,
-K8sPEASS falls back to `kubectl` and applies the same hard request allowlist.
+K8sPEAS falls back to `kubectl` and applies the same hard request allowlist.
 Kubeconfig, direct bearer-token, client-certificate, and in-cluster service
 account authentication are supported. `--namespace` can be repeated when a
 namespace name is known but namespace listing is forbidden.
@@ -79,7 +79,7 @@ disable this or a value up to 5 for unstable links.
    ValidatingAdmissionPolicy parameter objects, existing Services behind
    fail-open webhooks, and delete/scale permissions over sole ready Deployment
    backends proven through EndpointSlice/Pod/ReplicaSet ownership. These are
-   bounded checks, not brute force. K8sPEASS raises them to high only when the
+   bounded checks, not brute force. K8sPEAS raises them to high only when the
    exact permission is allowed and the observed configuration makes the path
    applicable.
 
@@ -88,11 +88,11 @@ disable this or a value up to 5 for unstable links.
 - An allowed create/update/delete-style authorization result does not prove
   that admission will accept the request. The console and JSON output label
   this uncertainty, including observed PSA labels when available.
-- `SelfSubjectRulesReview` can be incomplete for some authorizers. K8sPEASS
+- `SelfSubjectRulesReview` can be incomplete for some authorizers. K8sPEAS
   preserves the API server's incomplete/evaluation-error state and never turns
   uncertainty into a denial.
 - A forbidden namespace list means hidden namespace names may exist. Supply
-  known names with repeated `--namespace`; K8sPEASS also tries exact namespace
+  known names with repeated `--namespace`; K8sPEAS also tries exact namespace
   `GET` requests so readable PSA labels are not lost.
 - Name-constrained `list`/`watch` rules are represented with the required
   `metadata.name` field selector. Some API servers do not confirm selector
@@ -109,9 +109,9 @@ disable this or a value up to 5 for unstable links.
 Explicit impersonation is available for authorized testing:
 
 ```bash
-python3 K8sPEASS.py --as system:serviceaccount:demo:reader \
+python3 K8sPEAS.py --as system:serviceaccount:demo:reader \
   --as-group system:serviceaccounts --namespace demo
 ```
 
-This only adds Kubernetes impersonation headers. K8sPEASS does not discover a
+This only adds Kubernetes impersonation headers. K8sPEAS does not discover a
 permission and then automatically impersonate another identity.

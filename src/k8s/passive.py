@@ -131,7 +131,7 @@ def analyze_admission_read_only(
                     "observations": _admission_observations(item),
                     "meaning": (
                         "Readable policy configuration only. Effective behavior remains "
-                        "unknown without a write, which K8sPEASS never performs."
+                        "unknown without a write, which K8sPEAS never performs."
                     ),
                     "confidence": "configuration-observed",
                 }

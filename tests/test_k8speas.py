@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from src.CloudPEASS.interactive import confirm_slow_operation
 from src.k8s.client import APIError, K8sClient
 from src.k8s.discovery import discover_api_resources
-from src.k8s.k8speass import K8sPEASS
+from src.k8s.k8speas import K8sPEAS
 from src.k8s.models import APIResource, Coverage, PermissionFinding, PermissionKey
 from src.k8s.passive import admission_sensitive_permissions, is_valid_namespace_name
 from src.k8s.reviews import findings_from_rules
@@ -161,12 +161,12 @@ class ReadOnlyGuardrailTests(unittest.TestCase):
 
     def test_failed_temp_credential_cleanup_retains_path_for_atexit_retry(self):
         client = object.__new__(K8sClient)
-        client._temporary_kubeconfig_path = "/tmp/k8speass-test.kubeconfig"
+        client._temporary_kubeconfig_path = "/tmp/k8speas-test.kubeconfig"
         with patch("src.k8s.client.Path.unlink", side_effect=PermissionError("denied")):
             with self.assertRaises(RuntimeError):
                 client._cleanup_temporary_kubeconfig()
         self.assertEqual(
-            client._temporary_kubeconfig_path, "/tmp/k8speass-test.kubeconfig"
+            client._temporary_kubeconfig_path, "/tmp/k8speas-test.kubeconfig"
         )
 
     def test_malformed_discovery_is_partial_instead_of_fatal(self):
@@ -197,7 +197,7 @@ class ReadOnlyGuardrailTests(unittest.TestCase):
 class PermissionModelTests(unittest.TestCase):
     @staticmethod
     def _scanner_with_probe(status, size=0):
-        scanner = object.__new__(K8sPEASS)
+        scanner = object.__new__(K8sPEAS)
         scanner.client = SimpleNamespace(probe_get=Mock(return_value=(status, size)))
         scanner._nonresource_probe_cache = {}
         return scanner
@@ -251,7 +251,7 @@ class PermissionModelTests(unittest.TestCase):
         scanner.client.probe_get.assert_called_once_with("/debug/pprof/")
 
     def test_unserved_explicit_rbac_grant_is_downgraded(self):
-        scanner = object.__new__(K8sPEASS)
+        scanner = object.__new__(K8sPEAS)
         scanner.coverage = Coverage(discovery_complete=True)
         finding = PermissionFinding(
             key=PermissionKey(
@@ -270,7 +270,7 @@ class PermissionModelTests(unittest.TestCase):
         self.assertIn("not served", normalized.explanation)
 
     def test_unadvertised_operation_is_dormant_but_special_verbs_are_preserved(self):
-        scanner = object.__new__(K8sPEASS)
+        scanner = object.__new__(K8sPEAS)
         scanner.coverage = Coverage(discovery_complete=True)
         resources = [
             APIResource(
@@ -315,7 +315,7 @@ class PermissionModelTests(unittest.TestCase):
         self.assertTrue(special.resource_served)
 
     def test_uninstalled_policy_resource_is_dormant_even_for_use(self):
-        scanner = object.__new__(K8sPEASS)
+        scanner = object.__new__(K8sPEAS)
         scanner.coverage = Coverage(discovery_complete=True)
         finding = PermissionFinding(
             key=PermissionKey(
@@ -332,7 +332,7 @@ class PermissionModelTests(unittest.TestCase):
         self.assertFalse(normalized.resource_served)
 
     def test_exact_confirmation_preserves_served_metadata(self):
-        scanner = object.__new__(K8sPEASS)
+        scanner = object.__new__(K8sPEAS)
         scanner.coverage = Coverage()
         key = PermissionKey("get", resource="secrets", namespace="demo")
         summarized = PermissionFinding(
@@ -891,11 +891,11 @@ class PermissionModelTests(unittest.TestCase):
             ),
         ):
             with self.subTest(permission=key.human()):
-                self.assertTrue(K8sPEASS._authorization_without_discovery(key))
-                self.assertTrue(K8sPEASS._is_special_verb_for_served_resource(key))
+                self.assertTrue(K8sPEAS._authorization_without_discovery(key))
+                self.assertTrue(K8sPEAS._is_special_verb_for_served_resource(key))
 
     def test_zero_visibility_fallback_checks_include_new_high_paths(self):
-        scanner = object.__new__(K8sPEASS)
+        scanner = object.__new__(K8sPEAS)
         scanner._run_access_reviews = Mock(side_effect=lambda candidates: candidates)
         candidates = scanner._fallback_checks(["demo"], [])
         identities = {
@@ -922,7 +922,7 @@ class PermissionModelTests(unittest.TestCase):
         self.assertTrue(expected.issubset(identities))
 
     def test_exhaustive_checks_use_correct_virtual_impersonation_groups(self):
-        candidates = K8sPEASS._exhaustive_candidates([], ["demo"])
+        candidates = K8sPEAS._exhaustive_candidates([], ["demo"])
         identities = {
             (key.verb, key.group, key.resource, key.namespace) for key in candidates
         }
@@ -970,7 +970,7 @@ class PermissionModelTests(unittest.TestCase):
         )
         summarized = PermissionFinding(key=key, allowed=True, confidence="summarized")
         no_opinion = PermissionFinding(key=key, allowed=False, confidence="confirmed")
-        merged = K8sPEASS._merge_findings([summarized, no_opinion])
+        merged = K8sPEAS._merge_findings([summarized, no_opinion])
         self.assertEqual(len(merged), 1)
         self.assertTrue(merged[0].allowed)
         self.assertEqual(merged[0].confidence, "summarized")
@@ -998,14 +998,14 @@ class PermissionModelTests(unittest.TestCase):
                 },
             }
         ]
-        result = K8sPEASS._annotate_admission([finding], admission)[0]
+        result = K8sPEAS._annotate_admission([finding], admission)[0]
         self.assertIn("did not send a write probe", result.admission)
         self.assertIn("restricted", result.admission)
 
     def test_live_admission_correlation_elevates_exact_allowed_permission(self):
         key = PermissionKey("breakglass", "example.io", resource="guards", name="x")
         finding = PermissionFinding(key=key, allowed=True, severity="low")
-        result = K8sPEASS._annotate_admission(
+        result = K8sPEAS._annotate_admission(
             [finding], [], {key: "Observed exact admission bypass."}
         )[0]
         self.assertEqual(result.severity, "high")
@@ -1014,7 +1014,7 @@ class PermissionModelTests(unittest.TestCase):
     def test_json_report_is_atomic_private_and_cleans_failed_temporary_files(self):
         with tempfile.TemporaryDirectory() as directory:
             target = os.path.join(directory, "report.json")
-            scanner = object.__new__(K8sPEASS)
+            scanner = object.__new__(K8sPEAS)
             scanner.out_path = target
             scanner._write_json({"ok": True})
             with open(target, encoding="utf-8") as report:

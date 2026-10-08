@@ -279,7 +279,7 @@ class K8sClient:
             "clusters": [{"name": "cluster", "cluster": safe_cluster}],
             "contexts": [
                 {
-                    "name": "k8speass-token",
+                    "name": "k8speas-token",
                     "context": {
                         "cluster": "cluster",
                         "user": "token",
@@ -287,13 +287,13 @@ class K8sClient:
                     },
                 }
             ],
-            "current-context": "k8speass-token",
+            "current-context": "k8speas-token",
             "users": [{"name": "token", "user": {"token": self.token}}],
         }
         handle = tempfile.NamedTemporaryFile(
             mode="w",
             encoding="utf-8",
-            prefix="k8speass-",
+            prefix="k8speas-",
             suffix=".kubeconfig",
             delete=False,
         )

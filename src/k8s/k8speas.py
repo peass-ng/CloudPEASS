@@ -39,7 +39,7 @@ init(autoreset=True)
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 
-class K8sPEASS:
+class K8sPEAS:
     """Kubernetes PEASS with the same high-level flow as the cloud PEASS tools."""
 
     def __init__(
@@ -209,7 +209,7 @@ class K8sPEASS:
         self.coverage.unavailable_inventories.extend(unavailable)
 
         report = {
-            "tool": "K8sPEASS",
+            "tool": "K8sPEAS",
             "read_only": True,
             "guardrails": {
                 "resource_writes": "never",
@@ -348,7 +348,7 @@ class K8sPEASS:
                         resource_served=None,
                         explanation=(
                             f"Conditional sensitive API-server URL grant {path}; "
-                            "K8sPEASS has no bounded safe availability probe for this pattern."
+                            "K8sPEAS has no bounded safe availability probe for this pattern."
                         ),
                     )
                 )
@@ -900,7 +900,7 @@ class K8sPEASS:
                 continue
             note = (
                 "Authorization allows this operation, but mutating/validating admission "
-                "may modify or reject it; K8sPEASS did not send a write probe."
+                "may modify or reject it; K8sPEAS did not send a write probe."
             )
             labels = psa_namespaces.get(finding.key.namespace)
             if labels and finding.key.resource in {

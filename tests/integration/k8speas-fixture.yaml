@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: k8speass-test-open
+  name: k8speas-test-open
   labels:
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
@@ -9,34 +9,34 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: k8speass-test-hidden
+  name: k8speas-test-hidden
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: zero
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: limited
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: named-reader
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: only-this-secret
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 stringData:
   value: synthetic-test-value
 ---
@@ -44,7 +44,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: other-secret
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 stringData:
   value: must-not-be-readable
 ---
@@ -52,7 +52,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: limited-role
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 rules:
   - apiGroups: [""]
     resources: ["pods"]
@@ -71,11 +71,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: limited-binding
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 subjects:
   - kind: ServiceAccount
     name: limited
-    namespace: k8speass-test-hidden
+    namespace: k8speas-test-hidden
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -85,7 +85,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: named-secret-reader
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -96,11 +96,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: named-secret-reader
-  namespace: k8speass-test-hidden
+  namespace: k8speas-test-hidden
 subjects:
   - kind: ServiceAccount
     name: named-reader
-    namespace: k8speass-test-hidden
+    namespace: k8speas-test-hidden
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -109,9 +109,9 @@ roleRef:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: widgets.k8speass.example
+  name: widgets.k8speas.example
 spec:
-  group: k8speass.example
+  group: k8speas.example
   names:
     kind: Widget
     plural: widgets

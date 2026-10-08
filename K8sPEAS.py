@@ -9,13 +9,13 @@ import sys
 
 from colorama import Fore
 
-from src.k8s import K8sPEASS
+from src.k8s import K8sPEAS
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Run K8sPEASS to enumerate the current Kubernetes identity and its "
+            "Run K8sPEAS to enumerate the current Kubernetes identity and its "
             "permissions without changing resources or using exec-like actions."
         )
     )
@@ -98,7 +98,7 @@ def main() -> int:
         parser.error("--as-group requires --as")
     scanner = None
     try:
-        scanner = K8sPEASS(
+        scanner = K8sPEAS(
             kubeconfig=args.kubeconfig,
             context=args.context,
             server=args.server,
@@ -124,7 +124,7 @@ def main() -> int:
         print(f"{Fore.YELLOW}Interrupted. No Kubernetes resources were changed.")
         return 130
     except Exception as exc:
-        print(f"{Fore.RED}K8sPEASS failed safely: {exc}")
+        print(f"{Fore.RED}K8sPEAS failed safely: {exc}")
         return 1
     finally:
         if scanner is not None:

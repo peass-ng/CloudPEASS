@@ -262,9 +262,9 @@ python3 AWSPEAS.py --profile <AWS_PROFILE> --aws-services s3api,sqs,sns --brutef
 ---
 
 <details>
-<summary><h2>K8sPEASS ☸️🔍</h2></summary>
+<summary><h2>K8sPEAS ☸️🔍</h2></summary>
 
-**K8sPEASS** enumerates the current Kubernetes identity's effective permissions and rates their security risk. It uses read-only HTTP `GET` requests and non-persisted self-review APIs. It never changes Kubernetes resources or uses exec, attach, port-forward, workload proxying, token minting, or dry-run write probes.
+**K8sPEAS** enumerates the current Kubernetes identity's effective permissions and rates their security risk. It uses read-only HTTP `GET` requests and non-persisted self-review APIs. It never changes Kubernetes resources or uses exec, attach, port-forward, workload proxying, token minting, or dry-run write probes.
 
 ### How it works
 
@@ -281,22 +281,22 @@ python3 AWSPEAS.py --profile <AWS_PROFILE> --aws-services s3api,sqs,sns --brutef
 - Use `--client-certificate` and `--client-key` together for client-certificate authentication.
 - Run inside a Pod using its mounted service-account credentials.
 
-The official Python Kubernetes client from `requirements.txt` is preferred. If unavailable, K8sPEASS falls back to `kubectl` with the same request allowlist.
+The official Python Kubernetes client from `requirements.txt` is preferred. If unavailable, K8sPEAS falls back to `kubectl` with the same request allowlist.
 
 ### Examples
 
 ```bash
 # Review an existing kubeconfig context without exhaustive checks
-python3 K8sPEASS.py --context my-context --skip-bruteforce
+python3 K8sPEAS.py --context my-context --skip-bruteforce
 
 # Include known namespaces even when namespace listing is forbidden
-python3 K8sPEASS.py --namespace demo --namespace staging --skip-bruteforce
+python3 K8sPEAS.py --namespace demo --namespace staging --skip-bruteforce
 
 # Noninteractive review with a complete JSON report
-python3 K8sPEASS.py --no-ask --skip-bruteforce --out-json-path k8s-results.json
+python3 K8sPEAS.py --no-ask --skip-bruteforce --out-json-path k8s-results.json
 
 # Full option reference
-python3 K8sPEASS.py --help
+python3 K8sPEAS.py --help
 ```
 
 ### Interpreting results and useful controls
@@ -305,6 +305,6 @@ An allowed authorization review does not prove admission will accept a write. In
 
 The console summarizes findings; `--show-all` includes low-risk and repeated entries. `--out-json-path` preserves allowed, denied, and unknown reviews, discovery coverage, admission evidence, and inaccessible optional inventories. Use `--threads`, `--timeout`, and `--retries` to bound concurrency and transient failures. Read-only reviews and discovery calls can still appear in Kubernetes audit logs.
 
-See the [complete K8sPEASS guide](docs/K8sPEASS.md) and [permission risk model](docs/K8sPEASS-risk-model.md) for enumeration details, severity definitions, and limitations.
+See the [complete K8sPEAS guide](docs/K8sPEAS.md) and [permission risk model](docs/K8sPEAS-risk-model.md) for enumeration details, severity definitions, and limitations.
 
 </details>

@@ -1,5 +1,5 @@
 """Kubernetes permission enumeration for CloudPEASS."""
 
-from .k8speass import K8sPEASS
+from .k8speas import K8sPEAS
 
-__all__ = ["K8sPEASS"]
+__all__ = ["K8sPEAS"]

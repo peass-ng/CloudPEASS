@@ -1,6 +1,6 @@
-# K8sPEASS permission risk model
+# K8sPEAS permission risk model
 
-K8sPEASS rates the highest locally reproduced offensive impact of an allowed Kubernetes
+K8sPEAS rates the highest locally reproduced offensive impact of an allowed Kubernetes
 request. A rating does not mean that the whole attack is guaranteed. The target
 may not exist, a resourceNames restriction may select only a decoy, admission
 may reject a write, a custom authorizer may disagree with RBAC, or a controller
@@ -43,7 +43,7 @@ control-plane modification, protected data access, or a strong conditional escal
   reachable mutating webhook can do the same, while a validating webhook can
   receive full matching objects such as Secrets.
 - Exact custom permissions referenced by a canonical negated admission
-  `authorizer...check(...).allowed()` match condition. K8sPEASS only elevates
+  `authorizer...check(...).allowed()` match condition. K8sPEAS only elevates
   the exact grant after reading the configuration and confirming it with SSAR.
 - Exact create/patch/update/delete permissions over a named parameter object
   referenced by an enforced ValidatingAdmissionPolicy binding. Create is high
@@ -143,13 +143,13 @@ joined during attack-path analysis.
 
 An explicit rule can be authorized by RBAC even when its API group/resource is
 not installed, or when the served endpoint does not support that verb.
-K8sPEASS retains such a rule as a dormant low finding, records its
+K8sPEAS retains such a rule as a dormant low finding, records its
 `potential_severity`, and excludes it from active critical/high totals. This
 does not apply to wildcards or virtual authorization resources such as
 Signers, traditional or constrained impersonation identities, and kubelet-only
 Node subresources.
 
-Non-resource RBAC has the same problem. K8sPEASS uses only bounded, read-only
+Non-resource RBAC has the same problem. K8sPEAS uses only bounded, read-only
 availability probes for known paths. A successful `/debug/pprof/` probe can
 remain high; HTTP 404 becomes dormant low, and an unsafe or inconclusive path
 becomes conditional medium. The scanner never calls workload proxy paths.
@@ -160,7 +160,7 @@ critical; group, UID, and extra-field grants are conditional because Kubernetes
 also requires user impersonation. Constrained impersonation is reported as two
 conditional halves: an `impersonate:<mode>` identity selector and an
 `impersonate-on:<mode>:<verb>` action grant.
-K8sPEASS also treats `unsafe-delete-ignore-read-errors` and DRA's node-aware
+K8sPEAS also treats `unsafe-delete-ignore-read-errors` and DRA's node-aware
 `:patch`/`:update` verbs as mutations, while keeping unrelated made-up special
 verbs low. A `resourceNames` constraint is preserved in every finding; note
 that Kubernetes generally cannot constrain a `create` request by a name that
