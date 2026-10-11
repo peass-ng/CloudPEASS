@@ -18,7 +18,7 @@ init(autoreset=True)
 logging.getLogger('msal').setLevel(logging.ERROR)
 
 from src.CloudPEASS.cloudpeass import CloudPEASS, CloudResource
-from src.sensitive_permissions.azure import very_sensitive_combinations, sensitive_combinations
+from src.CloudPEASS.risk_rule_updates import prepare_rules
 from src.azure.entraid import EntraIDPEASS
 from src.azure.arm import AzureARMEnumerator, scope_kind, scope_name
 from src.azure.azcli import AzureCLIReadProbe
@@ -1470,6 +1470,7 @@ if __name__ == "__main__":
     parser.add_argument('--azure-services', default="", help="Limit the Azure CLI read-only fallback to comma-separated top-level groups (for example: vm,keyvault,storage)")
     parser.add_argument('--skip-az-cli-fallback', action="store_true", help="Do not probe safe read-only az commands when ARM permission enumeration returns nothing")
     parser.add_argument('--out-json-path', default=None, help="Output JSON file path (e.g. /tmp/azure_results.json)")
+    parser.add_argument('--no-update-rules', action='store_true', help="Use bundled permission rules without downloading updates")
     parser.add_argument('--threads', default=5, type=int, help="Number of threads to use")
     parser.add_argument('--no-ask', action="store_true", default=False, help="Do not ask for user input during execution, use defaults instead")
     parser.add_argument('--debug', action="store_true", help="Show failed fallback and API diagnostics")
@@ -1478,6 +1479,9 @@ if __name__ == "__main__":
     
     if args.threads < 1:
         parser.error("--threads must be at least 1")
+
+    rules = prepare_rules("azure", update=not args.no_update_rules)
+    combinations = rules["combinations"]
 
     uuid_re = re.compile(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
     check_only_subs = [sub.strip() for sub in args.check_only_these_subs.split(",") if sub.strip()]
@@ -1577,8 +1581,8 @@ if __name__ == "__main__":
         graph_token,
         foci_refresh_token,
         tenant_id,
-        very_sensitive_combinations,  # Ensure these variables are defined in your context
-        sensitive_combinations,       # Ensure these variables are defined in your context
+        combinations["critical"],
+        combinations["high"],
         num_threads=args.threads,
         not_enumerate_m365=args.not_enumerate_m365,
         skip_entraid=args.skip_entraid,

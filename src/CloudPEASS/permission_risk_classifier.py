@@ -1,10 +1,7 @@
 """
 Permission risk classifier for AWS, Azure, and GCP.
 Adapted from Blue-PEASS for CloudPEASS integration.
-Uses bundled audited rules; network/cache is a fallback for missing bundles.
-
-Note: The Blue-CloudPEASS repository must be publicly accessible at:
-https://github.com/peass-ng/Blue-CloudPEASS
+Uses the rules selected at startup, with bundled audited rules as an offline fallback.
 """
 
 from __future__ import annotations
@@ -12,103 +9,29 @@ from __future__ import annotations
 import ast
 from functools import lru_cache
 import fnmatch
-import os
 import re
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-import requests
 import yaml
+
+from src.CloudPEASS.risk_rule_updates import selected_rules
 
 
 RISK_ORDER = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 RISK_LEVELS = ("low", "medium", "high", "critical")
-
-# Blue-CloudPEASS GitHub repository base URL
-# Note: Update this to match your Blue-CloudPEASS repository name and branch
-BLUEPEASS_RISK_RULES_BASE_URL = "https://raw.githubusercontent.com/peass-ng/Blue-CloudPEASS/refs/heads/main/risk_rules"
-RISK_RULES_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60  # 7 days
-
-
-def _cache_dir() -> Path:
-    """Get cache directory for risk rules."""
-    return Path.home() / ".cache" / "cloudpeass" / "risk_rules"
-
 
 def _bundled_rules_path(provider: str) -> Path:
     """Return the permissionless/offline baseline shipped with CloudPEASS."""
     return Path(__file__).resolve().parent / "risk_rules" / f"{provider}.yaml"
 
 
-def _parse_rules_yaml(yaml_text: Optional[str], provider: str, source: str) -> dict:
-    if not yaml_text:
-        return {}
-    try:
-        data = yaml.safe_load(yaml_text) or {}
-    except Exception as e:
-        print(f"Warning: Couldn't parse {source} risk rules for {provider}: {e}")
-        return {}
-    if not isinstance(data, dict):
-        return {}
-    return data
-
-
-def _should_refresh_cache(path: Path) -> bool:
-    """Check if cached file should be refreshed."""
-    if not path.exists():
-        return True
-    try:
-        age_seconds = time.time() - path.stat().st_mtime
-    except OSError:
-        return True
-    return age_seconds > RISK_RULES_CACHE_TTL_SECONDS
-
-
-def _download_risk_rules(provider: str) -> Optional[str]:
-    """Download risk rules YAML from Blue-PEASS repo."""
-    url = f"{BLUEPEASS_RISK_RULES_BASE_URL}/{provider}.yaml"
-    try:
-        resp = requests.get(url, timeout=45)
-    except Exception as e:
-        print(f"Warning: Couldn't download risk rules for {provider}: {e}")
-        return None
-
-    if resp.status_code != 200:
-        print(f"Warning: Couldn't download risk rules for {provider} ({resp.status_code})")
-        return None
-    return resp.text
-
-
 def _load_yaml(provider: str) -> dict:
-    """Use the shipped audit deterministically; external rules are a fallback."""
+    """Return the rules selected for this scan."""
     if provider not in {"aws", "gcp", "azure"}:
         raise ValueError(f"Unknown provider: {provider}")
-    bundled_path = _bundled_rules_path(provider)
-    try:
-        bundled_text = bundled_path.read_text(encoding="utf-8")
-    except OSError:
-        bundled_text = None
-    bundled = _parse_rules_yaml(bundled_text, provider, "bundled")
-    if bundled:
-        return bundled
-
-    cache_path = _cache_dir() / f"{provider}.yaml"
-    if _should_refresh_cache(cache_path):
-        downloaded = _download_risk_rules(provider)
-        parsed = _parse_rules_yaml(downloaded, provider, "downloaded")
-        if parsed:
-            try:
-                cache_path.parent.mkdir(parents=True, exist_ok=True)
-                cache_path.write_text(downloaded, encoding="utf-8")
-            except OSError:
-                pass
-            return parsed
-    try:
-        return _parse_rules_yaml(cache_path.read_text(encoding="utf-8"), provider, "cached")
-    except OSError:
-        return {}
+    return selected_rules(provider)
 
 
 @dataclass(frozen=True)

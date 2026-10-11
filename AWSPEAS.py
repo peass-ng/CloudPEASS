@@ -21,7 +21,7 @@ from tqdm import tqdm
 from src.CloudPEASS.cloudpeass import CloudPEASS, CloudResource
 from src.aws.awsbruteforce import AWSBruteForce
 from src.aws.awsmanagedpoliciesguesser import AWSManagedPoliciesGuesser
-from src.sensitive_permissions.aws import sensitive_combinations, very_sensitive_combinations
+from src.CloudPEASS.risk_rule_updates import prepare_rules
 
 
 init(autoreset=True)
@@ -1460,6 +1460,7 @@ def build_parser():
     parser.add_argument("--session-token", help="AWS session token for temporary explicit credentials")
     parser.add_argument("--region", help="Region for regional probes (session/env region, then us-east-1)")
     parser.add_argument("--out-json-path", help="Write JSON analysis results to this local path")
+    parser.add_argument("--no-update-rules", action="store_true", help="Use bundled permission rules without downloading updates")
     parser.add_argument("--threads", default=10, type=int, help="Concurrent read-only calls (default: 10)")
     parser.add_argument("--debug", action="store_true", help="Show failed calls and unhandled probe responses")
     parser.add_argument(
@@ -1506,6 +1507,9 @@ def main(argv=None):
     if not args.access_key_id and (args.secret_access_key or args.session_token):
         parser.error("--secret-access-key/--session-token require --access-key-id")
 
+    rules = prepare_rules("aws", update=not args.no_update_rules)
+    combinations = rules["combinations"]
+
     aws_services = [service.strip() for service in (args.aws_services or "").split(",") if service.strip()]
     resource_arns = [
         arn.strip()
@@ -1516,8 +1520,8 @@ def main(argv=None):
     try:
         aws_peass = AWSPEASS(
             args.profile,
-            very_sensitive_combinations,
-            sensitive_combinations,
+            combinations["critical"],
+            combinations["high"],
             num_threads=args.threads,
             debug=args.debug,
             region=args.region,

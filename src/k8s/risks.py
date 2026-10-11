@@ -2,20 +2,14 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import Path
-
-import yaml
 
 from .models import PermissionKey
-
-
-def _rules_path() -> Path:
-    return Path(__file__).resolve().parent.parent / "CloudPEASS" / "risk_rules" / "k8s.yaml"
+from src.CloudPEASS.risk_rule_updates import selected_rules
 
 
 @lru_cache(maxsize=1)
 def _rules() -> tuple[dict, ...]:
-    data = yaml.safe_load(_rules_path().read_text(encoding="utf-8"))
+    data = selected_rules("k8s")
     if data.get("version") != 1 or data.get("provider") != "k8s":
         raise ValueError("Unsupported Kubernetes permission rules")
     return tuple(data["rules"])

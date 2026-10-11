@@ -33,6 +33,7 @@ from src.gcp.definitions import (
     NOT_STORAGE_PERMS,
 )
 from src.sensitive_permissions.gcp import sensitive_combinations, very_sensitive_combinations
+from src.CloudPEASS.risk_rule_updates import prepare_rules
 
 
 init(autoreset=True)
@@ -566,7 +567,9 @@ class GCPPEASS(CloudPEASS):
             NOT_ORGANIZATION_PERMS,
         ):
             permissions.update(values)
-        for combo in list(very_sensitive_combinations) + list(sensitive_combinations):
+        critical_combos = getattr(self, "very_sensitive_combos", very_sensitive_combinations)
+        high_combos = getattr(self, "sensitive_combos", sensitive_combinations)
+        for combo in list(critical_combos) + list(high_combos):
             permissions.update(combo)
         permissions.update(BUILTIN_FALLBACK_PERMISSIONS)
         print(f"{Fore.YELLOW}Using {len(permissions)} built-in core permissions; results may be incomplete.")
@@ -2646,6 +2649,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "using read-only API calls. No cloud resource is created, changed, executed, or deleted."
         )
     )
+    parser.add_argument("--no-update-rules", action="store_true", help="Use bundled permission rules without downloading updates")
     parser.add_argument(
         "--projects", "--project", dest="projects", help="Known project IDs, comma-separated"
     )
@@ -2823,6 +2827,8 @@ def main(argv=None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     _validate_args(args, parser)
+    rules = prepare_rules("gcp", update=not args.no_update_rules)
+    combinations = rules["combinations"]
     credentials = _load_credentials(args, parser)
     peass = GCPPEASS(
         credentials=credentials,
@@ -2831,8 +2837,8 @@ def main(argv=None) -> int:
         folders=args.folders,
         orgs=args.organizations,
         sas=args.service_accounts,
-        very_sensitive_combos=very_sensitive_combinations,
-        sensitive_combos=sensitive_combinations,
+        very_sensitive_combos=combinations["critical"],
+        sensitive_combos=combinations["high"],
         num_threads=args.threads,
         out_path=args.out_json_path,
         billing_project=args.billing_project,

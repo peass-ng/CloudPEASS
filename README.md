@@ -6,7 +6,7 @@ Welcome to the **Cloud Privilege Escalation Awesome Script Suite** – your one-
 
 This toolkit leverages advanced techniques to enumerate your permissions (it uses different permission enumeration techniques depending on the cloud) and utilizes insights from **[HackTricks Cloud](https://cloud.hacktricks.wiki/en/index.html)** and the shared permission categorizations maintained in that book to classify permissions as **critical / high / medium / low**.
 
-The bundled categorizations for AWS, GCP, Azure, and Kubernetes update weekly from HackTricks Cloud. See [maintaining the shared categorizations](docs/permission-categorization-sync.md).
+The bundled categorizations for AWS, GCP, Azure, and Kubernetes update weekly from HackTricks Cloud. Each script also tries to download its latest YAML from this repository's `main` branch when it starts. A failed download falls back to the last valid cached copy, then the bundled copy. Pass `--no-update-rules` to use the bundled YAML without a network request. See [maintaining the shared categorizations](docs/permission-categorization-sync.md).
 
 Permission ratings follow the shared [severity policy](docs/permission-severity-policy.md), with [audited source evidence](docs/permission-severity-audit.csv).
 

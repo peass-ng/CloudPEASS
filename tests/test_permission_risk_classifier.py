@@ -1,6 +1,5 @@
 import re
 import unittest
-from pathlib import Path
 from typing import Optional
 
 import CloudPEASS.permission_risk_classifier as risk_classifier
@@ -1326,10 +1325,7 @@ class AwsRiskClassificationTest(unittest.TestCase):
         self.assertEqual(len(flattened), len(set(flattened)))
 
 
-def test_aws_rules_have_a_bundled_permissionless_fallback(monkeypatch, tmp_path):
-    monkeypatch.setattr(risk_classifier, "_cache_dir", lambda: tmp_path / "empty-cache")
-    monkeypatch.setattr(risk_classifier, "_download_risk_rules", lambda provider: None)
-
+def test_aws_rules_have_a_bundled_permissionless_fallback():
     data = risk_classifier._load_yaml("aws")
 
     assert "iam:PassRole" in data["critical_exact"]
@@ -1337,71 +1333,11 @@ def test_aws_rules_have_a_bundled_permissionless_fallback(monkeypatch, tmp_path)
     assert data["provider"] == "aws"
 
 
-def test_malformed_download_uses_bundled_aws_rules(monkeypatch, tmp_path):
-    monkeypatch.setattr(risk_classifier, "_cache_dir", lambda: tmp_path / "bad-cache")
-    monkeypatch.setattr(risk_classifier, "_download_risk_rules", lambda provider: "[")
-
-    data = risk_classifier._load_yaml("aws")
-
-    assert "kms:Decrypt" in data["critical_exact"]
-
-
-def test_unwritable_cache_still_uses_bundled_aws_rules(monkeypatch, tmp_path):
-    monkeypatch.setattr(risk_classifier, "_cache_dir", lambda: tmp_path / "cache")
-    monkeypatch.setattr(risk_classifier, "_download_risk_rules", lambda provider: None)
-
-    original_mkdir = Path.mkdir
-
-    def fail_for_cache(path, *args, **kwargs):
-        if path == tmp_path / "cache":
-            raise PermissionError("read-only cache")
-        return original_mkdir(path, *args, **kwargs)
-
-    monkeypatch.setattr(Path, "mkdir", fail_for_cache)
-
-    data = risk_classifier._load_yaml("aws")
-
-    assert "iam:PassRole" in data["critical_exact"]
-
-
-def test_azure_rules_have_a_bundled_permissionless_fallback(monkeypatch, tmp_path):
-    monkeypatch.setattr(risk_classifier, "_cache_dir", lambda: tmp_path / "empty-cache")
-    monkeypatch.setattr(risk_classifier, "_download_risk_rules", lambda provider: None)
-
+def test_azure_rules_have_a_bundled_permissionless_fallback():
     data = risk_classifier._load_yaml("azure")
 
     assert data["provider"] == "azure"
     assert "listsecrets" in data["credential_action_regex"]
-
-
-def test_azure_bundled_rules_are_not_relabelled_by_remote_cache(monkeypatch, tmp_path):
-    cache = tmp_path / "cache"
-    cache.mkdir()
-    (cache / "azure.yaml").write_text(
-        "provider: azure\ncredential_action_regex: '$^'\n",
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(risk_classifier, "_cache_dir", lambda: cache)
-    monkeypatch.setattr(risk_classifier, "_download_risk_rules", lambda provider: None)
-
-    data = risk_classifier._load_yaml("azure")
-
-    assert "listsecrets" in data["credential_action_regex"]
-
-
-def test_invalid_downloaded_aws_regex_cannot_replace_bundled_baseline(
-    monkeypatch, tmp_path
-):
-    monkeypatch.setattr(risk_classifier, "_cache_dir", lambda: tmp_path / "cache")
-    monkeypatch.setattr(
-        risk_classifier,
-        "_download_risk_rules",
-        lambda provider: "provider: aws\nwrite_like_prefix_regex: '['\n",
-    )
-
-    data = risk_classifier._load_yaml("aws")
-
-    assert data["write_like_prefix_regex"].startswith("^(Put|")
 
 
 def test_workdocs_document_metadata_is_not_a_sensitive_data_finding():

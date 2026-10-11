@@ -10,6 +10,7 @@ import sys
 from colorama import Fore
 
 from src.k8s import K8sPEAS
+from src.CloudPEASS.risk_rule_updates import prepare_rules
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -84,6 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print low-risk and all repeated findings",
     )
     parser.add_argument("--out-json-path", help="Write the complete JSON report here")
+    parser.add_argument("--no-update-rules", action="store_true", help="Use bundled permission rules without downloading updates")
     return parser
 
 
@@ -96,6 +98,7 @@ def main() -> int:
         parser.error("choose either bearer-token or client-certificate authentication")
     if args.impersonate_groups and not args.impersonate_user:
         parser.error("--as-group requires --as")
+    prepare_rules("k8s", update=not args.no_update_rules)
     scanner = None
     try:
         scanner = K8sPEAS(
