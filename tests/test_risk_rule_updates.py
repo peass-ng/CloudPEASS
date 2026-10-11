@@ -41,6 +41,7 @@ def reset_selected():
 
 @pytest.mark.parametrize("provider", ["aws", "azure", "gcp", "k8s"])
 def test_refresh_uses_main_url_and_selected_rules(monkeypatch, tmp_path, provider):
+    assert updates.RULES_URL == "https://raw.githubusercontent.com/peass-ng/CloudPEASS/refs/heads/main/src/CloudPEASS/risk_rules"
     monkeypatch.setattr(updates, "_cache_path", lambda name: tmp_path / f"{name}.yaml")
     payload = json.dumps(_remote_rules(provider))
     calls = []

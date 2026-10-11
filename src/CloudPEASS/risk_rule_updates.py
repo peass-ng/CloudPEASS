@@ -13,7 +13,7 @@ import yaml
 
 
 RULES_URL = (
-    "https://raw.githubusercontent.com/carlospolop/CloudPEASS/"
+    "https://raw.githubusercontent.com/peass-ng/CloudPEASS/"
     "refs/heads/main/src/CloudPEASS/risk_rules"
 )
 PROVIDERS = frozenset({"aws", "azure", "gcp", "k8s"})
